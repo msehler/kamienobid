@@ -13,6 +13,8 @@
   </head>
   <body>
     <div class="page-grid"></div>
+    <div class="ambient-orb ambient-orb-left"></div>
+    <div class="ambient-orb ambient-orb-right"></div>
     <div class="status-toast" id="statusToast" aria-live="polite"></div>
 
     <header class="site-header reveal">
@@ -38,26 +40,57 @@
     <main id="top">
       <section class="hero-section reveal">
         <div class="hero-shell">
-          <div class="hero-copy">
-            <p class="eyebrow" id="heroEyebrow"></p>
-            <h1 class="hero-title">
-              <span class="hero-sans">POST ONCE.</span>
-              <span class="hero-serif">Compare strategies</span>
-              <span class="hero-sans">across jurisdictions.</span>
-            </h1>
-            <p class="hero-description" id="heroDescription"></p>
-            <div class="hero-actions">
-              <a class="button primary" href="#account">Create an account</a>
-              <a class="button secondary" href="#post-matter">See the client flow</a>
+          <article class="hero-card hero-card-primary">
+            <div class="hero-copy">
+              <p class="eyebrow" id="heroEyebrow"></p>
+              <h1 class="hero-title">
+                <span class="hero-sans">POST ONCE.</span>
+                <span class="hero-serif">Compare strategies</span>
+                <span class="hero-sans">with verified lawyers.</span>
+              </h1>
+              <p class="hero-description" id="heroDescription"></p>
+              <div class="hero-actions">
+                <a class="button primary" href="#account">Create an account</a>
+                <a class="button secondary" href="#post-matter">See the client flow</a>
+              </div>
             </div>
+          </article>
+          <div class="hero-stack">
+            <article class="hero-card hero-card-secondary">
+              <div class="mini-rule"></div>
+              <div class="hero-mini-copy">
+                <p class="eyebrow">Kamieno use cases</p>
+                <p>
+                  One publishing workflow for family, employment, injury, immigration, business disputes, and more.
+                </p>
+              </div>
+              <div class="tag-cloud">
+                <span class="tag-pill">Family</span>
+                <span class="tag-pill">Employment</span>
+                <span class="tag-pill">Injury</span>
+                <span class="tag-pill">Business</span>
+              </div>
+            </article>
+            <article class="hero-card hero-card-brand">
+              <div class="brand-lockup">
+                <img src="/assets/site-wordmark-symbol.svg" alt="Kamieno" />
+              </div>
+              <div class="metric-stack" id="heroStats"></div>
+            </article>
           </div>
           <div class="hero-aside">
-            <div class="metric-stack" id="heroStats"></div>
-            <div class="glass-card">
+            <article class="hero-card hero-card-quote">
               <p class="eyebrow">Detected base</p>
               <p class="big-stat" id="jurisdictionBadge"></p>
-              <p class="small-copy">Currency, disclaimers, and intake prompts adapt by jurisdiction.</p>
-            </div>
+              <h2 class="quote-title">
+                Strategy first.
+                <span>Pricing and jurisdiction handled clearly.</span>
+              </h2>
+              <p class="quote-copy">
+                Matter intake, lawyer access, disclaimers, and required prompts all shift to the user’s local legal
+                context.
+              </p>
+            </article>
           </div>
         </div>
       </section>
