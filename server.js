@@ -67,6 +67,13 @@ const server = http.createServer(async (req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   const handler = apiHandlers[parsedUrl.pathname];
 
+  if (parsedUrl.pathname === "/platform") {
+    res.statusCode = 302;
+    res.setHeader("Location", "/");
+    res.end();
+    return;
+  }
+
   if (handler) {
     try {
       attachResponseHelpers(res);
