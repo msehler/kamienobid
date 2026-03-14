@@ -265,7 +265,7 @@ a {
 .home-hero {
   position: relative;
   z-index: 1;
-  width: min(1180px, calc(100vw - 36px));
+  width: min(1320px, calc(100vw - 36px));
   margin: 28px auto 0;
 }
 
