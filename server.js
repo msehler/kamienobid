@@ -52,8 +52,10 @@ function serveStatic(res, pathname) {
   const safePath = path.normalize(requestedPath).replace(/^(\.\.[/\\])+/, "");
   const relativePath = safePath.replace(/^[/\\]+/, "");
   const filePath = path.join(PUBLIC_DIR, relativePath);
-  const exists = fs.existsSync(filePath) && fs.statSync(filePath).isFile();
-  const finalPath = exists ? filePath : path.join(PUBLIC_DIR, "index.html");
+  const htmlPath = path.extname(filePath) ? filePath : path.join(PUBLIC_DIR, `${relativePath}.html`);
+  const exactExists = fs.existsSync(filePath) && fs.statSync(filePath).isFile();
+  const cleanUrlExists = fs.existsSync(htmlPath) && fs.statSync(htmlPath).isFile();
+  const finalPath = exactExists ? filePath : cleanUrlExists ? htmlPath : path.join(PUBLIC_DIR, "index.html");
   const extension = path.extname(finalPath);
 
   res.statusCode = 200;

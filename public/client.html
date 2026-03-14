@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kamieno | Client</title>
+    <meta
+      name="description"
+      content="Create, pay for, and manage legal matters on Kamieno."
+    />
+    <link rel="icon" href="/assets/favicon-symbol.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-grid"></div>
+    <div class="ambient-orb ambient-orb-left"></div>
+    <div class="ambient-orb ambient-orb-right"></div>
+    <div class="status-toast" id="statusToast" aria-live="polite"></div>
+
+    <header class="site-header reveal">
+      <div class="brand-row">
+        <a href="/" class="brand-mark" aria-label="Kamieno home">
+          <img src="/assets/site-wordmark-symbol.svg" alt="Kamieno" />
+        </a>
+        <nav class="main-nav">
+          <a href="/platform">Platform</a>
+          <a href="/account">Account</a>
+          <a href="/client" aria-current="page">Client</a>
+          <a href="/lawyer">Lawyer</a>
+          <a href="/admin">Admin</a>
+        </nav>
+        <div class="auth-quick" id="authQuick"></div>
+      </div>
+    </header>
+
+    <main>
+      <section class="workspace reveal" id="post-matter">
+        <div class="workspace-header">
+          <p class="eyebrow">Client side</p>
+          <h2>Create a matter draft, then publish it through the local fee flow.</h2>
+        </div>
+        <div class="workspace-grid">
+          <form class="panel matter-form" id="matterForm">
+            <div class="panel-header">
+              <h3>Client publishing flow</h3>
+              <span class="pill" id="publishFee"></span>
+            </div>
+            <div class="access-note" id="matterAccessNote"></div>
+            <div class="form-grid">
+              <label>
+                Client name
+                <input id="clientName" name="clientName" type="text" placeholder="Taylor Shaw" required />
+              </label>
+              <label>
+                Account email
+                <input id="clientEmail" name="email" type="email" placeholder="taylor@example.com" required />
+              </label>
+              <label>
+                Country
+                <select id="countrySelect" name="countryCode"></select>
+              </label>
+              <label>
+                <span id="regionLabel">Region</span>
+                <select id="regionSelect" name="region"></select>
+              </label>
+              <label>
+                Practice area
+                <select id="practiceAreaSelect" name="practiceAreaId"></select>
+              </label>
+              <label>
+                Quote mode
+                <select id="quoteModeSelect" name="quoteMode">
+                  <option>Detailed</option>
+                  <option>Broad</option>
+                </select>
+              </label>
+            </div>
+            <label>
+              Matter summary
+              <textarea
+                id="matterSummary"
+                name="summary"
+                rows="5"
+                placeholder="Describe the dispute, timing, and the outcome you want."
+                required
+              ></textarea>
+            </label>
+            <label>
+              Budget or pricing preference
+              <input id="budgetInput" name="budget" type="text" placeholder="Prefer staged fixed fees" />
+            </label>
+            <div class="prompt-grid" id="promptFields"></div>
+            <label>
+              Supporting document names
+              <input id="documentNames" name="documents" type="text" placeholder="Contract.pdf, Dismissal letter.pdf" />
+            </label>
+            <div class="checklist-card">
+              <p class="eyebrow">Required uploads</p>
+              <ul id="requiredUploads"></ul>
+            </div>
+            <button class="button primary" id="matterSubmitButton" type="submit">Pay and publish matter</button>
+          </form>
+
+          <aside class="panel insight-panel">
+            <div class="panel-header">
+              <h3>Jurisdiction notes</h3>
+              <span class="pill neutral">Live template</span>
+            </div>
+            <div id="templateSummary" class="template-summary"></div>
+            <div class="launch-panel" id="paymentFlowSummary"></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="workspace reveal" id="client-board">
+        <div class="workspace-header">
+          <p class="eyebrow">Client side</p>
+          <h2>Review your paid matters, shortlist bids, and accept the best fit.</h2>
+        </div>
+        <div class="workspace-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Your matters</h3>
+              <span class="pill neutral">Decision board</span>
+            </div>
+            <div class="access-note" id="clientBoardAccess"></div>
+            <label>
+              Select matter
+              <select id="caseSelect"></select>
+            </label>
+            <div id="caseDetails" class="case-details"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Received bids</h3>
+              <span class="pill">Client view</span>
+            </div>
+            <div id="bidList" class="bid-list"></div>
+            <div class="engagement-letter" id="engagementLetter"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer reveal">
+      <div class="footer-copy">
+        <p class="eyebrow">Live disclaimer</p>
+        <p id="globalDisclaimer"></p>
+      </div>
+      <div class="footer-meta">
+        <p>&copy; 2026 Kamieno. All rights reserved.</p>
+        <a href="/terms">Terms of Use</a>
+      </div>
+    </footer>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>

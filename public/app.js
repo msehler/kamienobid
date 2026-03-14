@@ -95,39 +95,69 @@ function cacheElements() {
 }
 
 function bindEvents() {
-  elements.countrySelect.addEventListener("change", () => {
-    state.selectedCountryCode = elements.countrySelect.value;
-    renderMatterComposer();
-  });
+  if (elements.countrySelect) {
+    elements.countrySelect.addEventListener("change", () => {
+      state.selectedCountryCode = elements.countrySelect.value;
+      renderMatterComposer();
+    });
+  }
 
-  elements.practiceAreaSelect.addEventListener("change", () => {
-    state.selectedPracticeAreaId = elements.practiceAreaSelect.value;
-    renderMatterComposer();
-  });
+  if (elements.practiceAreaSelect) {
+    elements.practiceAreaSelect.addEventListener("change", () => {
+      state.selectedPracticeAreaId = elements.practiceAreaSelect.value;
+      renderMatterComposer();
+    });
+  }
 
-  elements.lawyerCountrySelect.addEventListener("change", renderLawyerRegionOptions);
-  elements.addJurisdictionButton.addEventListener("click", addJurisdiction);
-  elements.bidCaseSelect.addEventListener("change", () => {
-    renderBidDefaults();
-    renderCompliancePreview();
-  });
-  [elements.strategyPosition, elements.strategyNextSteps, elements.strategyRisks, elements.strategyTimeline].forEach(
-    (field) => field.addEventListener("input", renderCompliancePreview),
-  );
-  elements.caseSelect.addEventListener("change", () => {
-    state.selectedCaseId = elements.caseSelect.value;
-    renderClientBoard();
-  });
+  if (elements.lawyerCountrySelect) {
+    elements.lawyerCountrySelect.addEventListener("change", renderLawyerRegionOptions);
+  }
+  if (elements.addJurisdictionButton) {
+    elements.addJurisdictionButton.addEventListener("click", addJurisdiction);
+  }
+  if (elements.bidCaseSelect) {
+    elements.bidCaseSelect.addEventListener("change", () => {
+      renderBidDefaults();
+      renderCompliancePreview();
+    });
+  }
+  [elements.strategyPosition, elements.strategyNextSteps, elements.strategyRisks, elements.strategyTimeline]
+    .filter(Boolean)
+    .forEach((field) => field.addEventListener("input", renderCompliancePreview));
+  if (elements.caseSelect) {
+    elements.caseSelect.addEventListener("change", () => {
+      state.selectedCaseId = elements.caseSelect.value;
+      renderClientBoard();
+    });
+  }
 
-  elements.signupForm.addEventListener("submit", submitSignup);
-  elements.loginForm.addEventListener("submit", submitLogin);
-  elements.logoutButton.addEventListener("click", submitLogout);
-  elements.matterForm.addEventListener("submit", submitMatter);
-  elements.lawyerForm.addEventListener("submit", submitLawyerProfile);
-  elements.bidForm.addEventListener("submit", submitBid);
-  elements.bidList.addEventListener("click", handleBidAction);
-  elements.adminCountrySettings.addEventListener("click", handleAdminCountryToggle);
-  elements.verificationQueue.addEventListener("click", handleAdminApproval);
+  if (elements.signupForm) {
+    elements.signupForm.addEventListener("submit", submitSignup);
+  }
+  if (elements.loginForm) {
+    elements.loginForm.addEventListener("submit", submitLogin);
+  }
+  if (elements.logoutButton) {
+    elements.logoutButton.addEventListener("click", submitLogout);
+  }
+  if (elements.matterForm) {
+    elements.matterForm.addEventListener("submit", submitMatter);
+  }
+  if (elements.lawyerForm) {
+    elements.lawyerForm.addEventListener("submit", submitLawyerProfile);
+  }
+  if (elements.bidForm) {
+    elements.bidForm.addEventListener("submit", submitBid);
+  }
+  if (elements.bidList) {
+    elements.bidList.addEventListener("click", handleBidAction);
+  }
+  if (elements.adminCountrySettings) {
+    elements.adminCountrySettings.addEventListener("click", handleAdminCountryToggle);
+  }
+  if (elements.verificationQueue) {
+    elements.verificationQueue.addEventListener("click", handleAdminApproval);
+  }
 }
 
 async function refreshApp() {
@@ -220,13 +250,20 @@ function renderAll() {
 
 function renderHeader() {
   const country = getCountry(state.selectedCountryCode);
-  elements.globalDisclaimer.textContent = country.disclaimer;
-  elements.authQuick.innerHTML = state.currentUser
-    ? `<span class="pill">${state.currentUser.role}</span><span>${state.currentUser.name}</span>`
-    : `<a class="button ghost" href="#account">Sign in</a>`;
+  if (elements.globalDisclaimer) {
+    elements.globalDisclaimer.textContent = country.disclaimer;
+  }
+  if (elements.authQuick) {
+    elements.authQuick.innerHTML = state.currentUser
+      ? `<span class="pill">${state.currentUser.role}</span><span>${state.currentUser.name}</span>`
+      : `<a class="button ghost" href="/account">Sign in</a>`;
+  }
 }
 
 function renderHero() {
+  if (!elements.heroEyebrow || !elements.heroDescription || !elements.jurisdictionBadge || !elements.heroStats) {
+    return;
+  }
   elements.heroEyebrow.textContent = state.bootstrap.hero.eyebrow;
   elements.heroDescription.textContent = state.bootstrap.hero.description;
   elements.jurisdictionBadge.textContent = getCountry(state.selectedCountryCode).name;
@@ -250,6 +287,9 @@ function renderHero() {
 }
 
 function renderAuth() {
+  if (!elements.sessionCard || !elements.stripeStatus || !elements.signupForm || !elements.loginForm || !elements.logoutButton) {
+    return;
+  }
   const user = state.currentUser;
   elements.stripeStatus.textContent = state.bootstrap.stripeReady ? "Stripe ready" : "Demo checkout";
 
@@ -274,6 +314,9 @@ function renderAuth() {
 }
 
 function renderCountryRail() {
+  if (!elements.countryInsights) {
+    return;
+  }
   elements.countryInsights.innerHTML = getEnabledCountries()
     .map((country) => `
       <article class="country-chip">
@@ -286,6 +329,24 @@ function renderCountryRail() {
 }
 
 function renderMatterComposer() {
+  if (
+    !elements.countrySelect ||
+    !elements.practiceAreaSelect ||
+    !elements.regionLabel ||
+    !elements.regionSelect ||
+    !elements.publishFee ||
+    !elements.templateSummary ||
+    !elements.paymentFlowSummary ||
+    !elements.promptFields ||
+    !elements.requiredUploads ||
+    !elements.matterAccessNote ||
+    !elements.matterForm ||
+    !elements.matterSubmitButton ||
+    !elements.clientName ||
+    !elements.clientEmail
+  ) {
+    return;
+  }
   populateCountrySelect(elements.countrySelect, state.selectedCountryCode);
   populatePracticeAreas();
 
@@ -336,6 +397,25 @@ function renderMatterComposer() {
 }
 
 function renderLawyerStudio() {
+  if (
+    !elements.lawyerCountrySelect ||
+    !elements.lawyerRegionSelect ||
+    !elements.selectedJurisdictions ||
+    !elements.lawyerAccessNote ||
+    !elements.bidAccessNote ||
+    !elements.lawyerForm ||
+    !elements.bidForm ||
+    !elements.lawyerSubmitButton ||
+    !elements.bidSubmitButton ||
+    !elements.lawyerName ||
+    !elements.lawyerEmail ||
+    !elements.lawyerFirm ||
+    !elements.lawyerSelect ||
+    !elements.lawyerRoster ||
+    !elements.bidCaseSelect
+  ) {
+    return;
+  }
   populateCountrySelect(elements.lawyerCountrySelect, elements.lawyerCountrySelect.value || state.selectedCountryCode);
   renderLawyerRegionOptions();
   renderSelectedJurisdictions();
@@ -405,6 +485,9 @@ function renderLawyerStudio() {
 }
 
 function renderBidDefaults() {
+  if (!elements.bidCaseSelect || !elements.feeType || !elements.disbursements || !elements.compliancePreview) {
+    return;
+  }
   const matter = state.cases.find((entry) => entry.id === elements.bidCaseSelect.value);
   if (!matter) {
     elements.feeType.placeholder = "Select an eligible matter";
@@ -418,6 +501,17 @@ function renderBidDefaults() {
 }
 
 function renderCompliancePreview() {
+  if (
+    !elements.bidCaseSelect ||
+    !elements.strategyPosition ||
+    !elements.strategyNextSteps ||
+    !elements.strategyRisks ||
+    !elements.strategyTimeline ||
+    !elements.bidWordCount ||
+    !elements.compliancePreview
+  ) {
+    return;
+  }
   const matter = state.cases.find((entry) => entry.id === elements.bidCaseSelect.value);
   const content = [
     elements.strategyPosition.value,
@@ -446,6 +540,9 @@ function renderCompliancePreview() {
 }
 
 function renderClientBoard() {
+  if (!elements.clientBoardAccess || !elements.caseSelect || !elements.caseDetails || !elements.bidList || !elements.engagementLetter) {
+    return;
+  }
   const isClient = state.currentUser?.role === "client";
   elements.clientBoardAccess.innerHTML = isClient
     ? "<p>These are your own matters. Payment-pending drafts are visible only to you.</p>"
@@ -539,6 +636,9 @@ function renderBidCard(bid, matter) {
 }
 
 function renderAdmin() {
+  if (!elements.adminAccess || !elements.adminCountrySettings || !elements.adminMetrics || !elements.practiceAreaAnalytics || !elements.verificationQueue) {
+    return;
+  }
   if (state.currentUser?.role !== "admin") {
     elements.adminAccess.innerHTML = "<p>Admin access is restricted to administrator accounts.</p>";
     elements.adminCountrySettings.innerHTML = "";
@@ -687,6 +787,7 @@ async function submitMatter(event) {
       body: JSON.stringify({
         action: "create-checkout",
         caseId: draft.case.id,
+        returnPath: window.location.pathname === "/" ? "/client" : window.location.pathname,
       }),
     });
     showToast(checkout.message);
@@ -820,28 +921,43 @@ async function handleAdminApproval(event) {
 }
 
 function populateCountrySelect(select, selectedValue) {
+  if (!select) {
+    return;
+  }
   select.innerHTML = getEnabledCountries()
     .map((country) => `<option value="${country.code}" ${country.code === selectedValue ? "selected" : ""}>${country.name}</option>`)
     .join("");
 }
 
 function populatePracticeAreas() {
+  if (!elements.practiceAreaSelect) {
+    return;
+  }
   elements.practiceAreaSelect.innerHTML = state.bootstrap.practiceAreas
     .map((area) => `<option value="${area.id}" ${area.id === state.selectedPracticeAreaId ? "selected" : ""}>${area.label}</option>`)
     .join("");
 }
 
 function populateRegionSelect(select, country, selectedValue) {
+  if (!select) {
+    return;
+  }
   const fallback = selectedValue && country.regions.includes(selectedValue) ? selectedValue : country.regions[0];
   select.innerHTML = country.regions.map((region) => `<option value="${region}" ${region === fallback ? "selected" : ""}>${region}</option>`).join("");
 }
 
 function renderLawyerRegionOptions() {
+  if (!elements.lawyerCountrySelect || !elements.lawyerRegionSelect) {
+    return;
+  }
   const country = getCountry(elements.lawyerCountrySelect.value || state.selectedCountryCode);
   populateRegionSelect(elements.lawyerRegionSelect, country, elements.lawyerRegionSelect.value);
 }
 
 function addJurisdiction() {
+  if (!elements.lawyerCountrySelect || !elements.lawyerRegionSelect) {
+    return;
+  }
   const entry = `${elements.lawyerCountrySelect.value}:${elements.lawyerRegionSelect.value}`;
   if (!state.pendingJurisdictions.includes(entry)) {
     state.pendingJurisdictions.push(entry);
@@ -850,6 +966,9 @@ function addJurisdiction() {
 }
 
 function renderSelectedJurisdictions() {
+  if (!elements.selectedJurisdictions) {
+    return;
+  }
   elements.selectedJurisdictions.innerHTML = state.pendingJurisdictions.length
     ? state.pendingJurisdictions
         .map(
@@ -888,6 +1007,9 @@ function getTemplate(countryCode, practiceAreaId) {
 }
 
 function setFormEnabled(form, enabled) {
+  if (!form) {
+    return;
+  }
   Array.from(form.elements).forEach((element) => {
     if (element.id === "privateBid" || element.tagName === "BUTTON" || element.name?.startsWith("prompt:")) {
       return;
@@ -969,6 +1091,9 @@ async function request(url, options = {}) {
 }
 
 function showToast(message) {
+  if (!elements.statusToast) {
+    return;
+  }
   elements.statusToast.textContent = message;
   elements.statusToast.classList.add("is-visible");
   window.clearTimeout(showToast.timeoutId);

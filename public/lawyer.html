@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kamieno | Lawyer</title>
+    <meta
+      name="description"
+      content="Manage legal practice profile details and submit bids on Kamieno."
+    />
+    <link rel="icon" href="/assets/favicon-symbol.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-grid"></div>
+    <div class="ambient-orb ambient-orb-left"></div>
+    <div class="ambient-orb ambient-orb-right"></div>
+    <div class="status-toast" id="statusToast" aria-live="polite"></div>
+
+    <header class="site-header reveal">
+      <div class="brand-row">
+        <a href="/" class="brand-mark" aria-label="Kamieno home">
+          <img src="/assets/site-wordmark-symbol.svg" alt="Kamieno" />
+        </a>
+        <nav class="main-nav">
+          <a href="/platform">Platform</a>
+          <a href="/account">Account</a>
+          <a href="/client">Client</a>
+          <a href="/lawyer" aria-current="page">Lawyer</a>
+          <a href="/admin">Admin</a>
+        </nav>
+        <div class="auth-quick" id="authQuick"></div>
+      </div>
+    </header>
+
+    <main>
+      <section class="workspace alt reveal" id="lawyer-studio">
+        <div class="workspace-header">
+          <p class="eyebrow">Lawyer side</p>
+          <h2>Complete your jurisdiction profile, then bid only where you are licensed and verified.</h2>
+        </div>
+        <div class="workspace-grid">
+          <div class="stack-column">
+            <form class="panel" id="lawyerForm">
+              <div class="panel-header">
+                <h3>Lawyer profile</h3>
+                <span class="pill">Verification queue</span>
+              </div>
+              <div class="access-note" id="lawyerAccessNote"></div>
+              <div class="form-grid">
+                <label>
+                  Full name
+                  <input id="lawyerName" name="name" type="text" placeholder="Harriet Singh" required />
+                </label>
+                <label>
+                  Email
+                  <input id="lawyerEmail" name="email" type="email" placeholder="harriet@tribunalnorth.co.uk" required />
+                </label>
+                <label>
+                  Firm
+                  <input id="lawyerFirm" name="firm" type="text" placeholder="Tribunal North" />
+                </label>
+                <label>
+                  Country
+                  <select id="lawyerCountrySelect"></select>
+                </label>
+                <label>
+                  Region
+                  <select id="lawyerRegionSelect"></select>
+                </label>
+                <label>
+                  Certificate references
+                  <input id="certificateRefs" name="certificateRefs" type="text" placeholder="SRA-601443, AU-VIC-44891" />
+                </label>
+              </div>
+              <button class="button secondary" id="addJurisdictionButton" type="button">Add jurisdiction</button>
+              <div class="selected-chips" id="selectedJurisdictions"></div>
+              <button class="button primary" id="lawyerSubmitButton" type="submit">Save lawyer profile</button>
+            </form>
+
+            <div class="panel">
+              <div class="panel-header">
+                <h3>Lawyer roster</h3>
+                <span class="pill neutral">Marketplace</span>
+              </div>
+              <div id="lawyerRoster" class="roster-list"></div>
+            </div>
+          </div>
+
+          <form class="panel bid-form" id="bidForm">
+            <div class="panel-header">
+              <h3>Bid composer</h3>
+              <span class="pill" id="bidWordCount">0 words</span>
+            </div>
+            <div class="access-note" id="bidAccessNote"></div>
+            <div class="form-grid">
+              <label>
+                Lawyer account
+                <select id="lawyerSelect" name="lawyerId"></select>
+              </label>
+              <label>
+                Visible matter
+                <select id="bidCaseSelect" name="caseId"></select>
+              </label>
+              <label>
+                Fee model
+                <input id="feeType" name="feeType" type="text" placeholder="Fixed fee + disbursements + GST" />
+              </label>
+              <label>
+                Proposed fee
+                <input id="totalFee" name="totalFee" type="text" placeholder="AUD 4,800" />
+              </label>
+            </div>
+            <label>
+              Disbursements / taxes
+              <input id="disbursements" name="disbursements" type="text" placeholder="Court filing and valuation costs billed separately" />
+            </label>
+            <div class="strategy-grid">
+              <label>
+                Position
+                <textarea id="strategyPosition" rows="5"></textarea>
+              </label>
+              <label>
+                Next steps
+                <textarea id="strategyNextSteps" rows="5"></textarea>
+              </label>
+              <label>
+                Risks
+                <textarea id="strategyRisks" rows="5"></textarea>
+              </label>
+              <label>
+                Timeline
+                <textarea id="strategyTimeline" rows="5"></textarea>
+              </label>
+            </div>
+            <div class="checklist-card">
+              <p class="eyebrow">Compliance preview</p>
+              <ul id="compliancePreview"></ul>
+            </div>
+            <label class="inline-toggle">
+              <input id="privateBid" name="privateBid" type="checkbox" checked />
+              Keep this bid private to the client
+            </label>
+            <button class="button primary" id="bidSubmitButton" type="submit">Submit bid</button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer reveal">
+      <div class="footer-copy">
+        <p class="eyebrow">Live disclaimer</p>
+        <p id="globalDisclaimer"></p>
+      </div>
+      <div class="footer-meta">
+        <p>&copy; 2026 Kamieno. All rights reserved.</p>
+        <a href="/terms">Terms of Use</a>
+      </div>
+    </footer>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>
