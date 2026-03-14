@@ -1,0 +1,14 @@
+{
+  "name": "kamienobid",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Jurisdiction-aware legal bidding platform MVP for Kamieno.",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "check": "node --check server.js && node --check lib/app-data.js && node --check lib/store.js && node --check lib/platform.js && node --check public/app.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kamieno | Legal Bidding Platform</title>
+    <meta
+      name="description"
+      content="Kamieno helps clients post a legal matter once and receive jurisdiction-aware bids from verified lawyers."
+    />
+    <link rel="icon" href="/assets/favicon-symbol.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-grid"></div>
+    <div class="status-toast" id="statusToast" aria-live="polite"></div>
+
+    <header class="site-header reveal">
+      <div class="brand-row">
+        <a href="#top" class="brand-mark" aria-label="Kamieno home">
+          <img src="/assets/site-wordmark-symbol.svg" alt="Kamieno" />
+        </a>
+        <nav class="main-nav">
+          <a href="#platform">Platform</a>
+          <a href="#post-matter">Post Matter</a>
+          <a href="#lawyer-studio">Lawyer Studio</a>
+          <a href="#admin">Admin</a>
+        </nav>
+        <a class="button ghost" href="#post-matter">Launch MVP</a>
+      </div>
+      <div class="disclaimer-strip">
+        <span class="eyebrow">Live disclaimer</span>
+        <p id="globalDisclaimer"></p>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero-section reveal">
+        <div class="hero-shell">
+          <div class="hero-copy">
+            <p class="eyebrow" id="heroEyebrow"></p>
+            <h1 class="hero-title">
+              <span class="hero-sans">POST ONCE.</span>
+              <span class="hero-serif">Compare strategies</span>
+              <span class="hero-sans">across jurisdictions.</span>
+            </h1>
+            <p class="hero-description" id="heroDescription"></p>
+            <div class="hero-actions">
+              <a class="button primary" href="#post-matter">Publish a matter</a>
+              <a class="button secondary" href="#lawyer-studio">See lawyer flow</a>
+            </div>
+          </div>
+          <div class="hero-aside">
+            <div class="metric-stack" id="heroStats"></div>
+            <div class="glass-card">
+              <p class="eyebrow">Auto-detected base</p>
+              <p class="big-stat" id="jurisdictionBadge"></p>
+              <p class="small-copy">Users can override location manually before publishing.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="platform-section reveal" id="platform">
+        <div class="section-heading">
+          <p class="eyebrow">Product surface</p>
+          <h2>Built as a real, full-stack MVP around the March 2026 PRD.</h2>
+        </div>
+        <div class="platform-grid">
+          <article class="feature-card light">
+            <h3>Jurisdiction-aware matter intake</h3>
+            <p>Country, region, terminology, pricing, disclaimers, and checklists all switch dynamically.</p>
+          </article>
+          <article class="feature-card coral">
+            <h3>Structured lawyer bidding</h3>
+            <p>Licensed lawyers only, 4-part strategy requirement, 200-word minimum, and conduct-rule screening.</p>
+          </article>
+          <article class="feature-card dark">
+            <h3>Client decision board</h3>
+            <p>Shortlist bids, accept the best fit, and generate a jurisdiction-aware engagement letter draft.</p>
+          </article>
+        </div>
+        <div class="country-rail" id="countryInsights"></div>
+      </section>
+
+      <section class="workspace reveal" id="post-matter">
+        <div class="workspace-header">
+          <p class="eyebrow">Client side</p>
+          <h2>Post a matter in one flow, then publish for the local fixed fee.</h2>
+        </div>
+        <div class="workspace-grid">
+          <form class="panel matter-form" id="matterForm">
+            <div class="panel-header">
+              <h3>Publish a legal matter</h3>
+              <span class="pill" id="publishFee"></span>
+            </div>
+            <div class="form-grid">
+              <label>
+                Client name
+                <input id="clientName" name="clientName" type="text" placeholder="Olivia Brooks" required />
+              </label>
+              <label>
+                Email
+                <input id="clientEmail" name="email" type="email" placeholder="olivia@example.com" required />
+              </label>
+              <label>
+                Country
+                <select id="countrySelect" name="countryCode"></select>
+              </label>
+              <label>
+                <span id="regionLabel">Region</span>
+                <select id="regionSelect" name="region"></select>
+              </label>
+              <label>
+                Practice area
+                <select id="practiceAreaSelect" name="practiceAreaId"></select>
+              </label>
+              <label>
+                Quote mode
+                <select id="quoteModeSelect" name="quoteMode">
+                  <option>Detailed</option>
+                  <option>Broad</option>
+                </select>
+              </label>
+            </div>
+            <label>
+              Matter summary
+              <textarea
+                id="matterSummary"
+                name="summary"
+                rows="5"
+                placeholder="Describe the dispute, timing, and what you want resolved."
+                required
+              ></textarea>
+            </label>
+            <label>
+              Budget or pricing preference
+              <input id="budgetInput" name="budget" type="text" placeholder="Prefer staged fixed fees" />
+            </label>
+            <div class="prompt-grid" id="promptFields"></div>
+            <label>
+              Supporting document names
+              <input id="documentNames" name="documents" type="text" placeholder="Contract.pdf, Dismissal letter.pdf" />
+            </label>
+            <div class="checklist-card">
+              <p class="eyebrow">Required uploads</p>
+              <ul id="requiredUploads"></ul>
+            </div>
+            <button class="button primary" type="submit">Publish matter</button>
+          </form>
+
+          <aside class="panel insight-panel">
+            <div class="panel-header">
+              <h3>Jurisdiction notes</h3>
+              <span class="pill neutral">Live template</span>
+            </div>
+            <div id="templateSummary" class="template-summary"></div>
+            <div class="launch-panel">
+              <p class="eyebrow">Launch priority</p>
+              <p>
+                Australia, New Zealand, and the United Kingdom are highlighted as the recommended MVP launch set.
+              </p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="workspace alt reveal" id="lawyer-studio">
+        <div class="workspace-header">
+          <p class="eyebrow">Lawyer side</p>
+          <h2>Register by jurisdiction, then bid with structured strategy and pricing.</h2>
+        </div>
+        <div class="workspace-grid">
+          <div class="stack-column">
+            <form class="panel" id="lawyerForm">
+              <div class="panel-header">
+                <h3>Lawyer onboarding</h3>
+                <span class="pill">Verification queue</span>
+              </div>
+              <div class="form-grid">
+                <label>
+                  Full name
+                  <input id="lawyerName" name="name" type="text" placeholder="Harriet Singh" required />
+                </label>
+                <label>
+                  Email
+                  <input id="lawyerEmail" name="email" type="email" placeholder="harriet@tribunalnorth.co.uk" required />
+                </label>
+                <label>
+                  Firm
+                  <input id="lawyerFirm" name="firm" type="text" placeholder="Tribunal North" />
+                </label>
+                <label>
+                  Country
+                  <select id="lawyerCountrySelect"></select>
+                </label>
+                <label>
+                  Region
+                  <select id="lawyerRegionSelect"></select>
+                </label>
+                <label>
+                  Certificate references
+                  <input id="certificateRefs" name="certificateRefs" type="text" placeholder="SRA-601443, AU-VIC-44891" />
+                </label>
+              </div>
+              <button class="button secondary" id="addJurisdictionButton" type="button">Add jurisdiction</button>
+              <div class="selected-chips" id="selectedJurisdictions"></div>
+              <button class="button primary" type="submit">Submit lawyer profile</button>
+            </form>
+
+            <div class="panel">
+              <div class="panel-header">
+                <h3>Lawyer roster</h3>
+                <span class="pill neutral">Seeded + live</span>
+              </div>
+              <div id="lawyerRoster" class="roster-list"></div>
+            </div>
+          </div>
+
+          <form class="panel bid-form" id="bidForm">
+            <div class="panel-header">
+              <h3>Bid composer</h3>
+              <span class="pill" id="bidWordCount">0 words</span>
+            </div>
+            <div class="form-grid">
+              <label>
+                Lawyer
+                <select id="lawyerSelect" name="lawyerId"></select>
+              </label>
+              <label>
+                Visible case
+                <select id="bidCaseSelect" name="caseId"></select>
+              </label>
+              <label>
+                Fee model
+                <input id="feeType" name="feeType" type="text" placeholder="Fixed fee + disbursements + GST" />
+              </label>
+              <label>
+                Proposed fee
+                <input id="totalFee" name="totalFee" type="text" placeholder="AUD 4,800" />
+              </label>
+            </div>
+            <label>
+              Disbursements / taxes
+              <input id="disbursements" name="disbursements" type="text" placeholder="Court filing and valuation costs billed separately" />
+            </label>
+            <div class="strategy-grid">
+              <label>
+                Position
+                <textarea id="strategyPosition" rows="5"></textarea>
+              </label>
+              <label>
+                Next steps
+                <textarea id="strategyNextSteps" rows="5"></textarea>
+              </label>
+              <label>
+                Risks
+                <textarea id="strategyRisks" rows="5"></textarea>
+              </label>
+              <label>
+                Timeline
+                <textarea id="strategyTimeline" rows="5"></textarea>
+              </label>
+            </div>
+            <div class="checklist-card">
+              <p class="eyebrow">Compliance preview</p>
+              <ul id="compliancePreview"></ul>
+            </div>
+            <label class="inline-toggle">
+              <input id="privateBid" name="privateBid" type="checkbox" checked />
+              Keep this bid private to the client
+            </label>
+            <button class="button primary" type="submit">Submit bid</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="workspace reveal" id="client-board">
+        <div class="workspace-header">
+          <p class="eyebrow">Client side</p>
+          <h2>Shortlist and accept bids with a generated engagement letter preview.</h2>
+        </div>
+        <div class="workspace-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Open matters</h3>
+              <span class="pill neutral">Decision board</span>
+            </div>
+            <label>
+              Select matter
+              <select id="caseSelect"></select>
+            </label>
+            <div id="caseDetails" class="case-details"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Received bids</h3>
+              <span class="pill">Client view</span>
+            </div>
+            <div id="bidList" class="bid-list"></div>
+            <div class="engagement-letter" id="engagementLetter"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="workspace alt reveal" id="admin">
+        <div class="workspace-header">
+          <p class="eyebrow">Admin side</p>
+          <h2>Control country launch status, verification, and analytics.</h2>
+        </div>
+        <div class="workspace-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Country management</h3>
+              <span class="pill neutral">Enable / disable</span>
+            </div>
+            <div id="adminCountrySettings" class="settings-grid"></div>
+          </div>
+          <div class="stack-column">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>Platform metrics</h3>
+                <span class="pill">Segmented analytics</span>
+              </div>
+              <div id="adminMetrics" class="metric-stack compact"></div>
+              <div id="practiceAreaAnalytics" class="analytics-list"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <h3>Verification queue</h3>
+                <span class="pill neutral">Admin action</span>
+              </div>
+              <div id="verificationQueue" class="queue-list"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/app.js" defer></script>
+  </body>
+  </html>
