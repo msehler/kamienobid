@@ -11,7 +11,7 @@
     <link rel="icon" href="/assets/favicon-symbol.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
-  <body>
+  <body data-page="home">
     <div class="page-grid"></div>
     <div class="ambient-orb ambient-orb-left"></div>
     <div class="ambient-orb ambient-orb-right"></div>
@@ -49,6 +49,11 @@
                 <a class="button primary" href="/account">Create an account</a>
                 <a class="button secondary" href="/client">See the client flow</a>
               </div>
+              <div class="hero-proof-line">
+                <span>Jurisdiction aware from first intake</span>
+                <span>Verified practitioner access</span>
+                <span>Publishing gated by payment</span>
+              </div>
             </div>
           </article>
           <div class="hero-stack">
@@ -68,6 +73,7 @@
               </div>
             </article>
             <article class="hero-card hero-card-brand">
+              <p class="eyebrow">Marketplace pulse</p>
               <div class="brand-lockup">
                 <img src="/assets/site-wordmark-symbol.svg" alt="Kamieno" />
               </div>
@@ -86,45 +92,55 @@
                 Matter intake, lawyer access, disclaimers, and required prompts all shift to the user’s local legal
                 context.
               </p>
+              <div class="hero-mini-board">
+                <span>Families</span>
+                <span>Employers</span>
+                <span>Founders</span>
+                <span>Claimants</span>
+              </div>
             </article>
           </div>
         </div>
       </section>
 
-      <section class="platform-section reveal">
-        <div class="section-heading">
+      <section class="home-atlas-section reveal">
+        <div class="section-heading home-atlas-heading">
           <p class="eyebrow">Workspace map</p>
-          <h2>Choose the area you want instead of scrolling through the whole application on home.</h2>
+          <h2>Enter the exact operating surface you need, without the homepage carrying the whole application.</h2>
         </div>
-        <div class="platform-grid route-grid">
-          <article class="feature-card light route-card">
+        <div class="home-atlas-grid">
+          <article class="atlas-card atlas-card-featured">
+            <p class="eyebrow">Featured path</p>
+            <h3>Client workspace for matter intake, fee confirmation, and bid comparison.</h3>
+            <p>
+              Start with the highest-intent flow: publish once, then turn competing legal strategies into a decision
+              board.
+            </p>
+            <div class="atlas-meta">
+              <span>Draft</span>
+              <span>Publish</span>
+              <span>Decide</span>
+            </div>
+            <a class="button primary" href="/client">Open client workspace</a>
+          </article>
+          <article class="atlas-card atlas-card-platform">
             <p class="eyebrow">Platform</p>
-            <h3>See the product surface and live country rollout.</h3>
-            <p>Review enabled jurisdictions, pricing signals, and the production feature set.</p>
+            <h3>Review rollout, pricing logic, and enabled countries.</h3>
             <a class="button secondary" href="/platform">Open platform</a>
           </article>
-          <article class="feature-card coral route-card">
+          <article class="atlas-card atlas-card-account">
             <p class="eyebrow">Account</p>
-            <h3>Create a client or lawyer account and manage session access.</h3>
-            <p>Keep sign up, sign in, and current session details in one dedicated place.</p>
+            <h3>Create a client or lawyer account and manage sessions cleanly.</h3>
             <a class="button secondary" href="/account">Open account</a>
           </article>
-          <article class="feature-card dark route-card">
-            <p class="eyebrow">Client</p>
-            <h3>Publish matters and review bids in the client workflow.</h3>
-            <p>Draft a matter, pay the publishing fee, and compare strategy-led bids side by side.</p>
-            <a class="button ghost" href="/client">Open client</a>
-          </article>
-          <article class="feature-card light route-card">
+          <article class="atlas-card atlas-card-lawyer">
             <p class="eyebrow">Lawyer</p>
-            <h3>Maintain verification details and bid from the lawyer studio.</h3>
-            <p>Configure jurisdictions, monitor roster status, and submit compliant bid copy.</p>
+            <h3>Maintain practising rights, verification records, and bid composition.</h3>
             <a class="button secondary" href="/lawyer">Open lawyer</a>
           </article>
-          <article class="feature-card coral route-card">
+          <article class="atlas-card atlas-card-admin">
             <p class="eyebrow">Admin</p>
-            <h3>Manage rollout controls, approvals, and analytics separately.</h3>
-            <p>Keep moderation and platform operations in their own admin-focused screen.</p>
+            <h3>Control market availability, queue approvals, and analytics.</h3>
             <a class="button secondary" href="/admin">Open admin</a>
           </article>
         </div>
