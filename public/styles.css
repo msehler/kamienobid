@@ -781,8 +781,8 @@ body[data-page="account"] .page-hero-card::before {
   margin: 28px auto 32px;
   padding: 24px 26px;
   border-radius: var(--radius-xl);
-  background: rgba(255, 255, 255, 0.96);
-  color: var(--ink);
+  background: linear-gradient(180deg, #123ed5, #0d31ab);
+  color: white;
   box-shadow: var(--shadow);
   display: grid;
   gap: 18px;
@@ -801,23 +801,23 @@ body[data-page="account"] .page-hero-card::before {
 
 .footer-copy p:last-child,
 .footer-meta p {
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .footer-meta {
   padding-top: 16px;
-  border-top: 1px solid rgba(21, 57, 200, 0.12);
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 .footer-meta a {
   width: fit-content;
-  color: var(--ink);
+  color: white;
   text-decoration: none;
-  border-bottom: 1px solid rgba(21, 57, 200, 0.24);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.32);
 }
 
 .footer-meta a:hover {
-  border-bottom-color: var(--ink);
+  border-bottom-color: white;
 }
 
 .section-heading,
