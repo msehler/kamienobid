@@ -4,11 +4,14 @@ const path = require("path");
 const { URL } = require("url");
 
 const adminHandler = require("./api/admin");
+const authHandler = require("./api/auth");
 const bidsHandler = require("./api/bids");
 const bootstrapHandler = require("./api/bootstrap");
 const casesHandler = require("./api/cases");
 const decisionsHandler = require("./api/decisions");
 const lawyersHandler = require("./api/lawyers");
+const paymentsHandler = require("./api/payments");
+const { loadViewer } = require("./lib/auth");
 const { readJson, sendJson } = require("./lib/http");
 
 const PORT = Number(process.env.PORT || 3000);
@@ -23,11 +26,13 @@ const MIME_TYPES = {
 
 const apiHandlers = {
   "/api/admin": adminHandler,
+  "/api/auth": authHandler,
   "/api/bids": bidsHandler,
   "/api/bootstrap": bootstrapHandler,
   "/api/cases": casesHandler,
   "/api/decisions": decisionsHandler,
   "/api/lawyers": lawyersHandler,
+  "/api/payments": paymentsHandler,
 };
 
 function attachResponseHelpers(res) {
@@ -65,7 +70,8 @@ const server = http.createServer(async (req, res) => {
       attachResponseHelpers(res);
       attachQuery(req, parsedUrl);
       req.body = req.method === "POST" ? await readJson(req) : {};
-      handler(req, res);
+      req.viewer = loadViewer(req);
+      await handler(req, res);
     } catch (error) {
       sendJson(res, 500, { error: error.message || "Server error" });
     }

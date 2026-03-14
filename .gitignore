@@ -1,3 +1,6 @@
 .vercel
-data/store.json
 .DS_Store
+data/store.json
+data/*.sqlite
+data/*.sqlite-shm
+data/*.sqlite-wal

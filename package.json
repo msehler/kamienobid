@@ -6,9 +6,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "check": "node --check server.js && node --check lib/app-data.js && node --check lib/store.js && node --check lib/platform.js && node --check public/app.js"
+    "check": "node --check server.js && node --check lib/app-data.js && node --check lib/auth.js && node --check lib/db.js && node --check lib/http.js && node --check lib/payments.js && node --check lib/platform.js && node --check lib/security.js && node --check public/app.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": "24.x"
   }
 }

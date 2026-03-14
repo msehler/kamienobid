@@ -67,6 +67,13 @@ body {
   transform: translateY(0);
 }
 
+.auth-quick {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .site-header,
 .hero-shell,
 .workspace,
@@ -496,11 +503,21 @@ textarea {
 
 .checklist-card,
 .launch-panel,
-.engagement-letter {
+.engagement-letter,
+.access-note {
   padding: 18px;
   border-radius: var(--radius-md);
   border: 1px solid rgba(30, 24, 23, 0.1);
   background: rgba(255, 255, 255, 0.55);
+}
+
+.access-note {
+  margin-bottom: 16px;
+}
+
+.access-note p,
+.launch-panel p {
+  margin: 0;
 }
 
 .checklist-card ul,
@@ -546,6 +563,10 @@ textarea {
   border-radius: var(--radius-md);
   border: 1px solid rgba(30, 24, 23, 0.1);
   background: rgba(255, 255, 255, 0.6);
+}
+
+.panel.is-disabled {
+  opacity: 0.72;
 }
 
 .roster-item strong,

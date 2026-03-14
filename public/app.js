@@ -1,5 +1,6 @@
 const state = {
   bootstrap: null,
+  currentUser: null,
   cases: [],
   lawyers: [],
   bids: [],
@@ -7,30 +8,39 @@ const state = {
   selectedCountryCode: null,
   selectedPracticeAreaId: null,
   selectedCaseId: null,
-  selectedLawyerId: null,
   pendingJurisdictions: [],
   engagementLetter: null,
+  checkoutHandled: false,
 };
 
 const elements = {};
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   cacheElements();
   bindEvents();
   observeReveals();
-  refreshApp();
+  await refreshApp();
+  await handleCheckoutReturn();
 });
 
 function cacheElements() {
   [
     "statusToast",
+    "authQuick",
     "globalDisclaimer",
     "heroEyebrow",
     "heroDescription",
     "heroStats",
     "jurisdictionBadge",
+    "sessionCard",
+    "stripeStatus",
+    "signupForm",
+    "loginForm",
+    "logoutButton",
     "countryInsights",
     "matterForm",
+    "matterAccessNote",
+    "matterSubmitButton",
     "countrySelect",
     "regionSelect",
     "regionLabel",
@@ -40,7 +50,10 @@ function cacheElements() {
     "requiredUploads",
     "publishFee",
     "templateSummary",
+    "paymentFlowSummary",
     "lawyerForm",
+    "lawyerAccessNote",
+    "lawyerSubmitButton",
     "lawyerCountrySelect",
     "lawyerRegionSelect",
     "addJurisdictionButton",
@@ -49,6 +62,7 @@ function cacheElements() {
     "lawyerSelect",
     "bidCaseSelect",
     "bidForm",
+    "bidAccessNote",
     "feeType",
     "totalFee",
     "disbursements",
@@ -58,14 +72,23 @@ function cacheElements() {
     "strategyTimeline",
     "bidWordCount",
     "compliancePreview",
+    "bidSubmitButton",
     "caseSelect",
+    "clientBoardAccess",
     "caseDetails",
     "bidList",
     "engagementLetter",
+    "adminAccess",
     "adminCountrySettings",
     "adminMetrics",
     "practiceAreaAnalytics",
     "verificationQueue",
+    "clientName",
+    "clientEmail",
+    "lawyerName",
+    "lawyerEmail",
+    "lawyerFirm",
+    "certificateRefs",
   ].forEach((id) => {
     elements[id] = document.getElementById(id);
   });
@@ -84,27 +107,23 @@ function bindEvents() {
 
   elements.lawyerCountrySelect.addEventListener("change", renderLawyerRegionOptions);
   elements.addJurisdictionButton.addEventListener("click", addJurisdiction);
-  elements.lawyerSelect.addEventListener("change", () => {
-    state.selectedLawyerId = elements.lawyerSelect.value;
-    renderLawyerStudio();
-  });
-
   elements.bidCaseSelect.addEventListener("change", () => {
-    renderCompliancePreview();
     renderBidDefaults();
+    renderCompliancePreview();
   });
-
   [elements.strategyPosition, elements.strategyNextSteps, elements.strategyRisks, elements.strategyTimeline].forEach(
     (field) => field.addEventListener("input", renderCompliancePreview),
   );
-
   elements.caseSelect.addEventListener("change", () => {
     state.selectedCaseId = elements.caseSelect.value;
     renderClientBoard();
   });
 
+  elements.signupForm.addEventListener("submit", submitSignup);
+  elements.loginForm.addEventListener("submit", submitLogin);
+  elements.logoutButton.addEventListener("click", submitLogout);
   elements.matterForm.addEventListener("submit", submitMatter);
-  elements.lawyerForm.addEventListener("submit", submitLawyer);
+  elements.lawyerForm.addEventListener("submit", submitLawyerProfile);
   elements.bidForm.addEventListener("submit", submitBid);
   elements.bidList.addEventListener("click", handleBidAction);
   elements.adminCountrySettings.addEventListener("click", handleAdminCountryToggle);
@@ -113,15 +132,17 @@ function bindEvents() {
 
 async function refreshApp() {
   try {
-    const [bootstrap, cases, lawyers, bids, admin] = await Promise.all([
-      request("/api/bootstrap"),
+    const bootstrap = await request("/api/bootstrap");
+    state.bootstrap = bootstrap;
+    state.currentUser = bootstrap.currentUser;
+
+    const [cases, lawyers, bids, admin] = await Promise.all([
       request("/api/cases"),
       request("/api/lawyers"),
-      request("/api/bids"),
-      request("/api/admin"),
+      safeRequest("/api/bids", []),
+      state.currentUser?.role === "admin" ? request("/api/admin") : Promise.resolve(null),
     ]);
 
-    state.bootstrap = bootstrap;
     state.cases = cases;
     state.lawyers = lawyers;
     state.bids = bids;
@@ -134,10 +155,49 @@ async function refreshApp() {
   }
 }
 
+async function handleCheckoutReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const sessionId = params.get("session_id");
+  const checkoutStatus = params.get("checkout");
+  if (state.checkoutHandled || !checkoutStatus) {
+    return;
+  }
+  state.checkoutHandled = true;
+
+  if (checkoutStatus === "cancel") {
+    showToast("Checkout was cancelled. Your matter draft is still saved.");
+    clearSearchParams();
+    return;
+  }
+
+  if (checkoutStatus === "demo") {
+    showToast("Demo payment completed and matter published.");
+    clearSearchParams();
+    await refreshApp();
+    return;
+  }
+
+  if (checkoutStatus === "success" && sessionId && state.currentUser?.role === "client") {
+    try {
+      const response = await request("/api/payments", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "confirm-checkout",
+          sessionId,
+        }),
+      });
+      showToast(response.message);
+      clearSearchParams();
+      await refreshApp();
+    } catch (error) {
+      showToast(error.message);
+    }
+  }
+}
+
 function initializeSelections() {
   const enabledCountries = getEnabledCountries();
   const detectedCountry = detectCountry();
-
   state.selectedCountryCode = enabledCountries.some((country) => country.code === state.selectedCountryCode)
     ? state.selectedCountryCode
     : detectedCountry || enabledCountries[0]?.code || "AU";
@@ -145,17 +205,14 @@ function initializeSelections() {
   state.selectedCaseId = state.cases.some((matter) => matter.id === state.selectedCaseId)
     ? state.selectedCaseId
     : state.cases[0]?.id || null;
-  state.selectedLawyerId = state.lawyers.some((lawyer) => lawyer.id === state.selectedLawyerId)
-    ? state.selectedLawyerId
-    : state.lawyers[0]?.id || null;
 }
 
 function renderAll() {
   renderHeader();
   renderHero();
+  renderAuth();
   renderCountryRail();
   renderMatterComposer();
-  renderLawyerControls();
   renderLawyerStudio();
   renderClientBoard();
   renderAdmin();
@@ -164,21 +221,23 @@ function renderAll() {
 function renderHeader() {
   const country = getCountry(state.selectedCountryCode);
   elements.globalDisclaimer.textContent = country.disclaimer;
+  elements.authQuick.innerHTML = state.currentUser
+    ? `<span class="pill">${state.currentUser.role}</span><span>${state.currentUser.name}</span>`
+    : `<a class="button ghost" href="#account">Sign in</a>`;
 }
 
 function renderHero() {
   elements.heroEyebrow.textContent = state.bootstrap.hero.eyebrow;
   elements.heroDescription.textContent = state.bootstrap.hero.description;
+  elements.jurisdictionBadge.textContent = getCountry(state.selectedCountryCode).name;
 
   const analytics = state.bootstrap.analytics;
-  const cards = [
-    ["Live countries", `${getEnabledCountries().length}`],
-    ["Open matters", `${analytics.totalMatters}`],
-    ["Bids submitted", `${analytics.totalBids}`],
-    ["Verified lawyers", `${analytics.verifiedLawyers}`],
-  ];
-
-  elements.heroStats.innerHTML = cards
+  elements.heroStats.innerHTML = [
+    ["Live countries", getEnabledCountries().length],
+    ["Matters", analytics.totalMatters],
+    ["Bids", analytics.totalBids],
+    ["Verified lawyers", analytics.verifiedLawyers],
+  ]
     .map(
       ([label, value]) => `
         <article class="metric-card">
@@ -188,8 +247,30 @@ function renderHero() {
       `,
     )
     .join("");
+}
 
-  elements.jurisdictionBadge.textContent = getCountry(state.selectedCountryCode).name;
+function renderAuth() {
+  const user = state.currentUser;
+  elements.stripeStatus.textContent = state.bootstrap.stripeReady ? "Stripe ready" : "Demo checkout";
+
+  if (user) {
+    elements.sessionCard.innerHTML = `
+      <p><strong>${user.name}</strong></p>
+      <p>${user.email}</p>
+      <p>Role: ${user.role}</p>
+      <p>Status: ${user.status}</p>
+      ${user.jurisdictions?.length ? `<p>${user.jurisdictions.join(", ")}</p>` : "<p>No jurisdictions on file yet.</p>"}
+    `;
+  } else {
+    elements.sessionCard.innerHTML = `
+      <p><strong>Public preview</strong></p>
+      <p>Create a client or lawyer account to use the workflow. Admin access is provisioned separately.</p>
+    `;
+  }
+
+  elements.signupForm.style.display = user ? "none" : "";
+  elements.loginForm.style.display = user ? "none" : "";
+  elements.logoutButton.style.display = user ? "" : "none";
 }
 
 function renderCountryRail() {
@@ -209,22 +290,21 @@ function renderMatterComposer() {
   populatePracticeAreas();
 
   const country = getCountry(state.selectedCountryCode);
-  const practiceArea = getPracticeArea(state.selectedPracticeAreaId);
   const template = getTemplate(state.selectedCountryCode, state.selectedPracticeAreaId);
-
   state.selectedCountryCode = country.code;
-  state.selectedPracticeAreaId = practiceArea.id;
   elements.regionLabel.textContent = country.regionLabel;
   populateRegionSelect(elements.regionSelect, country, elements.regionSelect.value);
-  elements.publishFee.textContent = `Publish for ${formatMoney(country.clientFee, country.currencyCode)}`;
-
+  elements.publishFee.textContent = `${formatMoney(country.clientFee, country.currencyCode)} fee`;
   elements.templateSummary.innerHTML = `
     <p><strong>${template.label}</strong></p>
     <p>${template.terminology}</p>
     <p>${template.disclaimer}</p>
     <ul>${template.prompts.map((prompt) => `<li>${prompt}</li>`).join("")}</ul>
   `;
-
+  elements.paymentFlowSummary.innerHTML = `
+    <p class="eyebrow">Publishing flow</p>
+    <p>Create a draft matter first, then complete checkout to make it visible to eligible lawyers.</p>
+  `;
   elements.promptFields.innerHTML = template.prompts
     .map(
       (prompt) => `
@@ -235,48 +315,89 @@ function renderMatterComposer() {
       `,
     )
     .join("");
+  elements.requiredUploads.innerHTML = template.uploads.map((entry) => `<li>${entry}</li>`).join("");
 
-  elements.requiredUploads.innerHTML = template.uploads.map((item) => `<li>${item}</li>`).join("");
-  renderHeader();
-}
+  const isClient = state.currentUser?.role === "client";
+  elements.matterAccessNote.innerHTML = isClient
+    ? `<p>Signed in as client. Checkout will publish the matter once payment is confirmed.</p>`
+    : `<p>Sign in as a client to create and publish a matter.</p>`;
+  setFormEnabled(elements.matterForm, isClient);
+  elements.matterSubmitButton.disabled = !isClient;
 
-function renderLawyerControls() {
-  populateCountrySelect(elements.lawyerCountrySelect, elements.lawyerCountrySelect.value || state.selectedCountryCode);
-  renderLawyerRegionOptions();
-  renderSelectedJurisdictions();
-  elements.lawyerSelect.innerHTML = state.lawyers
-    .map((lawyer) => `<option value="${lawyer.id}" ${lawyer.id === state.selectedLawyerId ? "selected" : ""}>${lawyer.name}</option>`)
-    .join("");
-
-  elements.lawyerRoster.innerHTML = state.lawyers
-    .map((lawyer) => `
-      <article class="roster-item">
-        <strong>${lawyer.name}</strong>
-        <span>${lawyer.firm || "Independent practice"}</span>
-        <span>${lawyer.email}</span>
-        <span>Status: ${lawyer.status}</span>
-        <span>${lawyer.jurisdictions.join(", ")}</span>
-      </article>
-    `)
-    .join("");
+  if (state.currentUser) {
+    elements.clientName.value = state.currentUser.name;
+    elements.clientEmail.value = state.currentUser.email;
+    elements.clientName.readOnly = true;
+    elements.clientEmail.readOnly = true;
+  } else {
+    elements.clientName.readOnly = false;
+    elements.clientEmail.readOnly = false;
+  }
 }
 
 function renderLawyerStudio() {
-  const lawyer = state.lawyers.find((entry) => entry.id === state.selectedLawyerId) || state.lawyers[0];
-  if (!lawyer) {
-    return;
+  populateCountrySelect(elements.lawyerCountrySelect, elements.lawyerCountrySelect.value || state.selectedCountryCode);
+  renderLawyerRegionOptions();
+  renderSelectedJurisdictions();
+
+  const isLawyer = state.currentUser?.role === "lawyer";
+  elements.lawyerAccessNote.innerHTML = isLawyer
+    ? `<p>Update your jurisdictions and certificate references. Bidding unlocks after verification.</p>`
+    : `<p>Sign in as a lawyer to manage your practice profile and submit bids.</p>`;
+  elements.bidAccessNote.innerHTML = isLawyer
+    ? state.currentUser.status === "verified"
+      ? `<p>Your account is verified. You can bid on matching paid matters.</p>`
+      : `<p>Your account is pending verification. You can complete your profile, but bidding stays locked until approval.</p>`
+    : `<p>Lawyer login required to submit bids.</p>`;
+
+  setFormEnabled(elements.lawyerForm, isLawyer);
+  setFormEnabled(elements.bidForm, isLawyer && state.currentUser?.status === "verified");
+  elements.lawyerSubmitButton.disabled = !isLawyer;
+  elements.bidSubmitButton.disabled = !(isLawyer && state.currentUser?.status === "verified");
+
+  if (isLawyer) {
+    elements.lawyerName.value = state.currentUser.name || "";
+    elements.lawyerEmail.value = state.currentUser.email || "";
+    elements.lawyerFirm.value = state.currentUser.firm || "";
+    elements.lawyerEmail.readOnly = true;
+    if (!state.pendingJurisdictions.length && state.currentUser.jurisdictions?.length) {
+      state.pendingJurisdictions = [...state.currentUser.jurisdictions];
+      renderSelectedJurisdictions();
+    }
+  } else {
+    elements.lawyerEmail.readOnly = false;
   }
 
-  state.selectedLawyerId = lawyer.id;
-  const visibleCases = state.cases.filter((matter) => lawyer.jurisdictions.includes(`${matter.countryCode}:${matter.region}`));
-  const currentCase = visibleCases.find((matter) => matter.id === elements.bidCaseSelect.value) || visibleCases[0];
+  const lawyerOptions = isLawyer
+    ? [state.currentUser]
+    : state.lawyers.filter((entry) => entry.status === "verified");
+  elements.lawyerSelect.innerHTML = lawyerOptions.length
+    ? lawyerOptions.map((lawyer) => `<option value="${lawyer.id}">${lawyer.name}</option>`).join("")
+    : `<option value="">No lawyer account available</option>`;
 
+  elements.lawyerRoster.innerHTML = state.lawyers.length
+    ? state.lawyers
+        .map((lawyer) => `
+          <article class="roster-item">
+            <strong>${lawyer.name}</strong>
+            <span>${lawyer.firm || "Independent practice"}</span>
+            <span>Status: ${lawyer.status}</span>
+            <span>${(lawyer.jurisdictions || []).join(", ")}</span>
+          </article>
+        `)
+        .join("")
+    : "<p>No lawyer profiles yet.</p>";
+
+  const visibleCases = state.cases;
+  const selectedCase = visibleCases.find((matter) => matter.id === elements.bidCaseSelect.value) || visibleCases[0];
   elements.bidCaseSelect.innerHTML = visibleCases.length
-    ? visibleCases.map((matter) => `
-        <option value="${matter.id}" ${currentCase?.id === matter.id ? "selected" : ""}>
-          ${getCountry(matter.countryCode).name} · ${getPracticeArea(matter.practiceAreaId).label}
-        </option>
-      `).join("")
+    ? visibleCases
+        .map((matter) => `
+          <option value="${matter.id}" ${selectedCase?.id === matter.id ? "selected" : ""}>
+            ${getCountry(matter.countryCode).name} · ${getPracticeArea(matter.practiceAreaId).label}
+          </option>
+        `)
+        .join("")
     : `<option value="">No visible matters</option>`;
 
   renderBidDefaults();
@@ -286,67 +407,71 @@ function renderLawyerStudio() {
 function renderBidDefaults() {
   const matter = state.cases.find((entry) => entry.id === elements.bidCaseSelect.value);
   if (!matter) {
-    elements.feeType.placeholder = "Select a visible matter";
+    elements.feeType.placeholder = "Select an eligible matter";
+    elements.compliancePreview.innerHTML = "<li>Select an eligible matter to preview conduct checks.</li>";
     return;
   }
-
   const country = getCountry(matter.countryCode);
-  const practiceTemplate = getTemplate(matter.countryCode, matter.practiceAreaId);
-  elements.feeType.placeholder = country.code === "US"
-    ? "Contingency fee / hourly blend"
-    : country.code === "AU"
-      ? "Fixed fee + disbursements + GST"
-      : "Fixed or staged fee";
-  elements.disbursements.placeholder = practiceTemplate.terminology;
+  const template = getTemplate(matter.countryCode, matter.practiceAreaId);
+  elements.feeType.placeholder = country.code === "US" ? "Contingency / hourly blend" : "Fixed or staged fee";
+  elements.disbursements.placeholder = template.terminology;
 }
 
 function renderCompliancePreview() {
   const matter = state.cases.find((entry) => entry.id === elements.bidCaseSelect.value);
-  if (!matter) {
-    elements.compliancePreview.innerHTML = "<li>Select a visible matter to preview conduct checks.</li>";
-    elements.bidWordCount.textContent = "0 words";
-    return;
-  }
-
-  const country = getCountry(matter.countryCode);
   const content = [
     elements.strategyPosition.value,
     elements.strategyNextSteps.value,
     elements.strategyRisks.value,
     elements.strategyTimeline.value,
   ].join(" ");
-
   const words = content.trim() ? content.trim().split(/\s+/).length : 0;
   elements.bidWordCount.textContent = `${words} words`;
-
+  if (!matter) {
+    elements.compliancePreview.innerHTML = "<li>Select a visible matter to preview conduct checks.</li>";
+    return;
+  }
+  const country = getCountry(matter.countryCode);
   const flags = country.bannedPhrases.filter((phrase) => content.toLowerCase().includes(phrase));
   const items = [
-    `<li>Minimum strategy length: 200 words.</li>`,
-    `<li>Four sections required: position, next steps, risks, timeline.</li>`,
-    ...flags.map((flag) => `<li>${flag} is not permitted in ${country.name} copy.</li>`),
+    "<li>Minimum strategy length: 200 words.</li>",
+    "<li>Four sections required: position, next steps, risks, timeline.</li>",
   ];
-  if (!flags.length) {
+  if (flags.length) {
+    flags.forEach((flag) => items.push(`<li>${flag} is not permitted in ${country.name} copy.</li>`));
+  } else {
     items.push(`<li>No prohibited wording currently detected for ${country.name}.</li>`);
   }
   elements.compliancePreview.innerHTML = items.join("");
 }
 
 function renderClientBoard() {
-  elements.caseSelect.innerHTML = state.cases
-    .map((matter) => `
-      <option value="${matter.id}" ${matter.id === state.selectedCaseId ? "selected" : ""}>
-        ${getCountry(matter.countryCode).name} · ${getPracticeArea(matter.practiceAreaId).label}
-      </option>
-    `)
-    .join("");
+  const isClient = state.currentUser?.role === "client";
+  elements.clientBoardAccess.innerHTML = isClient
+    ? "<p>These are your own matters. Payment-pending drafts are visible only to you.</p>"
+    : "<p>Sign in as a client to view your decision board.</p>";
 
-  const matter = state.cases.find((entry) => entry.id === state.selectedCaseId) || state.cases[0];
-  if (!matter) {
-    elements.caseDetails.innerHTML = "<p>No matters published yet.</p>";
+  elements.caseSelect.innerHTML = state.cases.length
+    ? state.cases
+        .map((matter) => `
+          <option value="${matter.id}" ${matter.id === state.selectedCaseId ? "selected" : ""}>
+            ${getCountry(matter.countryCode).name} · ${getPracticeArea(matter.practiceAreaId).label}
+          </option>
+        `)
+        .join("")
+    : `<option value="">No matters available</option>`;
+
+  if (!isClient || !state.cases.length) {
+    elements.caseDetails.innerHTML = "";
     elements.bidList.innerHTML = "";
+    elements.engagementLetter.innerHTML = "";
     return;
   }
 
+  const matter = state.cases.find((entry) => entry.id === state.selectedCaseId) || state.cases[0];
+  if (!matter) {
+    return;
+  }
   state.selectedCaseId = matter.id;
   const template = getTemplate(matter.countryCode, matter.practiceAreaId);
   const matterBids = state.bids.filter((bid) => bid.caseId === matter.id);
@@ -359,6 +484,7 @@ function renderClientBoard() {
       <span class="pill neutral">${matter.region}</span>
       <span class="pill neutral">${matter.quoteMode}</span>
       <span class="pill neutral">${matter.status}</span>
+      <span class="pill neutral">${matter.paymentStatus}</span>
     </div>
     <div class="checklist-card">
       <p class="eyebrow">Dynamic prompts</p>
@@ -370,28 +496,22 @@ function renderClientBoard() {
   `;
 
   elements.bidList.innerHTML = matterBids.length
-    ? matterBids.map((bid) => renderBidCard(bid)).join("")
+    ? matterBids.map((bid) => renderBidCard(bid, matter)).join("")
     : "<p>No bids yet for this matter.</p>";
 
-  if (state.engagementLetter) {
-    elements.engagementLetter.innerHTML = `
-      <h4>${state.engagementLetter.heading}</h4>
-      <p>${state.engagementLetter.body}</p>
-    `;
-  } else {
-    elements.engagementLetter.innerHTML = "";
-  }
+  elements.engagementLetter.innerHTML = state.engagementLetter
+    ? `<h4>${state.engagementLetter.heading}</h4><p>${state.engagementLetter.body}</p>`
+    : "";
 }
 
-function renderBidCard(bid) {
-  const lawyer = state.lawyers.find((entry) => entry.id === bid.lawyerId);
-  const shortlisted = state.bootstrap.store.decisions.shortlistedBidIds.includes(bid.id);
-  const accepted = state.bootstrap.store.decisions.acceptedBidId === bid.id;
-
+function renderBidCard(bid, matter) {
+  const shortlisted = (matter.shortlistedBidIds || []).includes(bid.id);
+  const accepted = matter.acceptedBidId === bid.id;
+  const lawyer = (state.lawyers || []).find((entry) => entry.id === bid.lawyerId);
   return `
     <article class="bid-card">
       <div>
-        <strong>${lawyer?.name || "Unknown lawyer"}</strong>
+        <strong>${lawyer?.name || "Lawyer"}</strong>
         <div class="case-meta">
           <span class="pill neutral">${bid.feeType}</span>
           <span class="pill neutral">${bid.totalFee || "Price on request"}</span>
@@ -399,11 +519,11 @@ function renderBidCard(bid) {
           ${accepted ? '<span class="pill">Accepted</span>' : ""}
         </div>
       </div>
-      <p>${bid.sections.position}</p>
+      <p>${bid.sections.position || ""}</p>
       <ul>
-        <li><strong>Next steps:</strong> ${bid.sections.nextSteps}</li>
-        <li><strong>Risks:</strong> ${bid.sections.risks}</li>
-        <li><strong>Timeline:</strong> ${bid.sections.timeline}</li>
+        <li><strong>Next steps:</strong> ${bid.sections.nextSteps || ""}</li>
+        <li><strong>Risks:</strong> ${bid.sections.risks || ""}</li>
+        <li><strong>Timeline:</strong> ${bid.sections.timeline || ""}</li>
       </ul>
       ${
         bid.compliance?.flags?.length
@@ -419,9 +539,18 @@ function renderBidCard(bid) {
 }
 
 function renderAdmin() {
+  if (state.currentUser?.role !== "admin") {
+    elements.adminAccess.innerHTML = "<p>Admin access is restricted to administrator accounts.</p>";
+    elements.adminCountrySettings.innerHTML = "";
+    elements.adminMetrics.innerHTML = "";
+    elements.practiceAreaAnalytics.innerHTML = "";
+    elements.verificationQueue.innerHTML = "";
+    return;
+  }
+
+  elements.adminAccess.innerHTML = "<p>Admin session active.</p>";
   const countries = state.bootstrap.countries;
   const analytics = state.admin.analytics;
-
   elements.adminCountrySettings.innerHTML = countries
     .map((country) => `
       <article class="setting-card">
@@ -440,16 +569,18 @@ function renderAdmin() {
     ["Total bids", analytics.totalBids],
     ["Verified lawyers", analytics.verifiedLawyers],
   ]
-    .map(([label, value]) => `
-      <article class="metric-card">
-        <p class="eyebrow">${label}</p>
-        <p class="big-stat">${value}</p>
-      </article>
-    `)
+    .map(
+      ([label, value]) => `
+        <article class="metric-card">
+          <p class="eyebrow">${label}</p>
+          <p class="big-stat">${value}</p>
+        </article>
+      `,
+    )
     .join("");
 
   elements.practiceAreaAnalytics.innerHTML = analytics.byPracticeArea
-    .map((area) => `<p>${area.label}: <strong>${area.matters}</strong> matters</p>`)
+    .map((entry) => `<p>${entry.label}: <strong>${entry.matters}</strong> matters</p>`)
     .join("");
 
   elements.verificationQueue.innerHTML = analytics.verificationQueue.length
@@ -458,12 +589,234 @@ function renderAdmin() {
           <article class="queue-item">
             <strong>${lawyer.name}</strong>
             <p>${lawyer.email}</p>
-            <p>${lawyer.jurisdictions.join(", ")}</p>
+            <p>${(lawyer.jurisdictions || []).join(", ")}</p>
             <button class="button primary" data-lawyer-id="${lawyer.id}">Approve lawyer</button>
           </article>
         `)
         .join("")
     : "<p>Verification queue is clear.</p>";
+}
+
+async function submitSignup(event) {
+  event.preventDefault();
+  const formData = new FormData(elements.signupForm);
+  try {
+    const response = await request("/api/auth", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "signup",
+        name: formData.get("name"),
+        email: formData.get("email"),
+        password: formData.get("password"),
+        role: formData.get("role"),
+      }),
+    });
+    showToast(response.message);
+    elements.signupForm.reset();
+    await refreshApp();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function submitLogin(event) {
+  event.preventDefault();
+  const formData = new FormData(elements.loginForm);
+  try {
+    const response = await request("/api/auth", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "login",
+        email: formData.get("email"),
+        password: formData.get("password"),
+      }),
+    });
+    showToast(response.message);
+    elements.loginForm.reset();
+    await refreshApp();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function submitLogout() {
+  try {
+    const response = await request("/api/auth", {
+      method: "POST",
+      body: JSON.stringify({ action: "logout" }),
+    });
+    state.pendingJurisdictions = [];
+    state.engagementLetter = null;
+    showToast(response.message);
+    await refreshApp();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function submitMatter(event) {
+  event.preventDefault();
+  if (state.currentUser?.role !== "client") {
+    showToast("Client login required to publish a matter.");
+    return;
+  }
+
+  const template = getTemplate(elements.countrySelect.value, elements.practiceAreaSelect.value);
+  const formData = new FormData(elements.matterForm);
+  const customAnswers = {};
+  template.prompts.forEach((prompt) => {
+    customAnswers[prompt] = formData.get(`prompt:${prompt}`) || "";
+  });
+
+  try {
+    const draft = await request("/api/cases", {
+      method: "POST",
+      body: JSON.stringify({
+        countryCode: formData.get("countryCode"),
+        region: formData.get("region"),
+        practiceAreaId: formData.get("practiceAreaId"),
+        quoteMode: formData.get("quoteMode"),
+        summary: formData.get("summary"),
+        budget: formData.get("budget"),
+        documents: splitList(formData.get("documents")),
+        customAnswers,
+      }),
+    });
+    const checkout = await request("/api/payments", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "create-checkout",
+        caseId: draft.case.id,
+      }),
+    });
+    showToast(checkout.message);
+    if (checkout.redirectUrl) {
+      window.location.assign(checkout.redirectUrl);
+      return;
+    }
+    await refreshApp();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function submitLawyerProfile(event) {
+  event.preventDefault();
+  if (state.currentUser?.role !== "lawyer") {
+    showToast("Lawyer login required.");
+    return;
+  }
+
+  const formData = new FormData(elements.lawyerForm);
+  try {
+    const response = await request("/api/lawyers", {
+      method: "POST",
+      body: JSON.stringify({
+        name: formData.get("name"),
+        firm: formData.get("firm"),
+        jurisdictions: state.pendingJurisdictions,
+        certificateRefs: splitList(formData.get("certificateRefs")),
+      }),
+    });
+    showToast(response.message);
+    await refreshApp();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function submitBid(event) {
+  event.preventDefault();
+  if (state.currentUser?.role !== "lawyer") {
+    showToast("Lawyer login required.");
+    return;
+  }
+  try {
+    const response = await request("/api/bids", {
+      method: "POST",
+      body: JSON.stringify({
+        caseId: elements.bidCaseSelect.value,
+        feeType: elements.feeType.value,
+        totalFee: elements.totalFee.value,
+        disbursements: elements.disbursements.value,
+        privateBid: document.getElementById("privateBid").checked,
+        sections: {
+          position: elements.strategyPosition.value,
+          nextSteps: elements.strategyNextSteps.value,
+          risks: elements.strategyRisks.value,
+          timeline: elements.strategyTimeline.value,
+        },
+      }),
+    });
+    showToast(response.message);
+    elements.bidForm.reset();
+    await refreshApp();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function handleBidAction(event) {
+  const button = event.target.closest("button[data-action]");
+  if (!button || state.currentUser?.role !== "client") {
+    return;
+  }
+  try {
+    const response = await request("/api/decisions", {
+      method: "POST",
+      body: JSON.stringify({
+        action: button.dataset.action,
+        caseId: state.selectedCaseId,
+        bidId: button.dataset.bidId,
+      }),
+    });
+    showToast(response.message);
+    state.engagementLetter = response.engagementLetter || null;
+    await refreshApp();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function handleAdminCountryToggle(event) {
+  const button = event.target.closest("button[data-country]");
+  if (!button || state.currentUser?.role !== "admin") {
+    return;
+  }
+  try {
+    const response = await request("/api/admin", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "toggle-country",
+        code: button.dataset.country,
+        enabled: button.dataset.enabled !== "true",
+      }),
+    });
+    showToast(response.message);
+    await refreshApp();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function handleAdminApproval(event) {
+  const button = event.target.closest("button[data-lawyer-id]");
+  if (!button || state.currentUser?.role !== "admin") {
+    return;
+  }
+  try {
+    const response = await request("/api/admin", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "approve-lawyer",
+        lawyerId: button.dataset.lawyerId,
+      }),
+    });
+    showToast(response.message);
+    await refreshApp();
+  } catch (error) {
+    showToast(error.message);
+  }
 }
 
 function populateCountrySelect(select, selectedValue) {
@@ -489,9 +842,9 @@ function renderLawyerRegionOptions() {
 }
 
 function addJurisdiction() {
-  const jurisdiction = `${elements.lawyerCountrySelect.value}:${elements.lawyerRegionSelect.value}`;
-  if (!state.pendingJurisdictions.includes(jurisdiction)) {
-    state.pendingJurisdictions.push(jurisdiction);
+  const entry = `${elements.lawyerCountrySelect.value}:${elements.lawyerRegionSelect.value}`;
+  if (!state.pendingJurisdictions.includes(entry)) {
+    state.pendingJurisdictions.push(entry);
   }
   renderSelectedJurisdictions();
 }
@@ -499,12 +852,14 @@ function addJurisdiction() {
 function renderSelectedJurisdictions() {
   elements.selectedJurisdictions.innerHTML = state.pendingJurisdictions.length
     ? state.pendingJurisdictions
-        .map((entry) => `
-          <span class="selected-chip">
-            ${entry}
-            <button type="button" data-jurisdiction="${entry}">×</button>
-          </span>
-        `)
+        .map(
+          (entry) => `
+            <span class="selected-chip">
+              ${entry}
+              <button type="button" data-jurisdiction="${entry}">×</button>
+            </span>
+          `,
+        )
         .join("")
     : "<span class='eyebrow'>No jurisdictions added yet.</span>";
 
@@ -514,167 +869,6 @@ function renderSelectedJurisdictions() {
       renderSelectedJurisdictions();
     });
   });
-}
-
-async function submitMatter(event) {
-  event.preventDefault();
-  const template = getTemplate(elements.countrySelect.value, elements.practiceAreaSelect.value);
-  const formData = new FormData(elements.matterForm);
-  const customAnswers = {};
-
-  template.prompts.forEach((prompt) => {
-    customAnswers[prompt] = formData.get(`prompt:${prompt}`) || "";
-  });
-
-  const payload = {
-    clientName: formData.get("clientName"),
-    email: formData.get("email"),
-    countryCode: formData.get("countryCode"),
-    region: formData.get("region"),
-    practiceAreaId: formData.get("practiceAreaId"),
-    quoteMode: formData.get("quoteMode"),
-    summary: formData.get("summary"),
-    budget: formData.get("budget"),
-    documents: splitList(formData.get("documents")),
-    customAnswers,
-  };
-
-  try {
-    const response = await request("/api/cases", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    showToast(response.message);
-    elements.matterForm.reset();
-    state.selectedCaseId = response.case.id;
-    renderMatterComposer();
-    await refreshApp();
-  } catch (error) {
-    showToast(error.message);
-  }
-}
-
-async function submitLawyer(event) {
-  event.preventDefault();
-  const formData = new FormData(elements.lawyerForm);
-  const payload = {
-    name: formData.get("name"),
-    email: formData.get("email"),
-    firm: formData.get("firm"),
-    jurisdictions: state.pendingJurisdictions,
-    certificateRefs: splitList(formData.get("certificateRefs")),
-  };
-
-  try {
-    const response = await request("/api/lawyers", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    showToast(response.message);
-    elements.lawyerForm.reset();
-    state.pendingJurisdictions = [];
-    state.selectedLawyerId = response.lawyer.id;
-    renderSelectedJurisdictions();
-    await refreshApp();
-  } catch (error) {
-    showToast(error.message);
-  }
-}
-
-async function submitBid(event) {
-  event.preventDefault();
-  const payload = {
-    lawyerId: elements.lawyerSelect.value,
-    caseId: elements.bidCaseSelect.value,
-    feeType: elements.feeType.value,
-    totalFee: elements.totalFee.value,
-    disbursements: elements.disbursements.value,
-    privateBid: document.getElementById("privateBid").checked,
-    sections: {
-      position: elements.strategyPosition.value,
-      nextSteps: elements.strategyNextSteps.value,
-      risks: elements.strategyRisks.value,
-      timeline: elements.strategyTimeline.value,
-    },
-  };
-
-  try {
-    const response = await request("/api/bids", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    showToast(response.message);
-    elements.bidForm.reset();
-    await refreshApp();
-  } catch (error) {
-    showToast(error.message);
-  }
-}
-
-async function handleBidAction(event) {
-  const button = event.target.closest("button[data-action]");
-  if (!button) {
-    return;
-  }
-
-  try {
-    const response = await request("/api/decisions", {
-      method: "POST",
-      body: JSON.stringify({
-        action: button.dataset.action,
-        caseId: state.selectedCaseId,
-        bidId: button.dataset.bidId,
-      }),
-    });
-    showToast(response.message);
-    state.engagementLetter = response.engagementLetter || null;
-    await refreshApp();
-  } catch (error) {
-    showToast(error.message);
-  }
-}
-
-async function handleAdminCountryToggle(event) {
-  const button = event.target.closest("button[data-country]");
-  if (!button) {
-    return;
-  }
-
-  try {
-    const response = await request("/api/admin", {
-      method: "POST",
-      body: JSON.stringify({
-        action: "toggle-country",
-        code: button.dataset.country,
-        enabled: button.dataset.enabled !== "true",
-      }),
-    });
-    showToast(response.message);
-    await refreshApp();
-  } catch (error) {
-    showToast(error.message);
-  }
-}
-
-async function handleAdminApproval(event) {
-  const button = event.target.closest("button[data-lawyer-id]");
-  if (!button) {
-    return;
-  }
-
-  try {
-    const response = await request("/api/admin", {
-      method: "POST",
-      body: JSON.stringify({
-        action: "approve-lawyer",
-        lawyerId: button.dataset.lawyerId,
-      }),
-    });
-    showToast(response.message);
-    await refreshApp();
-  } catch (error) {
-    showToast(error.message);
-  }
 }
 
 function getEnabledCountries() {
@@ -693,6 +887,26 @@ function getTemplate(countryCode, practiceAreaId) {
   return state.bootstrap.templateCatalog[countryCode].find((template) => template.areaId === practiceAreaId);
 }
 
+function setFormEnabled(form, enabled) {
+  Array.from(form.elements).forEach((element) => {
+    if (element.id === "privateBid" || element.tagName === "BUTTON" || element.name?.startsWith("prompt:")) {
+      return;
+    }
+    if (element.id === "clientName" || element.id === "clientEmail" || element.id === "lawyerEmail") {
+      return;
+    }
+    element.disabled = !enabled;
+  });
+  form.classList.toggle("is-disabled", !enabled);
+}
+
+function splitList(value) {
+  return String(value || "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
 function formatMoney(value, currencyCode) {
   return new Intl.NumberFormat("en", {
     style: "currency",
@@ -706,7 +920,6 @@ function detectCountry() {
   if (!timezone) {
     return null;
   }
-
   if (timezone.startsWith("Australia/")) {
     return "AU";
   }
@@ -725,11 +938,19 @@ function detectCountry() {
   return null;
 }
 
-function splitList(value) {
-  return String(value || "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
+function clearSearchParams() {
+  window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+}
+
+async function safeRequest(url, fallbackValue) {
+  try {
+    return await request(url);
+  } catch (error) {
+    if (/access|sign in|required/i.test(error.message)) {
+      return fallbackValue;
+    }
+    throw error;
+  }
 }
 
 async function request(url, options = {}) {
@@ -740,7 +961,6 @@ async function request(url, options = {}) {
     },
     ...options,
   });
-
   const payload = await response.json();
   if (!response.ok) {
     throw new Error(payload.error || "Request failed");
@@ -754,7 +974,7 @@ function showToast(message) {
   window.clearTimeout(showToast.timeoutId);
   showToast.timeoutId = window.setTimeout(() => {
     elements.statusToast.classList.remove("is-visible");
-  }, 2400);
+  }, 2600);
 }
 
 function observeReveals() {

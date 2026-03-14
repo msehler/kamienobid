@@ -22,11 +22,12 @@
         </a>
         <nav class="main-nav">
           <a href="#platform">Platform</a>
-          <a href="#post-matter">Post Matter</a>
-          <a href="#lawyer-studio">Lawyer Studio</a>
+          <a href="#account">Account</a>
+          <a href="#post-matter">Client</a>
+          <a href="#lawyer-studio">Lawyer</a>
           <a href="#admin">Admin</a>
         </nav>
-        <a class="button ghost" href="#post-matter">Launch MVP</a>
+        <div class="auth-quick" id="authQuick"></div>
       </div>
       <div class="disclaimer-strip">
         <span class="eyebrow">Live disclaimer</span>
@@ -46,38 +47,111 @@
             </h1>
             <p class="hero-description" id="heroDescription"></p>
             <div class="hero-actions">
-              <a class="button primary" href="#post-matter">Publish a matter</a>
-              <a class="button secondary" href="#lawyer-studio">See lawyer flow</a>
+              <a class="button primary" href="#account">Create an account</a>
+              <a class="button secondary" href="#post-matter">See the client flow</a>
             </div>
           </div>
           <div class="hero-aside">
             <div class="metric-stack" id="heroStats"></div>
             <div class="glass-card">
-              <p class="eyebrow">Auto-detected base</p>
+              <p class="eyebrow">Detected base</p>
               <p class="big-stat" id="jurisdictionBadge"></p>
-              <p class="small-copy">Users can override location manually before publishing.</p>
+              <p class="small-copy">Currency, disclaimers, and intake prompts adapt by jurisdiction.</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="workspace alt reveal" id="account">
+        <div class="workspace-header">
+          <p class="eyebrow">Identity</p>
+          <h2>Use client, lawyer, and admin paths with session-backed access control.</h2>
+        </div>
+        <div class="workspace-grid">
+          <div class="stack-column">
+            <form class="panel" id="signupForm">
+              <div class="panel-header">
+                <h3>Create account</h3>
+                <span class="pill">Session auth</span>
+              </div>
+              <div class="form-grid">
+                <label>
+                  Full name
+                  <input id="signupName" name="name" type="text" placeholder="Taylor Shaw" required />
+                </label>
+                <label>
+                  Email
+                  <input id="signupEmail" name="email" type="email" placeholder="taylor@example.com" required />
+                </label>
+                <label>
+                  Password
+                  <input id="signupPassword" name="password" type="password" placeholder="Minimum 10 characters" required />
+                </label>
+                <label>
+                  Role
+                  <select id="signupRole" name="role">
+                    <option value="client">Client</option>
+                    <option value="lawyer">Lawyer</option>
+                  </select>
+                </label>
+              </div>
+              <button class="button primary" type="submit">Create account</button>
+            </form>
+
+            <form class="panel" id="loginForm">
+              <div class="panel-header">
+                <h3>Sign in</h3>
+                <span class="pill neutral">Returning user</span>
+              </div>
+              <div class="form-grid">
+                <label>
+                  Email
+                  <input id="loginEmail" name="email" type="email" placeholder="you@example.com" required />
+                </label>
+                <label>
+                  Password
+                  <input id="loginPassword" name="password" type="password" placeholder="Your password" required />
+                </label>
+              </div>
+              <button class="button secondary" type="submit">Sign in</button>
+            </form>
+          </div>
+
+          <aside class="panel insight-panel">
+            <div class="panel-header">
+              <h3>Current session</h3>
+              <span class="pill neutral" id="stripeStatus"></span>
+            </div>
+            <div id="sessionCard" class="template-summary"></div>
+            <div class="launch-panel">
+              <p class="eyebrow">Deployment note</p>
+              <p>
+                Matter publishing now follows a two-step flow: create draft, then complete checkout. If Stripe keys
+                are not configured, the app falls back to a safe demo payment path.
+              </p>
+            </div>
+            <button class="button ghost" id="logoutButton" type="button">Sign out</button>
+          </aside>
         </div>
       </section>
 
       <section class="platform-section reveal" id="platform">
         <div class="section-heading">
           <p class="eyebrow">Product surface</p>
-          <h2>Built as a real, full-stack MVP around the March 2026 PRD.</h2>
+          <h2>Now upgraded toward production with SQLite persistence, sessions, and Stripe-ready publishing.</h2>
         </div>
         <div class="platform-grid">
           <article class="feature-card light">
-            <h3>Jurisdiction-aware matter intake</h3>
-            <p>Country, region, terminology, pricing, disclaimers, and checklists all switch dynamically.</p>
+            <h3>Durable local data layer</h3>
+            <p>SQLite now stores users, sessions, matters, bids, shortlists, and launch settings.</p>
           </article>
           <article class="feature-card coral">
-            <h3>Structured lawyer bidding</h3>
-            <p>Licensed lawyers only, 4-part strategy requirement, 200-word minimum, and conduct-rule screening.</p>
+            <h3>Role-based access</h3>
+            <p>Clients publish and decide, lawyers bid only after verification, and admins manage rollout.</p>
           </article>
           <article class="feature-card dark">
-            <h3>Client decision board</h3>
-            <p>Shortlist bids, accept the best fit, and generate a jurisdiction-aware engagement letter draft.</p>
+            <h3>Payment-gated publishing</h3>
+            <p>Cases are created as drafts first, then published only once the client fee is confirmed.</p>
           </article>
         </div>
         <div class="country-rail" id="countryInsights"></div>
@@ -86,22 +160,23 @@
       <section class="workspace reveal" id="post-matter">
         <div class="workspace-header">
           <p class="eyebrow">Client side</p>
-          <h2>Post a matter in one flow, then publish for the local fixed fee.</h2>
+          <h2>Create a matter draft, then publish it through the local fee flow.</h2>
         </div>
         <div class="workspace-grid">
           <form class="panel matter-form" id="matterForm">
             <div class="panel-header">
-              <h3>Publish a legal matter</h3>
+              <h3>Client publishing flow</h3>
               <span class="pill" id="publishFee"></span>
             </div>
+            <div class="access-note" id="matterAccessNote"></div>
             <div class="form-grid">
               <label>
                 Client name
-                <input id="clientName" name="clientName" type="text" placeholder="Olivia Brooks" required />
+                <input id="clientName" name="clientName" type="text" placeholder="Taylor Shaw" required />
               </label>
               <label>
-                Email
-                <input id="clientEmail" name="email" type="email" placeholder="olivia@example.com" required />
+                Account email
+                <input id="clientEmail" name="email" type="email" placeholder="taylor@example.com" required />
               </label>
               <label>
                 Country
@@ -129,7 +204,7 @@
                 id="matterSummary"
                 name="summary"
                 rows="5"
-                placeholder="Describe the dispute, timing, and what you want resolved."
+                placeholder="Describe the dispute, timing, and the outcome you want."
                 required
               ></textarea>
             </label>
@@ -146,7 +221,7 @@
               <p class="eyebrow">Required uploads</p>
               <ul id="requiredUploads"></ul>
             </div>
-            <button class="button primary" type="submit">Publish matter</button>
+            <button class="button primary" id="matterSubmitButton" type="submit">Pay and publish matter</button>
           </form>
 
           <aside class="panel insight-panel">
@@ -155,12 +230,7 @@
               <span class="pill neutral">Live template</span>
             </div>
             <div id="templateSummary" class="template-summary"></div>
-            <div class="launch-panel">
-              <p class="eyebrow">Launch priority</p>
-              <p>
-                Australia, New Zealand, and the United Kingdom are highlighted as the recommended MVP launch set.
-              </p>
-            </div>
+            <div class="launch-panel" id="paymentFlowSummary"></div>
           </aside>
         </div>
       </section>
@@ -168,15 +238,16 @@
       <section class="workspace alt reveal" id="lawyer-studio">
         <div class="workspace-header">
           <p class="eyebrow">Lawyer side</p>
-          <h2>Register by jurisdiction, then bid with structured strategy and pricing.</h2>
+          <h2>Complete your jurisdiction profile, then bid only where you are licensed and verified.</h2>
         </div>
         <div class="workspace-grid">
           <div class="stack-column">
             <form class="panel" id="lawyerForm">
               <div class="panel-header">
-                <h3>Lawyer onboarding</h3>
+                <h3>Lawyer profile</h3>
                 <span class="pill">Verification queue</span>
               </div>
+              <div class="access-note" id="lawyerAccessNote"></div>
               <div class="form-grid">
                 <label>
                   Full name
@@ -205,13 +276,13 @@
               </div>
               <button class="button secondary" id="addJurisdictionButton" type="button">Add jurisdiction</button>
               <div class="selected-chips" id="selectedJurisdictions"></div>
-              <button class="button primary" type="submit">Submit lawyer profile</button>
+              <button class="button primary" id="lawyerSubmitButton" type="submit">Save lawyer profile</button>
             </form>
 
             <div class="panel">
               <div class="panel-header">
                 <h3>Lawyer roster</h3>
-                <span class="pill neutral">Seeded + live</span>
+                <span class="pill neutral">Marketplace</span>
               </div>
               <div id="lawyerRoster" class="roster-list"></div>
             </div>
@@ -222,13 +293,14 @@
               <h3>Bid composer</h3>
               <span class="pill" id="bidWordCount">0 words</span>
             </div>
+            <div class="access-note" id="bidAccessNote"></div>
             <div class="form-grid">
               <label>
-                Lawyer
+                Lawyer account
                 <select id="lawyerSelect" name="lawyerId"></select>
               </label>
               <label>
-                Visible case
+                Visible matter
                 <select id="bidCaseSelect" name="caseId"></select>
               </label>
               <label>
@@ -270,7 +342,7 @@
               <input id="privateBid" name="privateBid" type="checkbox" checked />
               Keep this bid private to the client
             </label>
-            <button class="button primary" type="submit">Submit bid</button>
+            <button class="button primary" id="bidSubmitButton" type="submit">Submit bid</button>
           </form>
         </div>
       </section>
@@ -278,14 +350,15 @@
       <section class="workspace reveal" id="client-board">
         <div class="workspace-header">
           <p class="eyebrow">Client side</p>
-          <h2>Shortlist and accept bids with a generated engagement letter preview.</h2>
+          <h2>Review your paid matters, shortlist bids, and accept the best fit.</h2>
         </div>
         <div class="workspace-grid">
           <div class="panel">
             <div class="panel-header">
-              <h3>Open matters</h3>
+              <h3>Your matters</h3>
               <span class="pill neutral">Decision board</span>
             </div>
+            <div class="access-note" id="clientBoardAccess"></div>
             <label>
               Select matter
               <select id="caseSelect"></select>
@@ -306,7 +379,7 @@
       <section class="workspace alt reveal" id="admin">
         <div class="workspace-header">
           <p class="eyebrow">Admin side</p>
-          <h2>Control country launch status, verification, and analytics.</h2>
+          <h2>Manage rollout settings, verify lawyers, and view segmented analytics.</h2>
         </div>
         <div class="workspace-grid">
           <div class="panel">
@@ -314,6 +387,7 @@
               <h3>Country management</h3>
               <span class="pill neutral">Enable / disable</span>
             </div>
+            <div class="access-note" id="adminAccess"></div>
             <div id="adminCountrySettings" class="settings-grid"></div>
           </div>
           <div class="stack-column">
