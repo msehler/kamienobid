@@ -6,7 +6,7 @@
     <title>Kamieno | Legal Bidding Platform</title>
     <meta
       name="description"
-      content="Kamieno helps clients post a legal matter once and receive jurisdiction-aware bids from verified lawyers."
+      content="Kamieno helps you post your legal matter once and compare proposals from verified lawyers before you choose."
     />
     <link rel="icon" href="/assets/favicon-symbol.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
@@ -34,116 +34,29 @@
     </header>
 
     <main id="top">
-      <section class="hero-section reveal">
-        <div class="hero-shell">
-          <article class="hero-card hero-card-primary">
-            <div class="hero-copy">
-              <p class="eyebrow" id="heroEyebrow"></p>
-              <h1 class="hero-title">
-                <span class="hero-sans">POST ONCE.</span>
-                <span class="hero-serif">Compare strategies</span>
-                <span class="hero-sans">with verified lawyers.</span>
-              </h1>
-              <p class="hero-description" id="heroDescription"></p>
-              <div class="hero-actions">
-                <a class="button primary" href="/account">Create an account</a>
-                <a class="button secondary" href="/client">See the client flow</a>
-              </div>
-              <div class="hero-proof-line">
-                <span>Jurisdiction aware from first intake</span>
-                <span>Verified practitioner access</span>
-                <span>Publishing gated by payment</span>
-              </div>
-            </div>
-          </article>
-          <div class="hero-stack">
-            <article class="hero-card hero-card-secondary">
-              <div class="mini-rule"></div>
-              <div class="hero-mini-copy">
-                <p class="eyebrow">Kamieno use cases</p>
-                <p>
-                  One publishing workflow for family, employment, injury, immigration, business disputes, and more.
-                </p>
-              </div>
-              <div class="tag-cloud">
-                <span class="tag-pill">Family</span>
-                <span class="tag-pill">Employment</span>
-                <span class="tag-pill">Injury</span>
-                <span class="tag-pill">Business</span>
-              </div>
-            </article>
-            <article class="hero-card hero-card-brand">
-              <p class="eyebrow">Marketplace pulse</p>
-              <div class="brand-lockup">
-                <img src="/assets/site-wordmark-symbol.svg" alt="Kamieno" />
-              </div>
-              <div class="metric-stack" id="heroStats"></div>
-            </article>
+      <section class="home-hero reveal">
+        <article class="home-hero-panel">
+          <div class="home-hero-topline">
+            <p class="eyebrow" id="heroEyebrow"></p>
+            <span class="home-jurisdiction-chip">Detected region: <strong id="jurisdictionBadge"></strong></span>
           </div>
-          <div class="hero-aside">
-            <article class="hero-card hero-card-quote">
-              <p class="eyebrow">Detected base</p>
-              <p class="big-stat" id="jurisdictionBadge"></p>
-              <h2 class="quote-title">
-                Strategy first.
-                <span>Pricing and jurisdiction handled clearly.</span>
-              </h2>
-              <p class="quote-copy">
-                Matter intake, lawyer access, disclaimers, and required prompts all shift to the user’s local legal
-                context.
-              </p>
-              <div class="hero-mini-board">
-                <span>Families</span>
-                <span>Employers</span>
-                <span>Founders</span>
-                <span>Claimants</span>
-              </div>
-            </article>
+          <div class="home-hero-copy">
+            <h1 class="home-hero-title">
+              Find the right lawyer
+              <span>before you commit.</span>
+            </h1>
+            <p class="home-hero-description" id="heroDescription"></p>
           </div>
-        </div>
-      </section>
-
-      <section class="home-atlas-section reveal">
-        <div class="section-heading home-atlas-heading">
-          <p class="eyebrow">Workspace map</p>
-          <h2>Enter the exact operating surface you need, without the homepage carrying the whole application.</h2>
-        </div>
-        <div class="home-atlas-grid">
-          <article class="atlas-card atlas-card-featured">
-            <p class="eyebrow">Featured path</p>
-            <h3>Client workspace for matter intake, fee confirmation, and bid comparison.</h3>
-            <p>
-              Start with the highest-intent flow: publish once, then turn competing legal strategies into a decision
-              board.
-            </p>
-            <div class="atlas-meta">
-              <span>Draft</span>
-              <span>Publish</span>
-              <span>Decide</span>
-            </div>
-            <a class="button primary" href="/client">Open client workspace</a>
-          </article>
-          <article class="atlas-card atlas-card-platform">
-            <p class="eyebrow">Platform</p>
-            <h3>Review rollout, pricing logic, and enabled countries.</h3>
-            <a class="button secondary" href="/platform">Open platform</a>
-          </article>
-          <article class="atlas-card atlas-card-account">
-            <p class="eyebrow">Account</p>
-            <h3>Create a client or lawyer account and manage sessions cleanly.</h3>
-            <a class="button secondary" href="/account">Open account</a>
-          </article>
-          <article class="atlas-card atlas-card-lawyer">
-            <p class="eyebrow">Lawyer</p>
-            <h3>Maintain practising rights, verification records, and bid composition.</h3>
-            <a class="button secondary" href="/lawyer">Open lawyer</a>
-          </article>
-          <article class="atlas-card atlas-card-admin">
-            <p class="eyebrow">Admin</p>
-            <h3>Control market availability, queue approvals, and analytics.</h3>
-            <a class="button secondary" href="/admin">Open admin</a>
-          </article>
-        </div>
+          <div class="home-hero-actions">
+            <a class="button primary" href="/account">Get started</a>
+            <a class="button secondary" href="/client">Post a matter</a>
+          </div>
+          <div class="home-hero-notes">
+            <span>Post once</span>
+            <span>Compare proposals</span>
+            <span>Choose your lawyer</span>
+          </div>
+        </article>
       </section>
     </main>
 

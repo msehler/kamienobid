@@ -261,12 +261,18 @@ function renderHeader() {
 }
 
 function renderHero() {
-  if (!elements.heroEyebrow || !elements.heroDescription || !elements.jurisdictionBadge || !elements.heroStats) {
+  if (elements.heroEyebrow) {
+    elements.heroEyebrow.textContent = state.bootstrap.hero.eyebrow;
+  }
+  if (elements.heroDescription) {
+    elements.heroDescription.textContent = state.bootstrap.hero.description;
+  }
+  if (elements.jurisdictionBadge) {
+    elements.jurisdictionBadge.textContent = getCountry(state.selectedCountryCode).name;
+  }
+  if (!elements.heroStats) {
     return;
   }
-  elements.heroEyebrow.textContent = state.bootstrap.hero.eyebrow;
-  elements.heroDescription.textContent = state.bootstrap.hero.description;
-  elements.jurisdictionBadge.textContent = getCountry(state.selectedCountryCode).name;
 
   const analytics = state.bootstrap.analytics;
   elements.heroStats.innerHTML = [
