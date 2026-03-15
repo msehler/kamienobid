@@ -23,12 +23,16 @@
           <img src="/assets/site-wordmark-symbol.svg" alt="Kamieno" />
         </a>
         <nav class="main-nav">
-          <a href="/account">Account</a>
-          <a href="/client">Client</a>
-          <a href="/lawyer">Lawyer</a>
-          <a href="/admin">Admin</a>
+          <div class="main-nav-primary">
+            <a class="main-nav-cta" href="/client">Post a new case</a>
+            <a href="/about">About us</a>
+            <a href="/contact">Contact us</a>
+            <a href="/account">Sign in</a>
+          </div>
+          <div class="main-nav-secondary">
+            <a href="/account?role=lawyer">Register as a lawyer</a>
+          </div>
         </nav>
-        <div class="auth-quick" id="authQuick"></div>
       </div>
     </header>
 
@@ -47,8 +51,8 @@
             <p class="home-hero-description" id="heroDescription"></p>
           </div>
           <div class="home-hero-actions">
-            <a class="button primary" href="/account">Get started</a>
-            <a class="button secondary" href="/client">Post a matter</a>
+            <a class="button primary" href="/client">Post a new case</a>
+            <a class="button secondary" href="/account?role=lawyer">Register as a lawyer</a>
           </div>
         </article>
       </section>

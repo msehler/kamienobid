@@ -17,6 +17,7 @@ const elements = {};
 
 document.addEventListener("DOMContentLoaded", async () => {
   cacheElements();
+  applySignupRolePrefill();
   bindEvents();
   observeReveals();
   await refreshApp();
@@ -157,6 +158,16 @@ function bindEvents() {
   }
   if (elements.verificationQueue) {
     elements.verificationQueue.addEventListener("click", handleAdminApproval);
+  }
+}
+
+function applySignupRolePrefill() {
+  if (!elements.signupRole) {
+    return;
+  }
+  const role = new URLSearchParams(window.location.search).get("role");
+  if (role === "client" || role === "lawyer") {
+    elements.signupRole.value = role;
   }
 }
 

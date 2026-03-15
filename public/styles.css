@@ -159,6 +159,8 @@ a {
 
 .brand-row,
 .main-nav,
+.main-nav-primary,
+.main-nav-secondary,
 .hero-actions,
 .panel-header,
 .workspace-header,
@@ -198,6 +200,21 @@ a {
   transition: 140ms ease;
 }
 
+.main-nav {
+  gap: 18px;
+}
+
+.main-nav-primary,
+.main-nav-secondary {
+  gap: 12px;
+}
+
+.main-nav-secondary {
+  padding-left: 18px;
+  margin-left: 6px;
+  border-left: 1px solid rgba(21, 57, 200, 0.12);
+}
+
 .main-nav a:hover {
   background: rgba(21, 57, 200, 0.08);
 }
@@ -205,6 +222,20 @@ a {
 .main-nav a[aria-current="page"] {
   background: rgba(21, 57, 200, 0.12);
   font-weight: 700;
+}
+
+.main-nav a.main-nav-cta {
+  background: var(--ink);
+  color: white;
+  box-shadow: 0 14px 30px rgba(21, 57, 200, 0.2);
+}
+
+.main-nav a.main-nav-cta:hover {
+  background: #1230ab;
+}
+
+.main-nav a.main-nav-cta[aria-current="page"] {
+  background: #1230ab;
 }
 
 .button,
