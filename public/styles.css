@@ -220,8 +220,10 @@ a {
 }
 
 .main-nav a[aria-current="page"] {
-  background: rgba(21, 57, 200, 0.12);
+  background: var(--ink);
+  color: white;
   font-weight: 700;
+  box-shadow: 0 14px 30px rgba(21, 57, 200, 0.18);
 }
 
 .main-nav a.main-nav-cta {
@@ -236,6 +238,12 @@ a {
 
 .main-nav a.main-nav-cta[aria-current="page"] {
   background: #1230ab;
+}
+
+.main-nav-secondary a[aria-current="page"] {
+  background: rgba(21, 57, 200, 0.12);
+  color: var(--ink);
+  box-shadow: none;
 }
 
 .button,
@@ -913,6 +921,27 @@ body[data-page="account"] .page-hero-card::before {
   display: grid;
   gap: 16px;
   align-content: space-between;
+}
+
+.info-grid {
+  align-items: stretch;
+}
+
+.info-card {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.info-card h3 {
+  margin: 0;
+  font-size: 1.75rem;
+  line-height: 0.96;
+  letter-spacing: -0.03em;
+}
+
+.info-list-panel {
+  max-width: 980px;
 }
 
 .feature-card::after {
