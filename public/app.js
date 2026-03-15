@@ -17,6 +17,7 @@ const elements = {};
 
 document.addEventListener("DOMContentLoaded", async () => {
   cacheElements();
+  applyNavigationFocus();
   applySignupRolePrefill();
   bindEvents();
   observeReveals();
@@ -158,6 +159,28 @@ function bindEvents() {
   }
   if (elements.verificationQueue) {
     elements.verificationQueue.addEventListener("click", handleAdminApproval);
+  }
+}
+
+function applyNavigationFocus() {
+  const params = new URLSearchParams(window.location.search);
+  const role = params.get("role");
+  const signInLink = document.querySelector('.main-nav a[href="/account"]');
+  const lawyerRegisterLink = document.querySelector('.main-nav a[href="/account?role=lawyer"]');
+
+  if (!signInLink || !lawyerRegisterLink) {
+    return;
+  }
+
+  if (window.location.pathname === "/account" && role === "lawyer") {
+    signInLink.removeAttribute("aria-current");
+    lawyerRegisterLink.setAttribute("aria-current", "page");
+    return;
+  }
+
+  if (window.location.pathname === "/account") {
+    signInLink.setAttribute("aria-current", "page");
+    lawyerRegisterLink.removeAttribute("aria-current");
   }
 }
 

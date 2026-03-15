@@ -220,10 +220,10 @@ a {
 }
 
 .main-nav a[aria-current="page"] {
-  background: var(--ink);
-  color: white;
+  background: rgba(21, 57, 200, 0.12);
+  color: var(--ink);
   font-weight: 700;
-  box-shadow: 0 14px 30px rgba(21, 57, 200, 0.18);
+  box-shadow: none;
 }
 
 .main-nav a.main-nav-cta {
@@ -237,7 +237,8 @@ a {
 }
 
 .main-nav a.main-nav-cta[aria-current="page"] {
-  background: #1230ab;
+  background: rgba(21, 57, 200, 0.12);
+  color: var(--ink);
 }
 
 .main-nav-secondary a[aria-current="page"] {
