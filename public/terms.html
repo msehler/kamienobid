@@ -21,6 +21,17 @@
         <a href="/" class="brand-mark" aria-label="Kamieno home">
           <img src="/assets/site-wordmark-symbol.svg" alt="Kamieno" />
         </a>
+        <button
+          class="mobile-nav-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="mobileNav"
+          aria-label="Toggle navigation"
+        >
+          <span class="mobile-nav-toggle-bar"></span>
+          <span class="mobile-nav-toggle-bar"></span>
+          <span class="mobile-nav-toggle-bar"></span>
+        </button>
         <nav class="main-nav">
           <div class="main-nav-primary">
             <a class="main-nav-cta" href="/client">Post a new case</a>
@@ -32,6 +43,17 @@
             <a href="/account?role=lawyer">Register as a lawyer</a>
           </div>
         </nav>
+      </div>
+      <div class="mobile-nav-panel" id="mobileNav" hidden>
+        <div class="mobile-nav-primary">
+          <a class="main-nav-cta" href="/client">Post a new case</a>
+          <a href="/about">About us</a>
+          <a href="/contact">Contact us</a>
+          <a href="/account">Sign in</a>
+        </div>
+        <div class="mobile-nav-secondary">
+          <a href="/account?role=lawyer">Register as a lawyer</a>
+        </div>
       </div>
     </header>
 

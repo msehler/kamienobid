@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   applyNavigationFocus();
   applySignupRolePrefill();
   bindEvents();
+  initMobileNav();
   observeReveals();
   await refreshApp();
   await handleCheckoutReturn();
@@ -165,23 +166,79 @@ function bindEvents() {
 function applyNavigationFocus() {
   const params = new URLSearchParams(window.location.search);
   const role = params.get("role");
-  const signInLink = document.querySelector('.main-nav a[href="/account"]');
-  const lawyerRegisterLink = document.querySelector('.main-nav a[href="/account?role=lawyer"]');
+  const path = window.location.pathname;
+  const currentHrefByPath = {
+    "/about": "/about",
+    "/contact": "/contact",
+    "/client": "/client",
+    "/lawyer": "/account?role=lawyer",
+  };
 
-  if (!signInLink || !lawyerRegisterLink) {
+  const currentHref = path === "/account" ? (role === "lawyer" ? "/account?role=lawyer" : "/account") : currentHrefByPath[path];
+
+  ["/client", "/about", "/contact", "/account", "/account?role=lawyer"].forEach((href) => {
+    document.querySelectorAll(`a[href="${href}"]`).forEach((link) => {
+      if (href === currentHref) {
+        link.setAttribute("aria-current", "page");
+      } else {
+        link.removeAttribute("aria-current");
+      }
+    });
+  });
+}
+
+function initMobileNav() {
+  const header = document.querySelector(".site-header");
+  const toggle = document.querySelector(".mobile-nav-toggle");
+  const panel = document.querySelector(".mobile-nav-panel");
+
+  if (!header || !toggle || !panel) {
     return;
   }
 
-  if (window.location.pathname === "/account" && role === "lawyer") {
-    signInLink.removeAttribute("aria-current");
-    lawyerRegisterLink.setAttribute("aria-current", "page");
-    return;
-  }
+  const closeMenu = () => {
+    header.classList.remove("mobile-nav-open");
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.setAttribute("aria-label", "Open navigation");
+    panel.hidden = true;
+  };
 
-  if (window.location.pathname === "/account") {
-    signInLink.setAttribute("aria-current", "page");
-    lawyerRegisterLink.removeAttribute("aria-current");
-  }
+  const openMenu = () => {
+    header.classList.add("mobile-nav-open");
+    toggle.setAttribute("aria-expanded", "true");
+    toggle.setAttribute("aria-label", "Close navigation");
+    panel.hidden = false;
+  };
+
+  toggle.addEventListener("click", () => {
+    if (panel.hidden) {
+      openMenu();
+    } else {
+      closeMenu();
+    }
+  });
+
+  panel.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", closeMenu);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !panel.hidden) {
+      closeMenu();
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!panel.hidden && !header.contains(event.target)) {
+      closeMenu();
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 900 && !panel.hidden) {
+      closeMenu();
+    }
+  });
 }
 
 function applySignupRolePrefill() {
