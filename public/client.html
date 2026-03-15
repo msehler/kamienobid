@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kamieno | Client</title>
+    <title>Kamieno | Post a new case</title>
     <meta
       name="description"
-      content="Create, pay for, and manage legal matters on Kamieno."
+      content="Post your legal matter once, then compare proposals from verified lawyers on Kamieno."
     />
     <link rel="icon" href="/assets/favicon-symbol.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
@@ -62,27 +62,27 @@
       <section class="page-hero reveal">
         <div class="page-hero-shell">
           <article class="page-hero-card page-hero-primary">
-            <p class="eyebrow">Client</p>
+            <p class="eyebrow">Post a new case</p>
             <h1 class="page-title">
-              Turn one legal problem into
-              <span>a structured decision board.</span>
+              Brief your legal problem once.
+              <span>Compare the right lawyers after.</span>
             </h1>
             <p class="page-summary">
-              Draft the matter, publish through the fee flow, then review bids and engagement options without toggling
-              across unrelated screens.
+              Kamieno helps you describe your matter clearly, publish it to the right market, and review competing
+              proposals from verified lawyers before you decide who to engage.
             </p>
             <div class="page-step-row">
-              <span>1. Draft</span>
-              <span>2. Publish</span>
-              <span>3. Decide</span>
+              <span>1. Brief the matter</span>
+              <span>2. Publish once</span>
+              <span>3. Compare proposals</span>
             </div>
           </article>
           <article class="page-hero-card page-hero-secondary">
-            <p class="eyebrow">Client flow</p>
+            <p class="eyebrow">What you are doing here</p>
             <div class="page-note-list">
-              <p>Intake prompts and disclaimers adapt by country and practice area.</p>
-              <p>Payment keeps marketplace visibility separate from private drafting.</p>
-              <p>Decision tools stay on the same page once bids begin to arrive.</p>
+              <p>Describe your issue once instead of approaching firms one by one.</p>
+              <p>Give lawyers the context they need to respond with a useful proposal.</p>
+              <p>Review pricing and approach side by side before making first contact.</p>
             </div>
           </article>
         </div>
@@ -90,13 +90,13 @@
 
       <section class="workspace reveal" id="post-matter">
         <div class="workspace-header">
-          <p class="eyebrow">Client side</p>
-          <h2>Create a matter draft, then publish it through the local fee flow.</h2>
+          <p class="eyebrow">Case brief</p>
+          <h2>Tell Kamieno what legal help you need, then publish your case for lawyer proposals.</h2>
         </div>
         <div class="workspace-grid">
           <form class="panel matter-form" id="matterForm">
             <div class="panel-header">
-              <h3>Client publishing flow</h3>
+              <h3>Create your case</h3>
               <span class="pill" id="publishFee"></span>
             </div>
             <div class="access-note" id="matterAccessNote"></div>
@@ -157,7 +157,7 @@
 
           <aside class="panel insight-panel">
             <div class="panel-header">
-              <h3>Jurisdiction notes</h3>
+              <h3>What lawyers will see</h3>
               <span class="pill neutral">Live template</span>
             </div>
             <div id="templateSummary" class="template-summary"></div>
@@ -168,13 +168,13 @@
 
       <section class="workspace reveal" id="client-board">
         <div class="workspace-header">
-          <p class="eyebrow">Client side</p>
-          <h2>Review your paid matters, shortlist bids, and accept the best fit.</h2>
+          <p class="eyebrow">Your proposals</p>
+          <h2>Track your published cases, compare bids, and choose the lawyer who fits best.</h2>
         </div>
         <div class="workspace-grid">
           <div class="panel">
             <div class="panel-header">
-              <h3>Your matters</h3>
+              <h3>Your cases</h3>
               <span class="pill neutral">Decision board</span>
             </div>
             <div class="access-note" id="clientBoardAccess"></div>
@@ -186,7 +186,7 @@
           </div>
           <div class="panel">
             <div class="panel-header">
-              <h3>Received bids</h3>
+              <h3>Lawyer proposals</h3>
               <span class="pill">Client view</span>
             </div>
             <div id="bidList" class="bid-list"></div>
