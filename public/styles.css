@@ -887,11 +887,8 @@ body[data-page="account"] .page-hero-card::before {
   z-index: 1;
   width: min(1320px, calc(100vw - 36px));
   margin: 28px auto 32px;
-  padding: 24px 26px;
-  border-radius: var(--radius-xl);
-  background: linear-gradient(180deg, #123ed5, #0d31ab);
+  padding: 24px 0 0;
   color: white;
-  box-shadow: var(--shadow);
   display: grid;
   gap: 18px;
 }
