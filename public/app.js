@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   cacheElements();
   applyNavigationFocus();
   applySignupRolePrefill();
+  applyAccountPageMode();
   bindEvents();
   initMobileNav();
   observeReveals();
@@ -38,8 +39,22 @@ function cacheElements() {
     "sessionCard",
     "stripeStatus",
     "signupForm",
+    "signupRole",
     "loginForm",
     "logoutButton",
+    "accountHeroEyebrow",
+    "accountHeroTitle",
+    "accountHeroSummary",
+    "accountHeroPills",
+    "accountHeroSecondaryEyebrow",
+    "accountHeroNotes",
+    "accountWorkspaceEyebrow",
+    "accountWorkspaceTitle",
+    "signupPanelTitle",
+    "signupPanelPill",
+    "signupSubmitLabel",
+    "accountInsightEyebrow",
+    "accountInsightBody",
     "countryInsights",
     "matterForm",
     "matterAccessNote",
@@ -248,6 +263,61 @@ function applySignupRolePrefill() {
   const role = new URLSearchParams(window.location.search).get("role");
   if (role === "client" || role === "lawyer") {
     elements.signupRole.value = role;
+  }
+}
+
+function applyAccountPageMode() {
+  const role = new URLSearchParams(window.location.search).get("role");
+  if (role !== "lawyer") {
+    return;
+  }
+
+  if (elements.accountHeroEyebrow) {
+    elements.accountHeroEyebrow.textContent = "Lawyer registration";
+  }
+  if (elements.accountHeroTitle) {
+    elements.accountHeroTitle.innerHTML = 'Register your practice for <span>the right matters.</span>';
+  }
+  if (elements.accountHeroSummary) {
+    elements.accountHeroSummary.textContent = "Create your Kamieno lawyer account so you can verify your jurisdictions, receive relevant opportunities, and submit structured proposals to clients looking for the right legal fit.";
+  }
+  if (elements.accountHeroPills) {
+    elements.accountHeroPills.innerHTML = `
+      <span class="tag-pill">Practice profile</span>
+      <span class="tag-pill">Jurisdiction verification</span>
+      <span class="tag-pill">Bid on matched matters</span>
+    `;
+  }
+  if (elements.accountHeroSecondaryEyebrow) {
+    elements.accountHeroSecondaryEyebrow.textContent = "What happens next";
+  }
+  if (elements.accountHeroNotes) {
+    elements.accountHeroNotes.innerHTML = `
+      <p>Create your lawyer account with your name, email, and secure password.</p>
+      <p>Complete your practice and jurisdiction details so Kamieno can verify where you are eligible to act.</p>
+      <p>Once approved, you can respond to suitable matters with pricing and a clear proposed approach.</p>
+    `;
+  }
+  if (elements.accountWorkspaceEyebrow) {
+    elements.accountWorkspaceEyebrow.textContent = "Lawyer onboarding";
+  }
+  if (elements.accountWorkspaceTitle) {
+    elements.accountWorkspaceTitle.textContent = "Start your Kamieno lawyer account here, then complete verification and bidding from your lawyer workspace.";
+  }
+  if (elements.signupPanelTitle) {
+    elements.signupPanelTitle.textContent = "Register as a lawyer";
+  }
+  if (elements.signupPanelPill) {
+    elements.signupPanelPill.textContent = "Lawyer account";
+  }
+  if (elements.signupSubmitLabel) {
+    elements.signupSubmitLabel.textContent = "Create lawyer account";
+  }
+  if (elements.accountInsightEyebrow) {
+    elements.accountInsightEyebrow.textContent = "Why lawyers join";
+  }
+  if (elements.accountInsightBody) {
+    elements.accountInsightBody.textContent = "Kamieno is designed to help lawyers compete on relevance, jurisdiction fit, and quality of approach before a client makes first contact. After registration, complete your profile in the lawyer workspace to enter verification.";
   }
 }
 

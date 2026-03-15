@@ -62,24 +62,24 @@
       <section class="page-hero reveal">
         <div class="page-hero-shell">
           <article class="page-hero-card page-hero-primary">
-            <p class="eyebrow">Account</p>
-            <h1 class="page-title">
+            <p class="eyebrow" id="accountHeroEyebrow">Account</p>
+            <h1 class="page-title" id="accountHeroTitle">
               Identity should feel
               <span>clear, calm, and immediate.</span>
             </h1>
-            <p class="page-summary">
+            <p class="page-summary" id="accountHeroSummary">
               This workspace is now focused on access only: create an account, sign in, and understand the current
               session without the rest of the product competing for attention.
             </p>
-            <div class="page-pill-row">
+            <div class="page-pill-row" id="accountHeroPills">
               <span class="tag-pill">Client</span>
               <span class="tag-pill">Lawyer</span>
               <span class="tag-pill">Admin aware</span>
             </div>
           </article>
           <article class="page-hero-card page-hero-secondary">
-            <p class="eyebrow">Session framing</p>
-            <div class="page-note-list">
+            <p class="eyebrow" id="accountHeroSecondaryEyebrow">Session framing</p>
+            <div class="page-note-list" id="accountHeroNotes">
               <p>Use this page to start a client or lawyer path cleanly.</p>
               <p>See checkout readiness and session status without leaving the auth surface.</p>
               <p>Keep account creation distinct from matter posting and bidding.</p>
@@ -90,15 +90,15 @@
 
       <section class="workspace alt reveal" id="account">
         <div class="workspace-header">
-          <p class="eyebrow">Identity</p>
-          <h2>Use client, lawyer, and admin paths with session-backed access control.</h2>
+          <p class="eyebrow" id="accountWorkspaceEyebrow">Identity</p>
+          <h2 id="accountWorkspaceTitle">Use client, lawyer, and admin paths with session-backed access control.</h2>
         </div>
         <div class="workspace-grid">
           <div class="stack-column">
             <form class="panel" id="signupForm">
               <div class="panel-header">
-                <h3>Create account</h3>
-                <span class="pill">Session auth</span>
+                <h3 id="signupPanelTitle">Create account</h3>
+                <span class="pill" id="signupPanelPill">Session auth</span>
               </div>
               <div class="form-grid">
                 <label>
@@ -121,7 +121,7 @@
                   </select>
                 </label>
               </div>
-              <button class="button primary" type="submit">Create account</button>
+              <button class="button primary" id="signupSubmitLabel" type="submit">Create account</button>
             </form>
 
             <form class="panel" id="loginForm">
@@ -150,8 +150,8 @@
             </div>
             <div id="sessionCard" class="template-summary"></div>
             <div class="launch-panel">
-              <p class="eyebrow">Deployment note</p>
-              <p>
+              <p class="eyebrow" id="accountInsightEyebrow">Deployment note</p>
+              <p id="accountInsightBody">
                 Matter publishing now follows a two-step flow: create draft, then complete checkout. If Stripe keys
                 are not configured, the app falls back to a safe demo payment path.
               </p>
