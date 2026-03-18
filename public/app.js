@@ -414,6 +414,9 @@ function renderHeader() {
   if (elements.globalDisclaimer) {
     elements.globalDisclaimer.textContent = country.disclaimer;
   }
+  document.querySelectorAll("[data-region-badge] strong").forEach((badge) => {
+    badge.textContent = country.name;
+  });
   if (elements.authQuick) {
     elements.authQuick.innerHTML = state.currentUser
       ? `<span class="pill">${state.currentUser.role}</span><span>${state.currentUser.name}</span>`
