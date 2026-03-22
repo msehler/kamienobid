@@ -1,5 +1,5 @@
 const { requireRole } = require("../lib/auth");
-const { createCase, listCases } = require("../lib/platform");
+const { createCase, deleteCase, listCases, updateCase } = require("../lib/platform");
 
 module.exports = function handler(req, res) {
   if (req.method === "GET") {
@@ -12,6 +12,24 @@ module.exports = function handler(req, res) {
       return;
     }
     const result = createCase(req.viewer, req.body || {});
+    res.status(result.status).json(result.body);
+    return;
+  }
+
+  if (req.method === "PUT") {
+    if (!requireRole(req, res, ["client"])) {
+      return;
+    }
+    const result = updateCase(req.viewer, req.body || {});
+    res.status(result.status).json(result.body);
+    return;
+  }
+
+  if (req.method === "DELETE") {
+    if (!requireRole(req, res, ["client"])) {
+      return;
+    }
+    const result = deleteCase(req.viewer, req.body || {});
     res.status(result.status).json(result.body);
     return;
   }

@@ -1101,6 +1101,11 @@ body[data-page="account"] .page-hero-card::before {
   margin-bottom: 22px;
 }
 
+.workspace-header-inline {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+
 .section-heading .eyebrow,
 .workspace-header .eyebrow {
   color: rgba(255, 255, 255, 0.72);
@@ -1114,6 +1119,23 @@ body[data-page="account"] .page-hero-card::before {
   line-height: 0.92;
   color: white;
   letter-spacing: -0.04em;
+}
+
+.workspace-summary {
+  margin: 0;
+  max-width: 56ch;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.workspace-actions,
+.panel-badges,
+.case-card-header,
+.case-card-actions,
+.case-primary-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .platform-grid,
@@ -1421,6 +1443,53 @@ textarea {
   margin-top: 18px;
 }
 
+.case-list {
+  display: grid;
+  gap: 16px;
+}
+
+.case-card,
+.case-empty {
+  padding: 20px;
+  border-radius: var(--panel-radius-md);
+  border: 1px solid var(--line-blue);
+  background: white;
+  color: var(--ink);
+}
+
+.case-card {
+  display: grid;
+  gap: 12px;
+}
+
+.case-card.is-selected {
+  border-color: rgba(21, 57, 200, 0.3);
+  box-shadow: 0 16px 34px rgba(21, 57, 200, 0.08);
+}
+
+.case-card-header {
+  justify-content: space-between;
+}
+
+.case-card-header strong {
+  display: block;
+  margin-top: 6px;
+}
+
+.case-card-summary,
+.case-empty p {
+  margin: 0;
+}
+
+.case-primary-actions {
+  margin: 18px 0;
+}
+
+.case-empty {
+  display: grid;
+  gap: 12px;
+}
+
 .bid-card {
   display: grid;
   gap: 12px;
@@ -1565,6 +1634,11 @@ textarea {
 
   .site-header.mobile-nav-open {
     border-radius: var(--panel-radius-sm);
+  }
+
+  .workspace-header-inline {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
   }
 
   .brand-row {

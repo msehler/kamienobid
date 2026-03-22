@@ -61,45 +61,125 @@
     </header>
 
     <main>
-      <section class="page-hero reveal">
+      <section class="page-hero reveal" id="clientMarketingHero">
         <div class="page-hero-shell">
           <article class="page-hero-card page-hero-primary">
             <p class="eyebrow">Post a new case</p>
             <h1 class="page-title">
-              Brief your legal problem once.
-              <span>Compare the right lawyers after.</span>
+              Describe your matter once.
+              <span>Then compare the right lawyers.</span>
             </h1>
             <p class="page-summary">
-              Kamieno helps you describe your matter clearly, publish it to the right market, and review competing
-              proposals from verified lawyers before you decide who to engage.
+              Kamieno gives clients one clear place to brief a matter, collect lawyer proposals, and manage everything
+              from a dedicated case dashboard.
             </p>
+            <div class="page-pill-row">
+              <a class="button primary" href="/account?role=client&returnTo=%2Fclient">Create client account</a>
+              <a class="button secondary" href="/account?role=client&mode=signin&returnTo=%2Fclient">Sign in</a>
+            </div>
             <div class="page-step-row">
-              <span>1. Brief the matter</span>
-              <span>2. Publish once</span>
-              <span>3. Compare proposals</span>
+              <span>1. Create your client account</span>
+              <span>2. Open your dashboard</span>
+              <span>3. Add your case brief</span>
             </div>
           </article>
           <article class="page-hero-card page-hero-secondary">
-            <p class="eyebrow">What you are doing here</p>
+            <p class="eyebrow">What happens after sign up</p>
             <div class="page-note-list">
-              <p>Describe your issue once instead of approaching firms one by one.</p>
-              <p>Give lawyers the context they need to respond with a useful proposal.</p>
-              <p>Review pricing and approach side by side before making first contact.</p>
+              <p>Your client dashboard keeps every posted case in one place.</p>
+              <p>Add a new case from the dashboard when you are ready to brief it.</p>
+              <p>Edit or delete your existing cases before you decide which lawyer to engage.</p>
             </div>
           </article>
         </div>
       </section>
 
-      <section class="workspace reveal" id="post-matter">
+      <section class="workspace reveal" id="clientMarketingDetails">
         <div class="workspace-header">
-          <p class="eyebrow">Case brief</p>
-          <h2>Tell Kamieno what legal help you need, then publish your case for lawyer proposals.</h2>
+          <p class="eyebrow">Why clients use Kamieno</p>
+          <h2>Start with a clean client account. Add cases only when you are ready.</h2>
+        </div>
+        <div class="platform-grid">
+          <article class="feature-card light">
+            <p class="eyebrow">Client dashboard</p>
+            <h3>Track every case in one place.</h3>
+            <p>See your cases, review their status, and return to the ones that need edits or a decision.</p>
+          </article>
+          <article class="feature-card coral">
+            <p class="eyebrow">Structured briefs</p>
+            <h3>Add a case brief after you click through.</h3>
+            <p>The detailed case form becomes the next step once you choose to add a new case from your dashboard.</p>
+          </article>
+          <article class="feature-card dark">
+            <p class="eyebrow">Decision flow</p>
+            <h3>Compare bids without losing context.</h3>
+            <p>Review proposals and manage your case history from the same client workspace after sign in.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="workspace reveal" id="clientDashboard" hidden>
+        <div class="workspace-header workspace-header-inline">
+          <div>
+            <p class="eyebrow">Client dashboard</p>
+            <h2>Your cases, drafts, and lawyer proposals live here.</h2>
+          </div>
+          <div class="workspace-actions">
+            <a class="button ghost" href="/account">Account</a>
+            <button class="button primary" id="clientCreateCaseButton" type="button">Add new case</button>
+          </div>
+        </div>
+        <div class="workspace-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Your cases</h3>
+              <span class="pill neutral">Dashboard</span>
+            </div>
+            <div class="access-note" id="clientBoardAccess"></div>
+            <div class="case-list" id="caseList"></div>
+          </div>
+          <div class="stack-column">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>Selected case</h3>
+                <span class="pill" id="dashboardCaseStatusPill">Case view</span>
+              </div>
+              <div id="caseDetails" class="case-details"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <h3>Lawyer proposals</h3>
+                <span class="pill neutral">Client view</span>
+              </div>
+              <div id="bidList" class="bid-list"></div>
+              <div class="engagement-letter" id="engagementLetter"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="workspace reveal" id="clientComposer" hidden>
+        <div class="workspace-header workspace-header-inline">
+          <div>
+            <p class="eyebrow" id="clientComposerEyebrow">Case brief</p>
+            <h2 id="clientComposerTitle">Tell Kamieno what legal help you need.</h2>
+            <p class="workspace-summary" id="clientComposerSummary">
+              Complete the case brief below to create your draft and continue into payment when you are ready to
+              publish it.
+            </p>
+          </div>
+          <div class="workspace-actions">
+            <button class="button secondary" id="matterCancelButton" type="button">Back to dashboard</button>
+          </div>
         </div>
         <div class="workspace-grid">
           <form class="panel matter-form" id="matterForm">
             <div class="panel-header">
-              <h3>Create your case</h3>
-              <span class="pill" id="publishFee"></span>
+              <h3 id="matterFormTitle">Create your case</h3>
+              <div class="panel-badges">
+                <span class="pill" id="matterFormPill">New draft</span>
+                <span class="pill neutral" id="publishFee"></span>
+              </div>
             </div>
             <div class="access-note" id="matterAccessNote"></div>
             <div class="form-grid">
@@ -154,7 +234,7 @@
               <p class="eyebrow">Required uploads</p>
               <ul id="requiredUploads"></ul>
             </div>
-            <button class="button primary" id="matterSubmitButton" type="submit">Pay and publish matter</button>
+            <button class="button primary" id="matterSubmitButton" type="submit">Save draft and continue</button>
           </form>
 
           <aside class="panel insight-panel">
@@ -165,35 +245,6 @@
             <div id="templateSummary" class="template-summary"></div>
             <div class="launch-panel" id="paymentFlowSummary"></div>
           </aside>
-        </div>
-      </section>
-
-      <section class="workspace reveal" id="client-board">
-        <div class="workspace-header">
-          <p class="eyebrow">Your proposals</p>
-          <h2>Track your published cases, compare bids, and choose the lawyer who fits best.</h2>
-        </div>
-        <div class="workspace-grid">
-          <div class="panel">
-            <div class="panel-header">
-              <h3>Your cases</h3>
-              <span class="pill neutral">Decision board</span>
-            </div>
-            <div class="access-note" id="clientBoardAccess"></div>
-            <label>
-              Select matter
-              <select id="caseSelect"></select>
-            </label>
-            <div id="caseDetails" class="case-details"></div>
-          </div>
-          <div class="panel">
-            <div class="panel-header">
-              <h3>Lawyer proposals</h3>
-              <span class="pill">Client view</span>
-            </div>
-            <div id="bidList" class="bid-list"></div>
-            <div class="engagement-letter" id="engagementLetter"></div>
-          </div>
         </div>
       </section>
     </main>

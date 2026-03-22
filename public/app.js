@@ -11,6 +11,8 @@ const state = {
   pendingJurisdictions: [],
   engagementLetter: null,
   checkoutHandled: false,
+  clientView: "marketing",
+  editingCaseId: null,
 };
 
 const elements = {};
@@ -56,8 +58,19 @@ function cacheElements() {
     "accountInsightEyebrow",
     "accountInsightBody",
     "countryInsights",
+    "clientMarketingHero",
+    "clientMarketingDetails",
+    "clientDashboard",
+    "clientCreateCaseButton",
+    "clientComposer",
+    "clientComposerEyebrow",
+    "clientComposerTitle",
+    "clientComposerSummary",
     "matterForm",
+    "matterFormTitle",
+    "matterFormPill",
     "matterAccessNote",
+    "matterCancelButton",
     "matterSubmitButton",
     "countrySelect",
     "regionSelect",
@@ -69,6 +82,9 @@ function cacheElements() {
     "publishFee",
     "templateSummary",
     "paymentFlowSummary",
+    "matterSummary",
+    "budgetInput",
+    "documentNames",
     "lawyerForm",
     "lawyerAccessNote",
     "lawyerSubmitButton",
@@ -91,9 +107,10 @@ function cacheElements() {
     "bidWordCount",
     "compliancePreview",
     "bidSubmitButton",
-    "caseSelect",
+    "caseList",
     "clientBoardAccess",
     "caseDetails",
+    "dashboardCaseStatusPill",
     "bidList",
     "engagementLetter",
     "adminAccess",
@@ -142,12 +159,15 @@ function bindEvents() {
   [elements.strategyPosition, elements.strategyNextSteps, elements.strategyRisks, elements.strategyTimeline]
     .filter(Boolean)
     .forEach((field) => field.addEventListener("input", renderCompliancePreview));
-  if (elements.caseSelect) {
-    elements.caseSelect.addEventListener("change", () => {
-      state.selectedCaseId = elements.caseSelect.value;
-      renderClientBoard();
-    });
+  if (elements.clientCreateCaseButton) {
+    elements.clientCreateCaseButton.addEventListener("click", () => openMatterComposer());
   }
+  if (elements.matterCancelButton) {
+    elements.matterCancelButton.addEventListener("click", closeMatterComposer);
+  }
+  [elements.caseList, elements.caseDetails].filter(Boolean).forEach((container) => {
+    container.addEventListener("click", handleClientCaseAction);
+  });
 
   if (elements.signupForm) {
     elements.signupForm.addEventListener("submit", submitSignup);
@@ -267,57 +287,81 @@ function applySignupRolePrefill() {
 }
 
 function applyAccountPageMode() {
-  const role = new URLSearchParams(window.location.search).get("role");
-  if (role !== "lawyer") {
+  const params = new URLSearchParams(window.location.search);
+  const role = params.get("role");
+  const mode = params.get("mode");
+
+  if (role === "lawyer") {
+    if (elements.accountHeroEyebrow) {
+      elements.accountHeroEyebrow.textContent = "Lawyer registration";
+    }
+    if (elements.accountHeroTitle) {
+      elements.accountHeroTitle.innerHTML = 'Register your practice for <span>the right matters.</span>';
+    }
+    if (elements.accountHeroSummary) {
+      elements.accountHeroSummary.textContent = "Create your Kamieno lawyer account so you can verify your jurisdictions, receive relevant opportunities, and submit structured proposals to clients looking for the right legal fit.";
+    }
+    if (elements.accountHeroPills) {
+      elements.accountHeroPills.innerHTML = `
+        <span class="tag-pill">Practice profile</span>
+        <span class="tag-pill">Jurisdiction verification</span>
+        <span class="tag-pill">Bid on matched matters</span>
+      `;
+    }
+    if (elements.accountHeroSecondaryEyebrow) {
+      elements.accountHeroSecondaryEyebrow.textContent = "What happens next";
+    }
+    if (elements.accountHeroNotes) {
+      elements.accountHeroNotes.innerHTML = `
+        <p>Create your lawyer account with your name, email, and secure password.</p>
+        <p>Complete your practice and jurisdiction details so Kamieno can verify where you are eligible to act.</p>
+        <p>Once approved, you can respond to suitable matters with pricing and a clear proposed approach.</p>
+      `;
+    }
+    if (elements.accountWorkspaceEyebrow) {
+      elements.accountWorkspaceEyebrow.textContent = "Lawyer onboarding";
+    }
+    if (elements.accountWorkspaceTitle) {
+      elements.accountWorkspaceTitle.textContent = "Start your Kamieno lawyer account here, then complete verification and bidding from your lawyer workspace.";
+    }
+    if (elements.signupPanelTitle) {
+      elements.signupPanelTitle.textContent = "Register as a lawyer";
+    }
+    if (elements.signupPanelPill) {
+      elements.signupPanelPill.textContent = "Lawyer account";
+    }
+    if (elements.signupSubmitLabel) {
+      elements.signupSubmitLabel.textContent = "Create lawyer account";
+    }
+    if (elements.accountInsightEyebrow) {
+      elements.accountInsightEyebrow.textContent = "Why lawyers join";
+    }
+    if (elements.accountInsightBody) {
+      elements.accountInsightBody.textContent = "Kamieno is designed to help lawyers compete on relevance, jurisdiction fit, and quality of approach before a client makes first contact. After registration, complete your profile in the lawyer workspace to enter verification.";
+    }
     return;
   }
 
-  if (elements.accountHeroEyebrow) {
-    elements.accountHeroEyebrow.textContent = "Lawyer registration";
-  }
-  if (elements.accountHeroTitle) {
-    elements.accountHeroTitle.innerHTML = 'Register your practice for <span>the right matters.</span>';
-  }
-  if (elements.accountHeroSummary) {
-    elements.accountHeroSummary.textContent = "Create your Kamieno lawyer account so you can verify your jurisdictions, receive relevant opportunities, and submit structured proposals to clients looking for the right legal fit.";
-  }
-  if (elements.accountHeroPills) {
-    elements.accountHeroPills.innerHTML = `
-      <span class="tag-pill">Practice profile</span>
-      <span class="tag-pill">Jurisdiction verification</span>
-      <span class="tag-pill">Bid on matched matters</span>
-    `;
-  }
-  if (elements.accountHeroSecondaryEyebrow) {
-    elements.accountHeroSecondaryEyebrow.textContent = "What happens next";
-  }
-  if (elements.accountHeroNotes) {
-    elements.accountHeroNotes.innerHTML = `
-      <p>Create your lawyer account with your name, email, and secure password.</p>
-      <p>Complete your practice and jurisdiction details so Kamieno can verify where you are eligible to act.</p>
-      <p>Once approved, you can respond to suitable matters with pricing and a clear proposed approach.</p>
-    `;
-  }
-  if (elements.accountWorkspaceEyebrow) {
-    elements.accountWorkspaceEyebrow.textContent = "Lawyer onboarding";
-  }
-  if (elements.accountWorkspaceTitle) {
-    elements.accountWorkspaceTitle.textContent = "Start your Kamieno lawyer account here, then complete verification and bidding from your lawyer workspace.";
-  }
-  if (elements.signupPanelTitle) {
-    elements.signupPanelTitle.textContent = "Register as a lawyer";
-  }
-  if (elements.signupPanelPill) {
-    elements.signupPanelPill.textContent = "Lawyer account";
-  }
-  if (elements.signupSubmitLabel) {
-    elements.signupSubmitLabel.textContent = "Create lawyer account";
-  }
-  if (elements.accountInsightEyebrow) {
-    elements.accountInsightEyebrow.textContent = "Why lawyers join";
-  }
-  if (elements.accountInsightBody) {
-    elements.accountInsightBody.textContent = "Kamieno is designed to help lawyers compete on relevance, jurisdiction fit, and quality of approach before a client makes first contact. After registration, complete your profile in the lawyer workspace to enter verification.";
+  if (mode === "signin") {
+    if (elements.accountHeroEyebrow) {
+      elements.accountHeroEyebrow.textContent = "Client sign in";
+    }
+    if (elements.accountHeroTitle) {
+      elements.accountHeroTitle.innerHTML = 'Sign in to your client dashboard <span>and continue your cases.</span>';
+    }
+    if (elements.accountHeroSummary) {
+      elements.accountHeroSummary.textContent = "Use your Kamieno client account to review existing matters, add a new case from the dashboard, and continue any draft that still needs payment.";
+    }
+    if (elements.accountWorkspaceEyebrow) {
+      elements.accountWorkspaceEyebrow.textContent = "Client access";
+    }
+    if (elements.accountWorkspaceTitle) {
+      elements.accountWorkspaceTitle.textContent = "Sign in to open your client dashboard. If you are new here, you can still create a client account below.";
+    }
+    if (elements.loginForm && elements.signupForm) {
+      elements.loginForm.style.order = "-1";
+      elements.signupForm.style.order = "1";
+    }
   }
 }
 
@@ -350,10 +394,16 @@ async function handleCheckoutReturn() {
   const params = new URLSearchParams(window.location.search);
   const sessionId = params.get("session_id");
   const checkoutStatus = params.get("checkout");
+  const caseId = params.get("caseId");
   if (state.checkoutHandled || !checkoutStatus) {
     return;
   }
   state.checkoutHandled = true;
+  state.clientView = state.currentUser?.role === "client" ? "dashboard" : state.clientView;
+  state.editingCaseId = null;
+  if (caseId) {
+    state.selectedCaseId = caseId;
+  }
 
   if (checkoutStatus === "cancel") {
     showToast("Checkout was cancelled. Your matter draft is still saved.");
@@ -396,6 +446,12 @@ function initializeSelections() {
   state.selectedCaseId = state.cases.some((matter) => matter.id === state.selectedCaseId)
     ? state.selectedCaseId
     : state.cases[0]?.id || null;
+  if (state.currentUser?.role === "client") {
+    state.clientView = state.clientView === "composer" ? "composer" : "dashboard";
+  } else {
+    state.clientView = "marketing";
+    state.editingCaseId = null;
+  }
 }
 
 function renderAll() {
@@ -403,9 +459,8 @@ function renderAll() {
   renderHero();
   renderAuth();
   renderCountryRail();
-  renderMatterComposer();
+  renderClientExperience();
   renderLawyerStudio();
-  renderClientBoard();
   renderAdmin();
 }
 
@@ -498,6 +553,127 @@ function renderCountryRail() {
     .join("");
 }
 
+function renderClientExperience() {
+  const isClientPage = window.location.pathname === "/client";
+  if (!isClientPage) {
+    renderMatterComposer();
+    renderClientBoard();
+    return;
+  }
+
+  const isClient = state.currentUser?.role === "client";
+  const showMarketing = !isClient;
+  const showDashboard = isClient && state.clientView === "dashboard";
+  const showComposer = isClient && state.clientView === "composer";
+
+  if (elements.clientMarketingHero) {
+    elements.clientMarketingHero.hidden = !showMarketing;
+  }
+  if (elements.clientMarketingDetails) {
+    elements.clientMarketingDetails.hidden = !showMarketing;
+  }
+  if (elements.clientDashboard) {
+    elements.clientDashboard.hidden = !showDashboard;
+  }
+  if (elements.clientComposer) {
+    elements.clientComposer.hidden = !showComposer;
+  }
+
+  renderMatterComposer();
+  renderClientBoard();
+}
+
+function openMatterComposer(caseId = null) {
+  if (state.currentUser?.role !== "client") {
+    window.location.assign("/account?role=client&returnTo=%2Fclient");
+    return;
+  }
+
+  state.clientView = "composer";
+  state.editingCaseId = caseId;
+
+  if (caseId) {
+    const matter = state.cases.find((entry) => entry.id === caseId);
+    if (!matter) {
+      showToast("That case could not be loaded.");
+      return;
+    }
+    state.selectedCaseId = matter.id;
+    state.selectedCountryCode = matter.countryCode;
+    state.selectedPracticeAreaId = matter.practiceAreaId;
+  } else {
+    elements.matterForm?.reset();
+  }
+
+  renderClientExperience();
+
+  if (caseId) {
+    populateMatterFormFromCase(state.cases.find((entry) => entry.id === caseId));
+  } else {
+    prepareNewMatterForm();
+  }
+
+  elements.clientComposer?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function closeMatterComposer() {
+  state.clientView = state.currentUser?.role === "client" ? "dashboard" : "marketing";
+  state.editingCaseId = null;
+  renderClientExperience();
+  elements.clientDashboard?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function prepareNewMatterForm() {
+  if (!elements.matterForm) {
+    return;
+  }
+  elements.matterForm.reset();
+  state.editingCaseId = null;
+  renderMatterComposer();
+  if (elements.quoteModeSelect) {
+    elements.quoteModeSelect.value = "Detailed";
+  }
+  if (elements.documentNames) {
+    elements.documentNames.value = "";
+  }
+  if (elements.matterSummary) {
+    elements.matterSummary.value = "";
+  }
+  if (elements.budgetInput) {
+    elements.budgetInput.value = "";
+  }
+}
+
+function populateMatterFormFromCase(matter) {
+  if (!matter || !elements.matterForm) {
+    return;
+  }
+  state.selectedCountryCode = matter.countryCode;
+  state.selectedPracticeAreaId = matter.practiceAreaId;
+  renderMatterComposer();
+
+  if (elements.regionSelect) {
+    elements.regionSelect.value = matter.region;
+  }
+  if (elements.quoteModeSelect) {
+    elements.quoteModeSelect.value = matter.quoteMode || "Detailed";
+  }
+  if (elements.matterSummary) {
+    elements.matterSummary.value = matter.summary || "";
+  }
+  if (elements.budgetInput) {
+    elements.budgetInput.value = matter.budget || "";
+  }
+  if (elements.documentNames) {
+    elements.documentNames.value = (matter.documents || []).join(", ");
+  }
+
+  Array.from(elements.promptFields?.querySelectorAll("textarea") || []).forEach((field) => {
+    const prompt = field.name.replace(/^prompt:/, "");
+    field.value = matter.customAnswers?.[prompt] || "";
+  });
+}
+
 function renderMatterComposer() {
   if (
     !elements.countrySelect ||
@@ -512,6 +688,11 @@ function renderMatterComposer() {
     !elements.matterAccessNote ||
     !elements.matterForm ||
     !elements.matterSubmitButton ||
+    !elements.matterFormTitle ||
+    !elements.matterFormPill ||
+    !elements.clientComposerEyebrow ||
+    !elements.clientComposerTitle ||
+    !elements.clientComposerSummary ||
     !elements.clientName ||
     !elements.clientEmail
   ) {
@@ -549,8 +730,26 @@ function renderMatterComposer() {
   elements.requiredUploads.innerHTML = template.uploads.map((entry) => `<li>${entry}</li>`).join("");
 
   const isClient = state.currentUser?.role === "client";
+  const editingMatter = state.cases.find((entry) => entry.id === state.editingCaseId) || null;
+
+  elements.clientComposerEyebrow.textContent = editingMatter ? "Edit case brief" : "Case brief";
+  elements.clientComposerTitle.textContent = editingMatter
+    ? "Update your case details, then save your changes."
+    : "Tell Kamieno what legal help you need.";
+  elements.clientComposerSummary.textContent = editingMatter
+    ? "Review the draft or live case information below. If the matter is still unpaid, saving will take you back into checkout."
+    : "Complete the case brief below to create your draft and continue into payment when you are ready to publish it.";
+  elements.matterFormTitle.textContent = editingMatter ? "Edit your case" : "Create your case";
+  elements.matterFormPill.textContent = editingMatter ? "Existing case" : "New draft";
+  elements.matterSubmitButton.textContent = editingMatter
+    ? String(editingMatter.paymentStatus).startsWith("paid")
+      ? "Save case changes"
+      : "Save changes and continue"
+    : "Save draft and continue";
   elements.matterAccessNote.innerHTML = isClient
-    ? `<p>Signed in as client. Checkout will publish the matter once payment is confirmed.</p>`
+    ? editingMatter
+      ? `<p>Signed in as client. You are editing your own case${String(editingMatter.paymentStatus).startsWith("paid") ? "." : ", and checkout will still be required before an unpaid draft can publish."}</p>`
+      : `<p>Signed in as client. Checkout will publish the matter once payment is confirmed.</p>`
     : `<p>Sign in as a client to create and publish a matter.</p>`;
   setFormEnabled(elements.matterForm, isClient);
   elements.matterSubmitButton.disabled = !isClient;
@@ -710,28 +909,39 @@ function renderCompliancePreview() {
 }
 
 function renderClientBoard() {
-  if (!elements.clientBoardAccess || !elements.caseSelect || !elements.caseDetails || !elements.bidList || !elements.engagementLetter) {
+  if (!elements.clientBoardAccess || !elements.caseList || !elements.caseDetails || !elements.bidList || !elements.engagementLetter) {
     return;
   }
   const isClient = state.currentUser?.role === "client";
   elements.clientBoardAccess.innerHTML = isClient
-    ? "<p>These are your own matters. Payment-pending drafts are visible only to you.</p>"
-    : "<p>Sign in as a client to view your decision board.</p>";
+    ? "<p>Manage your case drafts, published matters, and proposal decisions from one client dashboard.</p>"
+    : "<p>Sign in as a client to view your dashboard.</p>";
 
-  elements.caseSelect.innerHTML = state.cases.length
-    ? state.cases
-        .map((matter) => `
-          <option value="${matter.id}" ${matter.id === state.selectedCaseId ? "selected" : ""}>
-            ${getCountry(matter.countryCode).name} · ${getPracticeArea(matter.practiceAreaId).label}
-          </option>
-        `)
-        .join("")
-    : `<option value="">No matters available</option>`;
-
-  if (!isClient || !state.cases.length) {
+  if (!isClient) {
+    elements.caseList.innerHTML = "";
     elements.caseDetails.innerHTML = "";
     elements.bidList.innerHTML = "";
     elements.engagementLetter.innerHTML = "";
+    if (elements.dashboardCaseStatusPill) {
+      elements.dashboardCaseStatusPill.textContent = "Case view";
+    }
+    return;
+  }
+
+  if (!state.cases.length) {
+    elements.caseList.innerHTML = `
+      <div class="case-empty">
+        <p><strong>No cases yet.</strong></p>
+        <p>Create your first case from this dashboard when you are ready to brief it.</p>
+        <button class="button primary" type="button" data-case-action="create">Add new case</button>
+      </div>
+    `;
+    elements.caseDetails.innerHTML = "<p>Select a case to review its details, or create a new one to get started.</p>";
+    elements.bidList.innerHTML = "<p>No lawyer proposals yet.</p>";
+    elements.engagementLetter.innerHTML = "";
+    if (elements.dashboardCaseStatusPill) {
+      elements.dashboardCaseStatusPill.textContent = "No cases";
+    }
     return;
   }
 
@@ -742,6 +952,41 @@ function renderClientBoard() {
   state.selectedCaseId = matter.id;
   const template = getTemplate(matter.countryCode, matter.practiceAreaId);
   const matterBids = state.bids.filter((bid) => bid.caseId === matter.id);
+  const canDelete = matter.status !== "engaged" && !matter.acceptedBidId;
+  const needsPayment = !String(matter.paymentStatus).startsWith("paid");
+
+  elements.caseList.innerHTML = state.cases
+    .map((entry) => {
+      const selected = entry.id === matter.id;
+      return `
+        <article class="case-card ${selected ? "is-selected" : ""}">
+          <div class="case-card-header">
+            <div>
+              <p class="eyebrow">${getCountry(entry.countryCode).name}</p>
+              <strong>${getPracticeArea(entry.practiceAreaId).label}</strong>
+            </div>
+            <span class="pill neutral">${entry.paymentStatus}</span>
+          </div>
+          <p class="case-card-summary">${entry.summary}</p>
+          <div class="case-meta">
+            <span class="pill neutral">${entry.region}</span>
+            <span class="pill neutral">${entry.quoteMode}</span>
+            <span class="pill neutral">${entry.status}</span>
+          </div>
+          <div class="case-card-actions">
+            <button class="button ghost" type="button" data-case-action="select" data-case-id="${entry.id}">View</button>
+            <button class="button secondary" type="button" data-case-action="edit" data-case-id="${entry.id}">Edit</button>
+            ${!String(entry.paymentStatus).startsWith("paid") ? `<button class="button primary" type="button" data-case-action="pay" data-case-id="${entry.id}">Continue to payment</button>` : ""}
+            <button class="button ghost" type="button" data-case-action="delete" data-case-id="${entry.id}" ${entry.status === "engaged" || entry.acceptedBidId ? "disabled" : ""}>Delete</button>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+
+  if (elements.dashboardCaseStatusPill) {
+    elements.dashboardCaseStatusPill.textContent = needsPayment ? "Draft" : matter.status;
+  }
 
   elements.caseDetails.innerHTML = `
     <p><strong>${getPracticeArea(matter.practiceAreaId).label}</strong></p>
@@ -752,6 +997,11 @@ function renderClientBoard() {
       <span class="pill neutral">${matter.quoteMode}</span>
       <span class="pill neutral">${matter.status}</span>
       <span class="pill neutral">${matter.paymentStatus}</span>
+    </div>
+    <div class="case-primary-actions">
+      <button class="button secondary" type="button" data-case-action="edit" data-case-id="${matter.id}">Edit case brief</button>
+      ${needsPayment ? `<button class="button primary" type="button" data-case-action="pay" data-case-id="${matter.id}">Continue to payment</button>` : ""}
+      <button class="button ghost" type="button" data-case-action="delete" data-case-id="${matter.id}" ${canDelete ? "" : "disabled"}>Delete case</button>
     </div>
     <div class="checklist-card">
       <p class="eyebrow">Dynamic prompts</p>
@@ -803,6 +1053,85 @@ function renderBidCard(bid, matter) {
       </div>
     </article>
   `;
+}
+
+async function handleClientCaseAction(event) {
+  const button = event.target.closest("button[data-case-action]");
+  if (!button || state.currentUser?.role !== "client") {
+    return;
+  }
+
+  const action = button.dataset.caseAction;
+  const caseId = button.dataset.caseId;
+
+  if (action === "create") {
+    openMatterComposer();
+    return;
+  }
+
+  if (action === "select") {
+    state.selectedCaseId = caseId;
+    renderClientBoard();
+    return;
+  }
+
+  if (action === "edit") {
+    openMatterComposer(caseId);
+    return;
+  }
+
+  if (action === "pay") {
+    await continueCaseCheckout(caseId);
+    return;
+  }
+
+  if (action === "delete") {
+    const matter = state.cases.find((entry) => entry.id === caseId);
+    if (!matter) {
+      return;
+    }
+    const confirmed = window.confirm(`Delete this case: ${getPracticeArea(matter.practiceAreaId).label}?`);
+    if (!confirmed) {
+      return;
+    }
+    try {
+      const response = await request("/api/cases", {
+        method: "DELETE",
+        body: JSON.stringify({ caseId }),
+      });
+      showToast(response.message);
+      if (state.selectedCaseId === caseId) {
+        state.selectedCaseId = null;
+      }
+      state.engagementLetter = null;
+      state.clientView = "dashboard";
+      state.editingCaseId = null;
+      await refreshApp();
+    } catch (error) {
+      showToast(error.message);
+    }
+  }
+}
+
+async function continueCaseCheckout(caseId) {
+  try {
+    const checkout = await request("/api/payments", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "create-checkout",
+        caseId,
+        returnPath: "/client",
+      }),
+    });
+    showToast(checkout.message);
+    if (checkout.redirectUrl) {
+      window.location.assign(checkout.redirectUrl);
+      return;
+    }
+    await refreshApp();
+  } catch (error) {
+    showToast(error.message);
+  }
 }
 
 function renderAdmin() {
@@ -883,6 +1212,9 @@ async function submitSignup(event) {
     });
     showToast(response.message);
     elements.signupForm.reset();
+    if (redirectAfterAuth(response.user, formData.get("role"))) {
+      return;
+    }
     await refreshApp();
   } catch (error) {
     showToast(error.message);
@@ -903,6 +1235,9 @@ async function submitLogin(event) {
     });
     showToast(response.message);
     elements.loginForm.reset();
+    if (redirectAfterAuth(response.user)) {
+      return;
+    }
     await refreshApp();
   } catch (error) {
     showToast(error.message);
@@ -917,6 +1252,8 @@ async function submitLogout() {
     });
     state.pendingJurisdictions = [];
     state.engagementLetter = null;
+    state.clientView = "marketing";
+    state.editingCaseId = null;
     showToast(response.message);
     await refreshApp();
   } catch (error) {
@@ -939,30 +1276,30 @@ async function submitMatter(event) {
   });
 
   try {
-    const draft = await request("/api/cases", {
-      method: "POST",
+    const payload = {
+      caseId: state.editingCaseId,
+      countryCode: formData.get("countryCode"),
+      region: formData.get("region"),
+      practiceAreaId: formData.get("practiceAreaId"),
+      quoteMode: formData.get("quoteMode"),
+      summary: formData.get("summary"),
+      budget: formData.get("budget"),
+      documents: splitList(formData.get("documents")),
+      customAnswers,
+    };
+    const response = await request("/api/cases", {
+      method: state.editingCaseId ? "PUT" : "POST",
       body: JSON.stringify({
-        countryCode: formData.get("countryCode"),
-        region: formData.get("region"),
-        practiceAreaId: formData.get("practiceAreaId"),
-        quoteMode: formData.get("quoteMode"),
-        summary: formData.get("summary"),
-        budget: formData.get("budget"),
-        documents: splitList(formData.get("documents")),
-        customAnswers,
+        ...payload,
       }),
     });
-    const checkout = await request("/api/payments", {
-      method: "POST",
-      body: JSON.stringify({
-        action: "create-checkout",
-        caseId: draft.case.id,
-        returnPath: window.location.pathname === "/" ? "/client" : window.location.pathname,
-      }),
-    });
-    showToast(checkout.message);
-    if (checkout.redirectUrl) {
-      window.location.assign(checkout.redirectUrl);
+    const matter = response.case;
+    state.selectedCaseId = matter.id;
+    state.editingCaseId = null;
+    state.clientView = "dashboard";
+    showToast(response.message);
+    if (!String(matter.paymentStatus).startsWith("paid")) {
+      await continueCaseCheckout(matter.id);
       return;
     }
     await refreshApp();
@@ -1228,6 +1565,39 @@ function detectCountry() {
     return "IE";
   }
   return null;
+}
+
+function redirectAfterAuth(user, preferredRole) {
+  const target = getPostAuthPath(user, preferredRole);
+  if (!target || target === window.location.pathname) {
+    return false;
+  }
+  window.location.assign(target);
+  return true;
+}
+
+function getPostAuthPath(user, preferredRole) {
+  const params = new URLSearchParams(window.location.search);
+  const returnTo = normalizeInternalPath(params.get("returnTo"));
+  if (returnTo) {
+    return returnTo;
+  }
+
+  const role = preferredRole || user?.role;
+  if (role === "client") {
+    return "/client";
+  }
+  if (role === "lawyer") {
+    return "/lawyer";
+  }
+  return "/account";
+}
+
+function normalizeInternalPath(value) {
+  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) {
+    return null;
+  }
+  return value.replace(/[\r\n]/g, "") || null;
 }
 
 function clearSearchParams() {
