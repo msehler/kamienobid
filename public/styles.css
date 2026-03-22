@@ -1269,6 +1269,10 @@ body[data-page="account"] .page-hero-card::before {
   padding: 28px;
 }
 
+form.panel > .button {
+  margin-top: 18px;
+}
+
 .panel-header {
   justify-content: space-between;
   margin-bottom: 18px;
