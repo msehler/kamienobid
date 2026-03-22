@@ -14,6 +14,10 @@
   --radius-xl: 34px;
   --radius-lg: 28px;
   --radius-md: 22px;
+  --panel-radius-xl: 26.88px;
+  --panel-radius-lg: 17.92px;
+  --panel-radius-md: 14.08px;
+  --panel-radius-sm: 15.36px;
   --sans: "Avenir Next", "Gill Sans", "Century Gothic", sans-serif;
   --serif: "Iowan Old Style", "Baskerville", "Times New Roman", serif;
 }
@@ -400,7 +404,7 @@ a {
   gap: 28px;
   min-height: 540px;
   padding: 38px;
-  border-radius: 42px;
+  border-radius: var(--panel-radius-xl);
   background:
     radial-gradient(circle at 18% 28%, rgba(237, 246, 219, 0.96), transparent 24%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(250, 251, 245, 0.97));
@@ -1239,6 +1243,7 @@ body[data-page="account"] .page-hero-card::before {
 }
 
 .panel {
+  border-radius: var(--panel-radius-lg);
   padding: 28px;
 }
 
@@ -1335,6 +1340,10 @@ textarea {
 .bid-card {
   border-radius: 22px;
   border: 1px solid var(--line-blue);
+}
+
+.launch-panel {
+  border-radius: var(--panel-radius-md);
 }
 
 .checklist-card,
@@ -1567,10 +1576,14 @@ textarea {
     border-radius: 24px;
   }
 
+  .panel {
+    border-radius: var(--panel-radius-sm);
+  }
+
   .home-hero-panel {
     min-height: auto;
     padding: 24px;
-    border-radius: 28px;
+    border-radius: calc(28px * 0.64);
   }
 
   .home-step-card {
