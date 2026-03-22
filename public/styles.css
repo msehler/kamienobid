@@ -155,7 +155,7 @@ a {
 
 .site-header {
   padding: 18px 22px;
-  border-radius: 999px;
+  border-radius: var(--panel-radius-lg);
   background: rgba(255, 255, 255, 0.97);
   color: var(--ink);
   box-shadow: var(--shadow);
@@ -1502,7 +1502,7 @@ textarea {
   }
 
   .site-header.mobile-nav-open {
-    border-radius: 30px;
+    border-radius: var(--panel-radius-lg);
   }
 
   .mobile-nav-panel:not([hidden]) {
@@ -1560,7 +1560,11 @@ textarea {
   }
 
   .site-header {
-    border-radius: 28px;
+    border-radius: var(--panel-radius-sm);
+  }
+
+  .site-header.mobile-nav-open {
+    border-radius: var(--panel-radius-sm);
   }
 
   .brand-row {
