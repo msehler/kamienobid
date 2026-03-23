@@ -16,6 +16,7 @@ const state = {
 };
 
 const elements = {};
+const STORED_USER_KEY = "kamieno.rememberedUser";
 
 document.addEventListener("DOMContentLoaded", async () => {
   cacheElements();
@@ -369,7 +370,7 @@ async function refreshApp() {
   try {
     const bootstrap = await request("/api/bootstrap");
     state.bootstrap = bootstrap;
-    state.currentUser = bootstrap.currentUser;
+    state.currentUser = bootstrap.currentUser || getStoredUser();
 
     const [cases, lawyers, bids, admin] = await Promise.all([
       request("/api/cases"),
@@ -378,10 +379,16 @@ async function refreshApp() {
       state.currentUser?.role === "admin" ? request("/api/admin") : Promise.resolve(null),
     ]);
 
-    state.cases = cases;
+    state.cases = bootstrap.currentUser ? cases : filterCasesForStoredUser(cases, state.currentUser);
     state.lawyers = lawyers;
-    state.bids = bids;
+    state.bids = bootstrap.currentUser ? bids : [];
     state.admin = admin;
+
+    if (bootstrap.currentUser) {
+      storeUser(bootstrap.currentUser);
+    } else if (!state.currentUser) {
+      clearStoredUser();
+    }
 
     initializeSelections();
     renderAll();
@@ -1250,6 +1257,7 @@ async function submitSignup(event) {
       }),
     });
     showToast(response.message);
+    storeUser(response.user);
     elements.signupForm.reset();
     if (redirectAfterAuth(response.user, formData.get("role"))) {
       return;
@@ -1273,6 +1281,7 @@ async function submitLogin(event) {
       }),
     });
     showToast(response.message);
+    storeUser(response.user);
     elements.loginForm.reset();
     if (redirectAfterAuth(response.user)) {
       return;
@@ -1293,6 +1302,7 @@ async function submitLogout() {
     state.engagementLetter = null;
     state.clientView = "marketing";
     state.editingCaseId = null;
+    clearStoredUser();
     showToast(response.message);
     await refreshApp();
   } catch (error) {
@@ -1637,6 +1647,52 @@ function normalizeInternalPath(value) {
     return null;
   }
   return value.replace(/[\r\n]/g, "") || null;
+}
+
+function getStoredUser() {
+  try {
+    const raw = window.localStorage.getItem(STORED_USER_KEY);
+    if (!raw) {
+      return null;
+    }
+    const user = JSON.parse(raw);
+    return user && typeof user === "object" ? user : null;
+  } catch (_error) {
+    return null;
+  }
+}
+
+function storeUser(user) {
+  if (!user) {
+    return;
+  }
+  try {
+    window.localStorage.setItem(STORED_USER_KEY, JSON.stringify({
+      id: user.id,
+      role: user.role,
+      name: user.name,
+      email: user.email,
+      status: user.status,
+      jurisdictions: user.jurisdictions || [],
+    }));
+  } catch (_error) {
+    // Ignore storage failures.
+  }
+}
+
+function clearStoredUser() {
+  try {
+    window.localStorage.removeItem(STORED_USER_KEY);
+  } catch (_error) {
+    // Ignore storage failures.
+  }
+}
+
+function filterCasesForStoredUser(cases, user) {
+  if (!user || user.role !== "client") {
+    return [];
+  }
+  return (cases || []).filter((matter) => matter.clientUserId === user.id);
 }
 
 function clearSearchParams() {
