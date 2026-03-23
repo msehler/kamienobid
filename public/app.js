@@ -439,6 +439,7 @@ async function handleCheckoutReturn() {
 function initializeSelections() {
   const enabledCountries = getEnabledCountries();
   const detectedCountry = detectCountry();
+  const params = new URLSearchParams(window.location.search);
   state.selectedCountryCode = enabledCountries.some((country) => country.code === state.selectedCountryCode)
     ? state.selectedCountryCode
     : detectedCountry || enabledCountries[0]?.code || "AU";
@@ -447,7 +448,7 @@ function initializeSelections() {
     ? state.selectedCaseId
     : state.cases[0]?.id || null;
   if (state.currentUser?.role === "client") {
-    state.clientView = state.clientView === "composer" ? "composer" : "dashboard";
+    state.clientView = params.get("view") === "composer" || state.clientView === "composer" ? "composer" : "dashboard";
   } else {
     state.clientView = "marketing";
     state.editingCaseId = null;
@@ -477,6 +478,31 @@ function renderHeader() {
       ? `<span class="pill">${state.currentUser.role}</span><span>${state.currentUser.name}</span>`
       : `<a class="button ghost" href="/account">Sign in</a>`;
   }
+
+  document.querySelectorAll(".nav-user-label").forEach((node) => node.remove());
+  document.querySelectorAll(".main-nav-primary > a[href=\"/account\"], .mobile-nav-primary > a[href=\"/account\"]").forEach((link) => {
+    if (state.currentUser) {
+      link.textContent = "Logout";
+      link.setAttribute("href", "#logout");
+      link.setAttribute("data-nav-logout", "true");
+      const label = document.createElement("span");
+      label.className = "pill neutral nav-user-label";
+      label.textContent = `Signed in as ${state.currentUser.name}`;
+      const targetContainer = link.closest(".main-nav-primary, .mobile-nav-primary")?.nextElementSibling;
+      targetContainer?.prepend(label);
+    } else {
+      link.textContent = "Sign in";
+      link.setAttribute("href", "/account");
+      link.removeAttribute("data-nav-logout");
+    }
+  });
+
+  document.querySelectorAll("[data-nav-logout]").forEach((link) => {
+    link.onclick = async (event) => {
+      event.preventDefault();
+      await submitLogout();
+    };
+  });
 }
 
 function renderHero() {
@@ -581,6 +607,19 @@ function renderClientExperience() {
 
   renderMatterComposer();
   renderClientBoard();
+
+  if (isClient && !showDashboard && !showComposer) {
+    state.clientView = "dashboard";
+    if (elements.clientMarketingHero) {
+      elements.clientMarketingHero.hidden = true;
+    }
+    if (elements.clientMarketingDetails) {
+      elements.clientMarketingDetails.hidden = true;
+    }
+    if (elements.clientDashboard) {
+      elements.clientDashboard.hidden = false;
+    }
+  }
 }
 
 function openMatterComposer(caseId = null) {
@@ -1580,12 +1619,12 @@ function getPostAuthPath(user, preferredRole) {
   const params = new URLSearchParams(window.location.search);
   const returnTo = normalizeInternalPath(params.get("returnTo"));
   if (returnTo) {
-    return returnTo;
+    return returnTo === "/client" ? "/client?view=dashboard" : returnTo;
   }
 
   const role = preferredRole || user?.role;
   if (role === "client") {
-    return "/client";
+    return "/client?view=dashboard";
   }
   if (role === "lawyer") {
     return "/lawyer";
