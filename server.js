@@ -78,7 +78,7 @@ const server = http.createServer(async (req, res) => {
     try {
       attachResponseHelpers(res);
       attachQuery(req, parsedUrl);
-      req.body = req.method === "POST" ? await readJson(req) : {};
+      req.body = ["POST", "PUT", "PATCH", "DELETE"].includes(req.method) ? await readJson(req) : {};
       req.viewer = loadViewer(req);
       await handler(req, res);
     } catch (error) {

@@ -14,10 +14,10 @@
   --radius-xl: 34px;
   --radius-lg: 28px;
   --radius-md: 22px;
-  --panel-radius-xl: 26.88px;
-  --panel-radius-lg: 17.92px;
-  --panel-radius-md: 14.08px;
-  --panel-radius-sm: 15.36px;
+  --panel-radius-xl: 30px;
+  --panel-radius-lg: 30px;
+  --panel-radius-md: 30px;
+  --panel-radius-sm: 30px;
   --sans: "Avenir Next", "Gill Sans", "Century Gothic", sans-serif;
   --serif: "Iowan Old Style", "Baskerville", "Times New Roman", serif;
 }
@@ -155,7 +155,7 @@ a {
 
 .site-header {
   padding: 18px 22px;
-  border-radius: var(--panel-radius-lg);
+  border-radius: var(--panel-radius-xl);
   background: rgba(255, 255, 255, 0.97);
   color: var(--ink);
   box-shadow: var(--shadow);
@@ -501,7 +501,7 @@ a {
   gap: 22px;
   min-height: 100%;
   padding: 22px;
-  border-radius: 32px;
+  border-radius: 30px;
   background: linear-gradient(180deg, rgba(246, 248, 252, 0.98), rgba(233, 239, 252, 0.94));
   color: var(--ink);
   box-shadow: var(--shadow);
@@ -512,7 +512,7 @@ a {
   overflow: hidden;
   min-height: 220px;
   padding: 18px;
-  border-radius: 28px;
+  border-radius: 30px;
   background: linear-gradient(180deg, rgba(21, 57, 200, 0.1), rgba(21, 57, 200, 0.04));
   border: 1px solid rgba(21, 57, 200, 0.1);
   display: grid;
@@ -556,7 +556,7 @@ a {
   position: relative;
   z-index: 1;
   background: rgba(255, 255, 255, 0.96);
-  border-radius: 24px;
+  border-radius: 30px;
   box-shadow: 0 18px 40px rgba(17, 48, 160, 0.12);
 }
 
@@ -677,7 +677,7 @@ a {
   position: relative;
   overflow: hidden;
   padding: 28px;
-  border-radius: var(--radius-xl);
+  border-radius: var(--panel-radius-lg);
   background: rgba(255, 255, 255, 0.95);
   color: var(--ink);
   box-shadow: var(--shadow);
@@ -788,7 +788,7 @@ body[data-page="account"] .page-hero-card::before {
   overflow: hidden;
   min-height: 260px;
   padding: 26px;
-  border-radius: var(--radius-xl);
+  border-radius: 30px;
   background: var(--card);
   color: var(--ink);
   box-shadow: var(--shadow);
@@ -979,7 +979,7 @@ body[data-page="account"] .page-hero-card::before {
 
 .metric-card {
   padding: 16px 18px;
-  border-radius: 22px;
+  border-radius: 30px;
   background: rgba(255, 255, 255, 0.12);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -1162,7 +1162,7 @@ body[data-page="account"] .page-hero-card::before {
 .panel,
 .country-chip {
   position: relative;
-  border-radius: var(--radius-lg);
+  border-radius: var(--panel-radius-lg);
   background: var(--card);
   color: var(--ink);
   box-shadow: var(--shadow);
@@ -1575,7 +1575,7 @@ textarea {
   }
 
   .site-header.mobile-nav-open {
-    border-radius: var(--panel-radius-lg);
+    border-radius: var(--panel-radius-xl);
   }
 
   .mobile-nav-panel:not([hidden]) {
@@ -1655,28 +1655,24 @@ textarea {
   .feature-card,
   .country-chip {
     padding: 20px;
-    border-radius: 24px;
-  }
-
-  .panel {
     border-radius: var(--panel-radius-sm);
   }
 
   .home-hero-panel {
     min-height: auto;
     padding: 24px;
-    border-radius: calc(28px * 0.64);
+    border-radius: 30px;
   }
 
   .home-step-card {
     gap: 18px;
-    border-radius: 28px;
+    border-radius: 30px;
     padding: 18px;
   }
 
   .home-step-visual {
     min-height: 190px;
-    border-radius: 24px;
+    border-radius: 30px;
   }
 
   .home-hero-title {
