@@ -1,4 +1,12 @@
-const { login, logout, sessionPayload, setSessionCookie, signUp } = require("../lib/auth");
+const {
+  getRememberedAccounts,
+  login,
+  logout,
+  rememberAccount,
+  sessionPayload,
+  setSessionCookie,
+  signUp,
+} = require("../lib/auth");
 
 module.exports = function handler(req, res) {
   if (req.method === "GET") {
@@ -10,9 +18,13 @@ module.exports = function handler(req, res) {
     if (req.body?.action === "signup") {
       const result = signUp(req.body || {});
       if (result.body.user) {
-        const loginResult = login(req.body || {});
+        rememberAccount(res, req, req.body?.email);
+        const loginResult = login(req.body || {}, {
+          rememberedAccounts: getRememberedAccounts(req),
+        });
         if (loginResult.body.token) {
           setSessionCookie(res, loginResult.body.token);
+          rememberAccount(res, req, req.body?.email);
           delete loginResult.body.token;
           res.status(201).json({ ...result.body, user: loginResult.body.user });
           return;
@@ -23,9 +35,12 @@ module.exports = function handler(req, res) {
     }
 
     if (req.body?.action === "login") {
-      const result = login(req.body || {});
+      const result = login(req.body || {}, {
+        rememberedAccounts: getRememberedAccounts(req),
+      });
       if (result.body.token) {
         setSessionCookie(res, result.body.token);
+        rememberAccount(res, req, req.body?.email);
         delete result.body.token;
       }
       res.status(result.status).json(result.body);
