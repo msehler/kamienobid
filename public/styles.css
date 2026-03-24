@@ -1380,6 +1380,10 @@ textarea {
   background: var(--card-soft);
 }
 
+.access-note {
+  margin-bottom: 16px;
+}
+
 .checklist-card ul,
 .template-summary ul,
 .bid-list ul {
