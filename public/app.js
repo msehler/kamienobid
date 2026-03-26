@@ -761,7 +761,7 @@ function renderMatterComposer() {
   `;
   elements.paymentFlowSummary.innerHTML = `
     <p class="eyebrow">Publishing flow</p>
-    <p>Create a draft matter first, then complete checkout to make it visible to eligible lawyers.</p>
+    <p>Save your draft first, then publish it from your dashboard when you are ready to receive lawyer proposals.</p>
   `;
   elements.promptFields.innerHTML = template.prompts
     .map(
@@ -783,19 +783,21 @@ function renderMatterComposer() {
     ? "Update your case details, then save your changes."
     : "Tell Kamieno what legal help you need.";
   elements.clientComposerSummary.textContent = editingMatter
-    ? "Review the draft or live case information below. If the matter is still unpaid, saving will take you back into checkout."
-    : "Complete the case brief below to create your draft and continue into payment when you are ready to publish it.";
+    ? String(editingMatter.paymentStatus).startsWith("paid")
+      ? "Review the published case information below, then save your changes."
+      : "Review the draft below, save your changes, and publish it later from your dashboard when you are ready."
+    : "Complete the case brief below to save your draft. You can publish it from your dashboard when you are ready.";
   elements.matterFormTitle.textContent = editingMatter ? "Edit your case" : "Create your case";
   elements.matterFormPill.textContent = editingMatter ? "Existing case" : "New draft";
   elements.matterSubmitButton.textContent = editingMatter
     ? String(editingMatter.paymentStatus).startsWith("paid")
       ? "Save case changes"
-      : "Save changes and continue"
-    : "Save draft and continue";
+      : "Save draft changes"
+    : "Save draft";
   elements.matterAccessNote.innerHTML = isClient
     ? editingMatter
-      ? `<p>Signed in as client. You are editing your own case${String(editingMatter.paymentStatus).startsWith("paid") ? "." : ", and checkout will still be required before an unpaid draft can publish."}</p>`
-      : `<p>Signed in as client. Checkout will publish the matter once payment is confirmed.</p>`
+      ? `<p>Signed in as client. You are editing your own case${String(editingMatter.paymentStatus).startsWith("paid") ? "." : ", and you can publish this draft from the dashboard when you are ready."}</p>`
+      : `<p>Signed in as client. Saving here creates a draft, and publishing happens later from the dashboard.</p>`
     : `<p>Sign in as a client to create and publish a matter.</p>`;
   setFormEnabled(elements.matterForm, isClient);
   elements.matterSubmitButton.disabled = !isClient;
@@ -1004,26 +1006,26 @@ function renderClientBoard() {
   elements.caseList.innerHTML = state.cases
     .map((entry) => {
       const selected = entry.id === matter.id;
+      const needsPayment = !String(entry.paymentStatus).startsWith("paid");
       return `
-        <article class="case-card ${selected ? "is-selected" : ""}">
+        <article class="case-card ${selected ? "is-selected" : ""}" data-case-action="select" data-case-id="${entry.id}">
           <div class="case-card-header">
             <div>
               <p class="eyebrow">${getCountry(entry.countryCode).name}</p>
               <strong>${getPracticeArea(entry.practiceAreaId).label}</strong>
             </div>
-            <span class="pill neutral">${entry.paymentStatus}</span>
+            <span class="pill neutral">${needsPayment ? "Draft" : "Published"}</span>
           </div>
           <p class="case-card-summary">${entry.summary}</p>
           <div class="case-meta">
             <span class="pill neutral">${entry.region}</span>
             <span class="pill neutral">${entry.quoteMode}</span>
-            <span class="pill neutral">${entry.status}</span>
+            <span class="pill neutral">${needsPayment ? "Awaiting publish" : entry.status}</span>
           </div>
           <div class="case-card-actions">
-            <button class="button ghost" type="button" data-case-action="select" data-case-id="${entry.id}">View</button>
             <button class="button secondary" type="button" data-case-action="edit" data-case-id="${entry.id}">Edit</button>
-            ${!String(entry.paymentStatus).startsWith("paid") ? `<button class="button primary" type="button" data-case-action="pay" data-case-id="${entry.id}">Continue to payment</button>` : ""}
             <button class="button ghost" type="button" data-case-action="delete" data-case-id="${entry.id}" ${entry.status === "engaged" || entry.acceptedBidId ? "disabled" : ""}>Delete</button>
+            ${needsPayment ? `<button class="button primary" type="button" data-case-action="publish" data-case-id="${entry.id}">Publish</button>` : ""}
           </div>
         </article>
       `;
@@ -1045,9 +1047,9 @@ function renderClientBoard() {
       <span class="pill neutral">${matter.paymentStatus}</span>
     </div>
     <div class="case-primary-actions">
-      <button class="button secondary" type="button" data-case-action="edit" data-case-id="${matter.id}">Edit case brief</button>
-      ${needsPayment ? `<button class="button primary" type="button" data-case-action="pay" data-case-id="${matter.id}">Continue to payment</button>` : ""}
-      <button class="button ghost" type="button" data-case-action="delete" data-case-id="${matter.id}" ${canDelete ? "" : "disabled"}>Delete case</button>
+      <button class="button secondary" type="button" data-case-action="edit" data-case-id="${matter.id}">Edit</button>
+      <button class="button ghost" type="button" data-case-action="delete" data-case-id="${matter.id}" ${canDelete ? "" : "disabled"}>Delete</button>
+      ${needsPayment ? `<button class="button primary" type="button" data-case-action="publish" data-case-id="${matter.id}">Publish</button>` : ""}
     </div>
     <div class="checklist-card">
       <p class="eyebrow">Dynamic prompts</p>
@@ -1102,13 +1104,16 @@ function renderBidCard(bid, matter) {
 }
 
 async function handleClientCaseAction(event) {
-  const button = event.target.closest("button[data-case-action]");
-  if (!button || state.currentUser?.role !== "client") {
+  const control = event.target.closest("[data-case-action]");
+  if (!control || state.currentUser?.role !== "client") {
+    return;
+  }
+  if (typeof control.matches === "function" && control.matches(":disabled")) {
     return;
   }
 
-  const action = button.dataset.caseAction;
-  const caseId = button.dataset.caseId;
+  const action = control.dataset.caseAction;
+  const caseId = control.dataset.caseId;
 
   if (action === "create") {
     openMatterComposer();
@@ -1126,7 +1131,7 @@ async function handleClientCaseAction(event) {
     return;
   }
 
-  if (action === "pay") {
+  if (action === "publish") {
     await continueCaseCheckout(caseId);
     return;
   }
@@ -1313,7 +1318,7 @@ async function submitLogout() {
 async function submitMatter(event) {
   event.preventDefault();
   if (state.currentUser?.role !== "client") {
-    showToast("Client login required to publish a matter.");
+    showToast("Client login required to save a draft.");
     return;
   }
 
@@ -1347,11 +1352,8 @@ async function submitMatter(event) {
     state.editingCaseId = null;
     state.clientView = "dashboard";
     showToast(response.message);
-    if (!String(matter.paymentStatus).startsWith("paid")) {
-      await continueCaseCheckout(matter.id);
-      return;
-    }
     await refreshApp();
+    elements.clientDashboard?.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
     showToast(error.message);
   }

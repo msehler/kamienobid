@@ -1468,6 +1468,7 @@ textarea {
 .case-card {
   display: grid;
   gap: 12px;
+  cursor: pointer;
 }
 
 .case-card.is-selected {
