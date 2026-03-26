@@ -42,6 +42,8 @@ function cacheElements() {
     "sessionCard",
     "stripeStatus",
     "signupForm",
+    "signupFirstName",
+    "signupLastName",
     "signupRole",
     "loginForm",
     "logoutButton",
@@ -131,6 +133,11 @@ function cacheElements() {
 }
 
 function bindEvents() {
+  [elements.signupFirstName, elements.signupLastName].filter(Boolean).forEach((field) => {
+    field.addEventListener("input", handleSignupNameInput);
+    field.addEventListener("blur", handleSignupNameInput);
+  });
+
   if (elements.countrySelect) {
     elements.countrySelect.addEventListener("change", () => {
       state.selectedCountryCode = elements.countrySelect.value;
@@ -1250,12 +1257,20 @@ function renderAdmin() {
 async function submitSignup(event) {
   event.preventDefault();
   const formData = new FormData(elements.signupForm);
+  const firstName = normalizeNamePart(formData.get("firstName"));
+  const lastName = normalizeNamePart(formData.get("lastName"));
   try {
+    if (elements.signupFirstName) {
+      elements.signupFirstName.value = firstName;
+    }
+    if (elements.signupLastName) {
+      elements.signupLastName.value = lastName;
+    }
     const response = await request("/api/auth", {
       method: "POST",
       body: JSON.stringify({
         action: "signup",
-        name: formData.get("name"),
+        name: [firstName, lastName].filter(Boolean).join(" "),
         email: formData.get("email"),
         password: formData.get("password"),
         role: formData.get("role"),
@@ -1585,6 +1600,24 @@ function splitList(value) {
     .split(",")
     .map((entry) => entry.trim())
     .filter(Boolean);
+}
+
+function normalizeNamePart(value) {
+  return String(value || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+    .replace(/(^|[\s'-])\p{L}/gu, (match) => match.toUpperCase());
+}
+
+function handleSignupNameInput(event) {
+  if (!event?.target) {
+    return;
+  }
+  const normalized = normalizeNamePart(event.target.value);
+  if (event.target.value !== normalized) {
+    event.target.value = normalized;
+  }
 }
 
 function formatMoney(value, currencyCode) {
