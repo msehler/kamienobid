@@ -1314,6 +1314,10 @@ form.panel > .button {
   background: rgba(21, 57, 200, 0.12);
 }
 
+.nav-user-label {
+  text-decoration: none;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
