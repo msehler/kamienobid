@@ -500,7 +500,7 @@ function renderHeader() {
       link.setAttribute("href", "#logout");
       link.setAttribute("data-nav-logout", "true");
       const label = document.createElement("a");
-      label.className = "pill neutral nav-user-label";
+      label.className = "button secondary nav-user-label";
       label.textContent = `Signed in as ${state.currentUser.name}`;
       label.href = getDashboardPath(state.currentUser);
       const targetContainer = link.closest(".main-nav-primary, .mobile-nav-primary")?.nextElementSibling;

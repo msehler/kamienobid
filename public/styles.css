@@ -1138,6 +1138,20 @@ body[data-page="account"] .page-hero-card::before {
   flex-wrap: wrap;
 }
 
+#clientDashboard .workspace-header h2,
+.dashboard-title {
+  max-width: 22ch;
+  font-size: clamp(1.9rem, 3vw, 3rem);
+  line-height: 0.98;
+}
+
+.dashboard-action {
+  min-height: 44px;
+  padding: 11px 18px;
+  font-size: 0.95rem;
+  line-height: 1.1;
+}
+
 .platform-grid,
 .workspace-grid,
 .stack-column,
@@ -1323,6 +1337,10 @@ form.panel > .button {
 
 .nav-user-label {
   text-decoration: none;
+  min-height: 40px;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  line-height: 1.1;
 }
 
 .form-grid {
