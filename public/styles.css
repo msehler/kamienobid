@@ -1279,7 +1279,14 @@ form.panel > .button {
   gap: 18px;
 }
 
+.insight-panel {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
 .matter-form .panel-header,
+.insight-panel .panel-header,
 .matter-form .access-note,
 .matter-form > .button,
 .matter-form .prompt-grid {
