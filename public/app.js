@@ -83,7 +83,6 @@ function cacheElements() {
     "quoteModeSelect",
     "promptFields",
     "requiredUploads",
-    "publishFee",
     "templateSummary",
     "paymentFlowSummary",
     "matterSummary",
@@ -741,7 +740,6 @@ function renderMatterComposer() {
     !elements.practiceAreaSelect ||
     !elements.regionLabel ||
     !elements.regionSelect ||
-    !elements.publishFee ||
     !elements.templateSummary ||
     !elements.paymentFlowSummary ||
     !elements.promptFields ||
@@ -768,7 +766,6 @@ function renderMatterComposer() {
   state.selectedCountryCode = country.code;
   elements.regionLabel.textContent = country.regionLabel;
   populateRegionSelect(elements.regionSelect, country, elements.regionSelect.value);
-  elements.publishFee.textContent = `${formatMoney(country.clientFee, country.currencyCode)} fee`;
   elements.templateSummary.innerHTML = `
     <p><strong>${template.label}</strong></p>
     <p>${template.terminology}</p>
@@ -777,7 +774,7 @@ function renderMatterComposer() {
   `;
   elements.paymentFlowSummary.innerHTML = `
     <p class="eyebrow">Publishing flow</p>
-    <p>Save your draft first, then publish it from your dashboard when you are ready to receive lawyer proposals.</p>
+    <p>Save your draft first, then add it to cart from your dashboard when you are ready for checkout and payment.</p>
   `;
   elements.caseName.placeholder = buildCaseNamePlaceholder(state.currentUser?.name);
   elements.promptFields.innerHTML = template.prompts
@@ -802,8 +799,8 @@ function renderMatterComposer() {
   elements.clientComposerSummary.textContent = editingMatter
     ? String(editingMatter.paymentStatus).startsWith("paid")
       ? "Review the published case information below, then save your changes."
-      : "Review the draft below, save your changes, and publish it later from your dashboard when you are ready."
-    : "Complete the case brief below to save your draft. You can publish it from your dashboard when you are ready.";
+      : "Review the draft below, save your changes, and add it to cart later from your dashboard when you are ready for checkout."
+    : "Complete the case brief below to save your draft. You can add it to cart from your dashboard when you are ready for checkout.";
   elements.matterFormTitle.textContent = editingMatter ? "Edit your case" : "Create your case";
   elements.matterFormPill.textContent = editingMatter ? "Existing case" : "New draft";
   elements.matterSubmitButton.textContent = editingMatter
@@ -813,8 +810,8 @@ function renderMatterComposer() {
     : "Save draft";
   elements.matterAccessNote.innerHTML = isClient
     ? editingMatter
-      ? `<p>Signed in as client. You are editing your own case${String(editingMatter.paymentStatus).startsWith("paid") ? "." : ", and you can publish this draft from the dashboard when you are ready."}</p>`
-      : `<p>Signed in as client. Saving here creates a draft, and publishing happens later from the dashboard.</p>`
+      ? `<p>Signed in as client. You are editing your own case${String(editingMatter.paymentStatus).startsWith("paid") ? "." : ", and you can add this draft to cart from the dashboard when you are ready."}</p>`
+      : `<p>Signed in as client. Saving here creates a draft, and checkout happens later from the dashboard.</p>`
     : `<p>Sign in as a client to create and publish a matter.</p>`;
   setFormEnabled(elements.matterForm, isClient);
   elements.matterSubmitButton.disabled = !isClient;
@@ -1037,12 +1034,12 @@ function renderClientBoard() {
           <div class="case-meta">
             <span class="pill neutral">${entry.region}</span>
             <span class="pill neutral">${entry.quoteMode}</span>
-            <span class="pill neutral">${needsPayment ? "Awaiting publish" : entry.status}</span>
+            <span class="pill neutral">${needsPayment ? "Ready for checkout" : entry.status}</span>
           </div>
           <div class="case-card-actions">
             <button class="button secondary" type="button" data-case-action="edit" data-case-id="${entry.id}">Edit</button>
             <button class="button ghost" type="button" data-case-action="delete" data-case-id="${entry.id}" ${entry.status === "engaged" || entry.acceptedBidId ? "disabled" : ""}>Delete</button>
-            ${needsPayment ? `<button class="button primary" type="button" data-case-action="publish" data-case-id="${entry.id}">Publish</button>` : ""}
+            ${needsPayment ? `<button class="button primary" type="button" data-case-action="publish" data-case-id="${entry.id}">Add to cart</button>` : ""}
           </div>
         </article>
       `;
@@ -1067,7 +1064,7 @@ function renderClientBoard() {
     <div class="case-primary-actions">
       <button class="button secondary" type="button" data-case-action="edit" data-case-id="${matter.id}">Edit</button>
       <button class="button ghost" type="button" data-case-action="delete" data-case-id="${matter.id}" ${canDelete ? "" : "disabled"}>Delete</button>
-      ${needsPayment ? `<button class="button primary" type="button" data-case-action="publish" data-case-id="${matter.id}">Publish</button>` : ""}
+      ${needsPayment ? `<button class="button primary" type="button" data-case-action="publish" data-case-id="${matter.id}">Add to cart</button>` : ""}
     </div>
     <div class="checklist-card">
       <p class="eyebrow">Dynamic prompts</p>
