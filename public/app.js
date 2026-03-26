@@ -75,6 +75,7 @@ function cacheElements() {
     "matterAccessNote",
     "matterCancelButton",
     "matterSubmitButton",
+    "caseName",
     "countrySelect",
     "regionSelect",
     "regionLabel",
@@ -695,6 +696,9 @@ function prepareNewMatterForm() {
   if (elements.budgetInput) {
     elements.budgetInput.value = "";
   }
+  if (elements.caseName) {
+    elements.caseName.value = "";
+  }
 }
 
 function populateMatterFormFromCase(matter) {
@@ -707,6 +711,9 @@ function populateMatterFormFromCase(matter) {
 
   if (elements.regionSelect) {
     elements.regionSelect.value = matter.region;
+  }
+  if (elements.caseName) {
+    elements.caseName.value = matter.caseName || "";
   }
   if (elements.quoteModeSelect) {
     elements.quoteModeSelect.value = matter.quoteMode || "Detailed";
@@ -747,7 +754,8 @@ function renderMatterComposer() {
     !elements.clientComposerTitle ||
     !elements.clientComposerSummary ||
     !elements.clientName ||
-    !elements.clientEmail
+    !elements.clientEmail ||
+    !elements.caseName
   ) {
     return;
   }
@@ -770,6 +778,7 @@ function renderMatterComposer() {
     <p class="eyebrow">Publishing flow</p>
     <p>Save your draft first, then publish it from your dashboard when you are ready to receive lawyer proposals.</p>
   `;
+  elements.caseName.placeholder = buildCaseNamePlaceholder(state.currentUser?.name);
   elements.promptFields.innerHTML = template.prompts
     .map(
       (prompt) => `
@@ -1019,7 +1028,7 @@ function renderClientBoard() {
           <div class="case-card-header">
             <div>
               <p class="eyebrow">${getCountry(entry.countryCode).name}</p>
-              <strong>${getPracticeArea(entry.practiceAreaId).label}</strong>
+              <strong>${entry.caseName || getPracticeArea(entry.practiceAreaId).label}</strong>
             </div>
             <span class="pill neutral">${needsPayment ? "Draft" : "Published"}</span>
           </div>
@@ -1044,7 +1053,8 @@ function renderClientBoard() {
   }
 
   elements.caseDetails.innerHTML = `
-    <p><strong>${getPracticeArea(matter.practiceAreaId).label}</strong></p>
+    <p><strong>${matter.caseName || getPracticeArea(matter.practiceAreaId).label}</strong></p>
+    <p class="eyebrow">${getPracticeArea(matter.practiceAreaId).label}</p>
     <p>${matter.summary}</p>
     <div class="case-meta">
       <span class="pill neutral">${getCountry(matter.countryCode).name}</span>
@@ -1347,6 +1357,7 @@ async function submitMatter(event) {
   try {
     const payload = {
       caseId: state.editingCaseId,
+      caseName: formData.get("caseName"),
       countryCode: formData.get("countryCode"),
       region: formData.get("region"),
       practiceAreaId: formData.get("practiceAreaId"),
@@ -1608,6 +1619,11 @@ function normalizeNamePart(value) {
     .replace(/\s+/g, " ")
     .toLowerCase()
     .replace(/(^|[\s'-])\p{L}/gu, (match) => match.toUpperCase());
+}
+
+function buildCaseNamePlaceholder(clientName) {
+  const plaintiff = String(clientName || "").trim() || "Taylor Shaw";
+  return `e.g. ${plaintiff} -v- John Smith`;
 }
 
 function handleSignupNameInput(event) {
