@@ -1356,18 +1356,8 @@ textarea {
   margin: 18px 0;
 }
 
-.matter-form > label,
-.matter-form .prompt-grid > label {
-  gap: 4px;
-}
-
-.matter-form textarea {
-  padding-top: 0;
-}
-
-.matter-form input[type="text"],
-.matter-form input[type="email"] {
-  padding-bottom: 0;
+.matter-form label {
+  gap: 8px;
 }
 
 .checklist-card,
