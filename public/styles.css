@@ -1273,6 +1273,19 @@ form.panel > .button {
   margin-top: 18px;
 }
 
+.matter-form {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+.matter-form .panel-header,
+.matter-form .access-note,
+.matter-form > .button,
+.matter-form .prompt-grid {
+  margin: 0;
+}
+
 .panel-header {
   justify-content: space-between;
   margin-bottom: 18px;
@@ -1358,10 +1371,6 @@ textarea {
 
 .matter-form label {
   gap: 8px;
-}
-
-.matter-form > label + .checklist-card {
-  margin-top: 8px;
 }
 
 .checklist-card,
