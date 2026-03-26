@@ -1360,6 +1360,10 @@ textarea {
   gap: 8px;
 }
 
+.matter-form > label + .checklist-card {
+  margin-top: 8px;
+}
+
 .checklist-card,
 .launch-panel,
 .engagement-letter,
