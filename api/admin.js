@@ -1,7 +1,9 @@
-const { requireRole } = require("../lib/auth");
+const { loadViewer, requireRole } = require("../lib/auth");
 const { getAdminSummary, updateAdmin } = require("../lib/platform");
 
 module.exports = function handler(req, res) {
+  req.viewer = req.viewer || loadViewer(req);
+
   if (!requireRole(req, res, ["admin"])) {
     return;
   }

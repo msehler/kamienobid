@@ -1,7 +1,9 @@
-const { requireRole } = require("../lib/auth");
+const { loadViewer, requireRole } = require("../lib/auth");
 const { applyDecision } = require("../lib/platform");
 
 module.exports = function handler(req, res) {
+  req.viewer = req.viewer || loadViewer(req);
+
   if (req.method === "POST") {
     if (!requireRole(req, res, ["client"])) {
       return;

@@ -1,8 +1,10 @@
-const { requireRole } = require("../lib/auth");
+const { loadViewer, requireRole } = require("../lib/auth");
 const { getRequestOrigin } = require("../lib/http");
 const { confirmCheckout, createCheckout } = require("../lib/platform");
 
 module.exports = async function handler(req, res) {
+  req.viewer = req.viewer || loadViewer(req);
+
   if (!requireRole(req, res, ["client", "admin"])) {
     return;
   }

@@ -1,7 +1,9 @@
-const { requireRole } = require("../lib/auth");
+const { loadViewer, requireRole } = require("../lib/auth");
 const { createCase, deleteCase, listCases, updateCase } = require("../lib/platform");
 
 module.exports = function handler(req, res) {
+  req.viewer = req.viewer || loadViewer(req);
+
   if (req.method === "GET") {
     res.status(200).json(listCases(req.viewer, req.query || {}));
     return;

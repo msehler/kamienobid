@@ -1,6 +1,7 @@
 const {
   getRememberedAccounts,
   login,
+  loadViewer,
   logout,
   rememberAccount,
   sessionPayload,
@@ -9,6 +10,8 @@ const {
 } = require("../lib/auth");
 
 module.exports = function handler(req, res) {
+  req.viewer = req.viewer || loadViewer(req);
+
   if (req.method === "GET") {
     res.status(200).json(sessionPayload(req));
     return;
