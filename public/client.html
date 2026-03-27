@@ -214,10 +214,21 @@
               <input id="budgetInput" name="budget" type="text" placeholder="Prefer staged fixed fees" />
             </label>
             <div class="prompt-grid" id="promptFields"></div>
-            <label>
-              Supporting document names
-              <input id="documentNames" name="documents" type="text" placeholder="Contract.pdf, Dismissal letter.pdf" />
-            </label>
+            <div class="document-field">
+              <div class="document-field-label">Supporting documents</div>
+              <div class="document-uploader" id="matterDocumentUploader" role="button" tabindex="0" aria-controls="matterDocumentInput">
+                <input
+                  id="matterDocumentInput"
+                  type="file"
+                  accept=".pdf,.doc,.docx,.txt,.rtf,image/*"
+                  multiple
+                  hidden
+                />
+                <strong>Drag and drop documents here</strong>
+                <p>Or click to add files. For this demo, each file can be up to 2 MB.</p>
+              </div>
+              <div class="uploaded-document-list" id="matterDocumentList"></div>
+            </div>
             <div class="checklist-card">
               <p class="eyebrow">Required uploads</p>
               <ul id="requiredUploads"></ul>

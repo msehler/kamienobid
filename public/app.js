@@ -13,10 +13,14 @@ const state = {
   checkoutHandled: false,
   clientView: "marketing",
   editingCaseId: null,
+  matterDocuments: [],
 };
 
 const elements = {};
 const STORED_USER_KEY = "kamieno.rememberedUser";
+const MAX_MATTER_DOCUMENTS = 10;
+const MAX_MATTER_DOCUMENT_BYTES_PER_FILE = 2 * 1024 * 1024;
+const MAX_MATTER_DOCUMENT_BYTES_TOTAL = 3 * 1024 * 1024;
 
 document.addEventListener("DOMContentLoaded", async () => {
   cacheElements();
@@ -89,7 +93,9 @@ function cacheElements() {
     "paymentFlowSummary",
     "matterSummary",
     "budgetInput",
-    "documentNames",
+    "matterDocumentUploader",
+    "matterDocumentInput",
+    "matterDocumentList",
     "lawyerForm",
     "lawyerAccessNote",
     "lawyerSubmitButton",
@@ -171,6 +177,22 @@ function bindEvents() {
     .forEach((field) => field.addEventListener("input", renderCompliancePreview));
   if (elements.clientCreateCaseButton) {
     elements.clientCreateCaseButton.addEventListener("click", () => openMatterComposer());
+  }
+  if (elements.matterDocumentUploader) {
+    elements.matterDocumentUploader.addEventListener("click", handleMatterDocumentUploaderClick);
+    elements.matterDocumentUploader.addEventListener("keydown", handleMatterDocumentUploaderKeydown);
+    elements.matterDocumentUploader.addEventListener("dragenter", handleMatterDocumentDragEnter);
+    elements.matterDocumentUploader.addEventListener("dragover", handleMatterDocumentDragEnter);
+    elements.matterDocumentUploader.addEventListener("dragleave", handleMatterDocumentDragLeave);
+    elements.matterDocumentUploader.addEventListener("drop", handleMatterDocumentDrop);
+  }
+  if (elements.matterDocumentInput) {
+    elements.matterDocumentInput.addEventListener("change", handleMatterDocumentInputChange);
+  }
+  if (elements.matterDocumentList) {
+    elements.matterDocumentList.addEventListener("click", handleMatterDocumentListClick);
+    elements.matterDocumentList.addEventListener("input", handleMatterDocumentListInput);
+    elements.matterDocumentList.addEventListener("change", handleMatterDocumentListInput);
   }
   if (elements.matterCancelButton) {
     elements.matterCancelButton.addEventListener("click", closeMatterComposer);
@@ -783,12 +805,10 @@ function prepareNewMatterForm() {
   }
   elements.matterForm.reset();
   state.editingCaseId = null;
+  setMatterDocuments([]);
   renderMatterComposer();
   if (elements.quoteModeSelect) {
     elements.quoteModeSelect.value = "Detailed";
-  }
-  if (elements.documentNames) {
-    elements.documentNames.value = "";
   }
   if (elements.matterSummary) {
     elements.matterSummary.value = "";
@@ -807,6 +827,7 @@ function populateMatterFormFromCase(matter) {
   }
   state.selectedCountryCode = matter.countryCode;
   state.selectedPracticeAreaId = matter.practiceAreaId;
+  setMatterDocuments(matter.documents || []);
   renderMatterComposer();
 
   if (elements.regionSelect) {
@@ -823,9 +844,6 @@ function populateMatterFormFromCase(matter) {
   }
   if (elements.budgetInput) {
     elements.budgetInput.value = matter.budget || "";
-  }
-  if (elements.documentNames) {
-    elements.documentNames.value = (matter.documents || []).join(", ");
   }
 
   Array.from(elements.promptFields?.querySelectorAll("textarea") || []).forEach((field) => {
@@ -844,6 +862,9 @@ function renderMatterComposer() {
     !elements.paymentFlowSummary ||
     !elements.promptFields ||
     !elements.requiredUploads ||
+    !elements.matterDocumentUploader ||
+    !elements.matterDocumentInput ||
+    !elements.matterDocumentList ||
     !elements.matterAccessNote ||
     !elements.matterForm ||
     !elements.matterSubmitButton ||
@@ -886,6 +907,7 @@ function renderMatterComposer() {
     )
     .join("");
   elements.requiredUploads.innerHTML = template.uploads.map((entry) => `<li>${entry}</li>`).join("");
+  renderMatterDocumentList();
 
   const isClient = state.currentUser?.role === "client";
   const editingMatter = state.cases.find((entry) => entry.id === state.editingCaseId) || null;
@@ -901,6 +923,7 @@ function renderMatterComposer() {
   elements.matterAccessNote.innerHTML = isClient ? "" : `<p>Sign in as a client to create and publish a matter.</p>`;
   setFormEnabled(elements.matterForm, isClient);
   elements.matterSubmitButton.disabled = !isClient;
+  renderMatterDocumentList();
 
   if (state.currentUser) {
     elements.clientName.value = state.currentUser.name;
@@ -1166,6 +1189,16 @@ function renderClientBoard() {
         .map(([key, value]) => `<li><strong>${key}</strong>: ${value || "Not provided"}</li>`)
         .join("")}</ul>
     </div>
+    ${
+      matter.documents?.length
+        ? `<div class="checklist-card">
+            <p class="eyebrow">Uploaded documents</p>
+            <div class="case-document-list">
+              ${matter.documents.map((entry) => renderCaseDocument(entry)).join("")}
+            </div>
+          </div>`
+        : ""
+    }
     <p>${template.disclaimer}</p>
   `;
 
@@ -1488,7 +1521,15 @@ async function submitMatter(event) {
       quoteMode: formData.get("quoteMode"),
       summary: formData.get("summary"),
       budget: formData.get("budget"),
-      documents: splitList(formData.get("documents")),
+      documents: state.matterDocuments.map((entry) => ({
+        id: entry.id,
+        name: entry.name,
+        title: entry.title,
+        documentDate: entry.documentDate,
+        mimeType: entry.mimeType,
+        size: entry.size,
+        dataUrl: entry.dataUrl,
+      })),
       customAnswers,
     };
     const response = await request("/api/cases", {
@@ -1735,6 +1776,314 @@ function splitList(value) {
     .split(",")
     .map((entry) => entry.trim())
     .filter(Boolean);
+}
+
+function createClientId(prefix) {
+  if (window.crypto?.randomUUID) {
+    return `${prefix}-${window.crypto.randomUUID()}`;
+  }
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function stripFileExtension(value) {
+  return String(value || "").replace(/\.[^.]+$/, "");
+}
+
+function normalizeDocumentDate(value) {
+  const normalized = String(value || "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : "";
+}
+
+function normalizeMatterDocumentEntry(entry) {
+  if (!entry) {
+    return null;
+  }
+
+  if (typeof entry === "string") {
+    const name = entry.trim();
+    if (!name) {
+      return null;
+    }
+    return {
+      id: createClientId("doc"),
+      name,
+      title: stripFileExtension(name),
+      documentDate: "",
+      mimeType: "",
+      size: 0,
+      dataUrl: "",
+    };
+  }
+
+  if (typeof entry !== "object") {
+    return null;
+  }
+
+  const name = String(entry.name || entry.fileName || "").trim();
+  if (!name) {
+    return null;
+  }
+
+  return {
+    id: String(entry.id || createClientId("doc")),
+    name,
+    title: String(entry.title || stripFileExtension(name)).trim().slice(0, 120),
+    documentDate: normalizeDocumentDate(entry.documentDate),
+    mimeType: String(entry.mimeType || entry.type || "").trim(),
+    size: Number.isFinite(Number(entry.size)) ? Math.max(0, Number(entry.size)) : 0,
+    dataUrl: typeof entry.dataUrl === "string" && entry.dataUrl.startsWith("data:") ? entry.dataUrl : "",
+  };
+}
+
+function setMatterDocuments(documents) {
+  state.matterDocuments = Array.isArray(documents)
+    ? documents.map(normalizeMatterDocumentEntry).filter(Boolean).slice(0, MAX_MATTER_DOCUMENTS)
+    : [];
+  renderMatterDocumentList();
+}
+
+function handleMatterDocumentUploaderClick() {
+  if (!elements.matterDocumentInput || elements.matterDocumentInput.disabled) {
+    return;
+  }
+  elements.matterDocumentInput.click();
+}
+
+function handleMatterDocumentUploaderKeydown(event) {
+  if (event.key !== "Enter" && event.key !== " ") {
+    return;
+  }
+  event.preventDefault();
+  handleMatterDocumentUploaderClick();
+}
+
+function handleMatterDocumentDragEnter(event) {
+  event.preventDefault();
+  if (!elements.matterDocumentUploader || elements.matterDocumentInput?.disabled) {
+    return;
+  }
+  elements.matterDocumentUploader.classList.add("is-drag-over");
+}
+
+function handleMatterDocumentDragLeave(event) {
+  if (!elements.matterDocumentUploader) {
+    return;
+  }
+  if (event.currentTarget.contains(event.relatedTarget)) {
+    return;
+  }
+  elements.matterDocumentUploader.classList.remove("is-drag-over");
+}
+
+async function handleMatterDocumentDrop(event) {
+  event.preventDefault();
+  if (!elements.matterDocumentUploader) {
+    return;
+  }
+  elements.matterDocumentUploader.classList.remove("is-drag-over");
+  if (elements.matterDocumentInput?.disabled) {
+    return;
+  }
+  await addMatterDocuments(event.dataTransfer?.files);
+}
+
+async function handleMatterDocumentInputChange(event) {
+  await addMatterDocuments(event.target?.files);
+  if (event.target) {
+    event.target.value = "";
+  }
+}
+
+async function addMatterDocuments(fileList) {
+  const files = Array.from(fileList || []);
+  if (!files.length) {
+    return;
+  }
+
+  if (state.matterDocuments.length + files.length > MAX_MATTER_DOCUMENTS) {
+    showToast(`You can attach up to ${MAX_MATTER_DOCUMENTS} documents per case.`);
+    return;
+  }
+
+  let totalBytes = state.matterDocuments.reduce((sum, entry) => sum + (Number(entry.size) || 0), 0);
+  const nextDocuments = [...state.matterDocuments];
+
+  for (const file of files) {
+    if (file.size > MAX_MATTER_DOCUMENT_BYTES_PER_FILE) {
+      showToast(`${file.name} is too large. Keep each file under 2 MB.`);
+      continue;
+    }
+    if (totalBytes + file.size > MAX_MATTER_DOCUMENT_BYTES_TOTAL) {
+      showToast("Uploaded documents are too large together. Keep the total under 3 MB.");
+      continue;
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      nextDocuments.push({
+        id: createClientId("doc"),
+        name: file.name,
+        title: stripFileExtension(file.name),
+        documentDate: "",
+        mimeType: file.type || "",
+        size: file.size || 0,
+        dataUrl,
+      });
+      totalBytes += file.size || 0;
+    } catch (_error) {
+      showToast(`Unable to load ${file.name}. Please try again.`);
+    }
+  }
+
+  state.matterDocuments = nextDocuments;
+  renderMatterDocumentList();
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error || new Error("Unable to read file."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function handleMatterDocumentListClick(event) {
+  if (elements.matterDocumentInput?.disabled) {
+    return;
+  }
+  const button = event.target.closest("[data-document-action]");
+  if (!button) {
+    return;
+  }
+  const documentId = button.dataset.documentId;
+  if (!documentId) {
+    return;
+  }
+
+  if (button.dataset.documentAction === "delete") {
+    state.matterDocuments = state.matterDocuments.filter((entry) => entry.id !== documentId);
+    renderMatterDocumentList();
+  }
+}
+
+function handleMatterDocumentListInput(event) {
+  const field = event.target?.dataset?.documentField;
+  const documentId = event.target?.dataset?.documentId;
+  if (!field || !documentId) {
+    return;
+  }
+
+  const documentEntry = state.matterDocuments.find((entry) => entry.id === documentId);
+  if (!documentEntry) {
+    return;
+  }
+
+  if (field === "title") {
+    documentEntry.title = String(event.target.value || "").trimStart().slice(0, 120);
+    return;
+  }
+
+  if (field === "documentDate") {
+    documentEntry.documentDate = normalizeDocumentDate(event.target.value);
+  }
+}
+
+function renderMatterDocumentList() {
+  if (!elements.matterDocumentList || !elements.matterDocumentUploader) {
+    return;
+  }
+
+  const disabled = Boolean(elements.matterDocumentInput?.disabled);
+  elements.matterDocumentUploader.setAttribute("aria-disabled", String(disabled));
+
+  if (!state.matterDocuments.length) {
+    elements.matterDocumentList.innerHTML = '<p class="document-empty">No documents uploaded yet.</p>';
+    return;
+  }
+
+  elements.matterDocumentList.innerHTML = state.matterDocuments.map(renderMatterDocumentCard).join("");
+}
+
+function renderMatterDocumentCard(entry) {
+  const disabled = Boolean(elements.matterDocumentInput?.disabled);
+  const titleValue = escapeHtml(entry.title || "");
+  const id = escapeHtml(entry.id);
+  const name = escapeHtml(entry.name || "Document");
+  const documentDate = escapeHtml(entry.documentDate || "");
+  const meta = [entry.mimeType, formatFileSize(entry.size)].filter(Boolean).join(" · ");
+
+  return `
+    <article class="uploaded-document-card">
+      <div class="uploaded-document-header">
+        <div>
+          <strong>${name}</strong>
+          <p>${escapeHtml(meta || "Uploaded document")}</p>
+        </div>
+        <button class="button ghost" type="button" data-document-action="delete" data-document-id="${id}" ${disabled ? "disabled" : ""}>Delete</button>
+      </div>
+      <div class="form-grid uploaded-document-meta">
+        <label>
+          Short title
+          <input type="text" value="${titleValue}" placeholder="e.g. Parenting plan" data-document-field="title" data-document-id="${id}" />
+        </label>
+        <label>
+          Date of document
+          <input type="date" value="${documentDate}" data-document-field="documentDate" data-document-id="${id}" />
+        </label>
+      </div>
+    </article>
+  `;
+}
+
+function renderCaseDocument(entry) {
+  const documentEntry = normalizeMatterDocumentEntry(entry);
+  if (!documentEntry) {
+    return "";
+  }
+
+  const title = escapeHtml(documentEntry.title || stripFileExtension(documentEntry.name) || documentEntry.name);
+  const fileName = escapeHtml(documentEntry.name);
+  const dateLabel = documentEntry.documentDate ? `<span class="pill neutral">${escapeHtml(documentEntry.documentDate)}</span>` : "";
+  const downloadAction = documentEntry.dataUrl
+    ? `<a class="document-link" href="${escapeHtml(documentEntry.dataUrl)}" download="${fileName}">Download</a>`
+    : "";
+
+  return `
+    <div class="case-document-row">
+      <div>
+        <strong>${title}</strong>
+        <p>${fileName}</p>
+      </div>
+      <div class="case-document-actions">
+        ${dateLabel}
+        ${downloadAction}
+      </div>
+    </div>
+  `;
+}
+
+function formatFileSize(bytes) {
+  const value = Number(bytes) || 0;
+  if (!value) {
+    return "";
+  }
+  if (value >= 1024 * 1024) {
+    return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  if (value >= 1024) {
+    return `${Math.round(value / 1024)} KB`;
+  }
+  return `${value} B`;
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function normalizeNamePart(value) {

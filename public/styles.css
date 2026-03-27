@@ -1312,9 +1312,120 @@ form.panel > .button {
 .matter-form .panel-header,
 .insight-panel .panel-header,
 .matter-form .access-note,
+.matter-form .document-field,
 .matter-form .matter-form-actions,
 .matter-form .prompt-grid {
   margin: 0;
+}
+
+.document-field {
+  display: grid;
+  gap: 12px;
+}
+
+.document-field-label {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.document-uploader {
+  display: grid;
+  gap: 8px;
+  padding: 22px;
+  border: 1px dashed rgba(21, 57, 200, 0.28);
+  border-radius: var(--panel-radius-md);
+  background: rgba(244, 245, 255, 0.72);
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.document-uploader strong,
+.document-uploader p {
+  margin: 0;
+}
+
+.document-uploader p {
+  color: rgba(21, 57, 200, 0.68);
+}
+
+.document-uploader:hover,
+.document-uploader:focus-visible,
+.document-uploader.is-drag-over {
+  border-color: rgba(21, 57, 200, 0.55);
+  background: rgba(232, 236, 255, 0.92);
+}
+
+.document-uploader:focus-visible {
+  outline: 2px solid rgba(21, 57, 200, 0.2);
+  outline-offset: 3px;
+}
+
+.document-uploader[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.uploaded-document-list,
+.case-document-list {
+  display: grid;
+  gap: 12px;
+}
+
+.uploaded-document-card,
+.case-document-row {
+  border: 1px solid rgba(21, 57, 200, 0.12);
+  border-radius: var(--panel-radius-md);
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.uploaded-document-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.case-document-row {
+  padding: 14px 16px;
+}
+
+.uploaded-document-header,
+.case-document-row,
+.case-document-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.uploaded-document-header strong,
+.uploaded-document-header p,
+.case-document-row strong,
+.case-document-row p,
+.document-empty {
+  margin: 0;
+}
+
+.uploaded-document-header p,
+.case-document-row p,
+.document-empty {
+  color: rgba(21, 57, 200, 0.7);
+}
+
+.uploaded-document-meta {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.document-link {
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.document-link:hover {
+  text-decoration: underline;
 }
 
 .panel-header {
