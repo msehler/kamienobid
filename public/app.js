@@ -622,7 +622,7 @@ function renderAuth() {
       elements.accountWorkspaceEyebrow.textContent = "My account";
     }
     if (elements.accountWorkspaceTitle) {
-      elements.accountWorkspaceTitle.textContent = "Review the details attached to your Kamieno profile and what this screen is for.";
+      elements.accountWorkspaceTitle.hidden = true;
     }
     if (elements.accountStatusPanelTitle) {
       elements.accountStatusPanelTitle.textContent = "About this screen";
@@ -660,6 +660,9 @@ function renderAuth() {
   } else {
     if (elements.accountHeroSection) {
       elements.accountHeroSection.hidden = false;
+    }
+    if (elements.accountWorkspaceTitle) {
+      elements.accountWorkspaceTitle.hidden = false;
     }
     if (elements.accountStatusPanelTitle) {
       elements.accountStatusPanelTitle.textContent = "Your account status";
