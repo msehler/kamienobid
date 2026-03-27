@@ -910,11 +910,8 @@ function renderMatterComposer() {
       ? "Save case changes"
       : "Save draft changes"
     : "Save draft";
-  elements.matterAccessNote.innerHTML = isClient
-    ? editingMatter
-      ? `<p>Signed in as client. You are editing your own case${String(editingMatter.paymentStatus).startsWith("paid") ? "." : ", and you can add this draft to cart from the dashboard when you are ready."}</p>`
-      : `<p>Signed in as client. Saving here creates a draft, and checkout happens later from the dashboard.</p>`
-    : `<p>Sign in as a client to create and publish a matter.</p>`;
+  elements.matterAccessNote.hidden = isClient;
+  elements.matterAccessNote.innerHTML = isClient ? "" : `<p>Sign in as a client to create and publish a matter.</p>`;
   setFormEnabled(elements.matterForm, isClient);
   elements.matterSubmitButton.disabled = !isClient;
 
