@@ -18,7 +18,8 @@
   --panel-radius-lg: 30px;
   --panel-radius-md: 30px;
   --panel-radius-sm: 30px;
-  --page-heading-size: clamp(1.9rem, 3vw, 3rem);
+  --page-heading-size: clamp(2.8rem, 6.3vw, 4.9rem);
+  --page-heading-size-mobile: clamp(2.2rem, 10.5vw, 3.22rem);
   --sans: "Avenir Next", "Gill Sans", "Century Gothic", sans-serif;
   --serif: "Iowan Old Style", "Baskerville", "Times New Roman", serif;
 }
@@ -459,7 +460,7 @@ a {
 .home-hero-title {
   margin: 0;
   max-width: 12ch;
-  font-size: clamp(2.8rem, 6.3vw, 4.9rem);
+  font-size: var(--page-heading-size);
   line-height: 0.86;
   letter-spacing: -0.08em;
   color: var(--ink);
@@ -1057,21 +1058,57 @@ body[data-page="account"] .page-hero-card::before {
   z-index: 1;
   width: min(1320px, calc(100vw - 36px));
   margin: 28px auto 32px;
-  padding: 24px 0 0;
+  padding: 34px 0 0;
   color: white;
   display: grid;
-  gap: 18px;
+  gap: 28px;
 }
 
-.footer-copy,
-.footer-meta {
+.footer-menu {
   display: grid;
-  gap: 8px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 30px 24px;
+}
+
+.footer-column,
+.footer-copy,
+.footer-meta,
+.footer-link-list {
+  display: grid;
+  gap: 12px;
+}
+
+.footer-column {
+  align-content: start;
+}
+
+.footer-column h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: white;
+}
+
+.footer-link-list {
+  gap: 10px;
 }
 
 .footer-copy p,
+.footer-link-list a,
+.footer-link-list span,
 .footer-meta p {
   margin: 0;
+}
+
+.footer-link-list a,
+.footer-link-list span {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1.02rem;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.footer-link-list a:hover {
+  color: white;
 }
 
 .footer-copy p:last-child,
@@ -1082,17 +1119,8 @@ body[data-page="account"] .page-hero-card::before {
 .footer-meta {
   padding-top: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.16);
-}
-
-.footer-meta a {
-  width: fit-content;
-  color: white;
-  text-decoration: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.32);
-}
-
-.footer-meta a:hover {
-  border-bottom-color: white;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr);
+  gap: 18px;
 }
 
 .section-heading,
@@ -1736,6 +1764,14 @@ textarea {
   .hero-card-quote {
     min-height: 460px;
   }
+
+  .footer-menu {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .footer-meta {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 900px) {
@@ -1849,7 +1885,7 @@ textarea {
   }
 
   .home-hero-title {
-    font-size: clamp(2.2rem, 10.5vw, 3.22rem);
+    font-size: var(--page-heading-size-mobile);
   }
 
   .home-hero-description {
@@ -1873,7 +1909,12 @@ textarea {
   .page-title,
   .section-heading h2,
   .workspace-header h2 {
-    font-size: clamp(2rem, 11vw, 3rem);
+    font-size: var(--page-heading-size-mobile);
+  }
+
+  .footer-menu,
+  .footer-meta {
+    grid-template-columns: 1fr;
   }
 
   .brand-mark img,

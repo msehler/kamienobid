@@ -534,6 +534,7 @@ function initializeSelections() {
 
 function renderAll() {
   renderHeader();
+  renderFooter();
   renderHero();
   renderAuth();
   renderCountryRail();
@@ -618,6 +619,12 @@ function renderHeader() {
       event.preventDefault();
       await submitLogout();
     };
+  });
+}
+
+function renderFooter() {
+  document.querySelectorAll(".site-footer").forEach((footer) => {
+    footer.innerHTML = getFooterMarkup();
   });
 }
 
@@ -2429,15 +2436,11 @@ function getDashboardPath(user) {
 
 function getPublicPrimaryNavMarkup(pathname) {
   const clientCurrent = pathname === "/client" ? ' aria-current="page"' : "";
-  const aboutCurrent = pathname === "/about" ? ' aria-current="page"' : "";
-  const contactCurrent = pathname === "/contact" ? ' aria-current="page"' : "";
   const params = new URLSearchParams(window.location.search);
   const signupCurrent = pathname === "/account" && params.get("mode") === "signup" ? ' aria-current="page"' : "";
   const signinCurrent = pathname === "/account" && params.get("mode") !== "signup" ? ' aria-current="page"' : "";
   return `
     <a class="main-nav-cta" href="/client"${clientCurrent}>Post a new case</a>
-    <a href="/about"${aboutCurrent}>About us</a>
-    <a href="/contact"${contactCurrent}>Contact us</a>
     <a href="/account?mode=signup"${signupCurrent}>Sign up</a>
     <a href="/account?mode=signin"${signinCurrent}>Sign in</a>
   `;
@@ -2448,6 +2451,75 @@ function getPublicSecondaryNavMarkup(pathname) {
   return `
     <a href="/account?role=lawyer"${lawyerCurrent}>Register as a lawyer</a>
     <span class="header-jurisdiction-chip" data-region-badge>Detected region: <strong></strong></span>
+  `;
+}
+
+function getFooterMarkup() {
+  const dashboardPath = getDashboardPath(state.currentUser);
+  const existingUserLinks = state.currentUser
+    ? `
+        <a href="${dashboardPath}">Dashboard</a>
+        <a href="/account">My account</a>
+        <a href="/account?role=lawyer">Lawyer access</a>
+      `
+    : `
+        <a href="/account?mode=signup">Sign up</a>
+        <a href="/account?mode=signin">Sign in</a>
+        <a href="/account?role=lawyer">Register as a lawyer</a>
+      `;
+
+  return `
+    <div class="footer-menu">
+      <section class="footer-column">
+        <h3>Discover</h3>
+        <div class="footer-link-list">
+          <a href="/">Home</a>
+          <a href="/client">Post a new case</a>
+          <a href="/client">How it works</a>
+          <a href="/lawyer">For lawyers</a>
+        </div>
+      </section>
+      <section class="footer-column">
+        <h3>Company</h3>
+        <div class="footer-link-list">
+          <a href="/about">About us</a>
+          <a href="/contact">Contact us</a>
+          <a href="/terms">Terms of Use</a>
+        </div>
+      </section>
+      <section class="footer-column">
+        <h3>Existing Users</h3>
+        <div class="footer-link-list">
+          ${existingUserLinks}
+        </div>
+      </section>
+      <section class="footer-column">
+        <h3>Popular Categories</h3>
+        <div class="footer-link-list">
+          <span>Family law</span>
+          <span>Employment</span>
+          <span>Commercial</span>
+          <span>Property</span>
+          <span>Wills and estates</span>
+          <span>Criminal</span>
+        </div>
+      </section>
+      <section class="footer-column">
+        <h3>Popular Locations</h3>
+        <div class="footer-link-list">
+          <span>Sydney</span>
+          <span>Melbourne</span>
+          <span>Brisbane</span>
+          <span>Perth</span>
+          <span>Adelaide</span>
+          <span>Canberra</span>
+        </div>
+      </section>
+    </div>
+    <div class="footer-meta">
+      <p>&copy; 2026 Kamieno. All rights reserved.</p>
+      <p>Clearer case briefs, structured lawyer responses, and a cleaner path to choosing the right legal help.</p>
+    </div>
   `;
 }
 
