@@ -159,34 +159,38 @@
                 <select id="bidCaseSelect" name="caseId"></select>
               </label>
               <label>
-                Fee model
-                <input id="feeType" name="feeType" type="text" placeholder="Fixed fee + disbursements + GST" />
+                Pricing approach
+                <input id="feeType" name="feeType" type="text" placeholder="Stage-based fixed fee or capped fee estimate" />
               </label>
               <label>
-                Proposed fee
-                <input id="totalFee" name="totalFee" type="text" placeholder="AUD 4,800" />
+                Likely overall range
+                <input id="totalFee" name="totalFee" type="text" placeholder="AUD 4,800 - 7,500" />
               </label>
             </div>
             <label>
-              Disbursements / taxes
-              <input id="disbursements" name="disbursements" type="text" placeholder="Court filing and valuation costs billed separately" />
+              Excluded costs / taxes
+              <input id="disbursements" name="disbursements" type="text" placeholder="Court filing, barrister, expert, GST/VAT if separate" />
             </label>
             <div class="strategy-grid">
               <label>
-                Position
-                <textarea id="strategyPosition" rows="5"></textarea>
+                Stage 1 estimate
+                <textarea id="strategyPosition" rows="5" placeholder="Initial review, advice, and first strategy call."></textarea>
               </label>
               <label>
-                Next steps
-                <textarea id="strategyNextSteps" rows="5"></textarea>
+                Stage 2 estimate
+                <textarea id="strategyNextSteps" rows="5" placeholder="Disclosure, drafting, negotiation, or conference work."></textarea>
               </label>
               <label>
-                Risks
-                <textarea id="strategyRisks" rows="5"></textarea>
+                Stage 3 estimate
+                <textarea id="strategyRisks" rows="5" placeholder="Hearing prep, advocacy, or finalisation allowance."></textarea>
               </label>
               <label>
-                Timeline
-                <textarea id="strategyTimeline" rows="5"></textarea>
+                Assumptions and scope
+                <textarea id="strategyTimeline" rows="5" placeholder="State what your estimate assumes and what is in scope."></textarea>
+              </label>
+              <label>
+                What could change the fee
+                <textarea id="strategyPriceFactors" rows="5" placeholder="Explain the main variables that could move the estimate up or down."></textarea>
               </label>
             </div>
             <div class="checklist-card">

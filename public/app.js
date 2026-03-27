@@ -86,7 +86,6 @@ function cacheElements() {
     "regionSelect",
     "regionLabel",
     "practiceAreaSelect",
-    "quoteModeSelect",
     "promptFields",
     "requiredUploads",
     "templateSummary",
@@ -115,6 +114,7 @@ function cacheElements() {
     "strategyNextSteps",
     "strategyRisks",
     "strategyTimeline",
+    "strategyPriceFactors",
     "bidWordCount",
     "compliancePreview",
     "bidSubmitButton",
@@ -172,7 +172,7 @@ function bindEvents() {
       renderCompliancePreview();
     });
   }
-  [elements.strategyPosition, elements.strategyNextSteps, elements.strategyRisks, elements.strategyTimeline]
+  [elements.strategyPosition, elements.strategyNextSteps, elements.strategyRisks, elements.strategyTimeline, elements.strategyPriceFactors]
     .filter(Boolean)
     .forEach((field) => field.addEventListener("input", renderCompliancePreview));
   if (elements.clientCreateCaseButton) {
@@ -807,14 +807,11 @@ function prepareNewMatterForm() {
   state.editingCaseId = null;
   setMatterDocuments([]);
   renderMatterComposer();
-  if (elements.quoteModeSelect) {
-    elements.quoteModeSelect.value = "Detailed";
-  }
   if (elements.matterSummary) {
     elements.matterSummary.value = "";
   }
   if (elements.budgetInput) {
-    elements.budgetInput.value = "";
+    elements.budgetInput.value = elements.budgetInput.options[0]?.value || "";
   }
   if (elements.caseName) {
     elements.caseName.value = "";
@@ -836,14 +833,12 @@ function populateMatterFormFromCase(matter) {
   if (elements.caseName) {
     elements.caseName.value = matter.caseName || "";
   }
-  if (elements.quoteModeSelect) {
-    elements.quoteModeSelect.value = matter.quoteMode || "Detailed";
-  }
   if (elements.matterSummary) {
     elements.matterSummary.value = matter.summary || "";
   }
   if (elements.budgetInput) {
-    elements.budgetInput.value = matter.budget || "";
+    populateBudgetOptions(elements.budgetInput, getCountry(matter.countryCode), matter.budget || "");
+    elements.budgetInput.value = matter.budget || elements.budgetInput.options[0]?.value || "";
   }
 
   Array.from(elements.promptFields?.querySelectorAll("textarea") || []).forEach((field) => {
@@ -882,9 +877,11 @@ function renderMatterComposer() {
 
   const country = getCountry(state.selectedCountryCode);
   const template = getTemplate(state.selectedCountryCode, state.selectedPracticeAreaId);
+  const currentBudgetValue = elements.budgetInput?.value || "";
   state.selectedCountryCode = country.code;
   elements.regionLabel.textContent = country.regionLabel;
   populateRegionSelect(elements.regionSelect, country, elements.regionSelect.value);
+  populateBudgetOptions(elements.budgetInput, country, currentBudgetValue);
   elements.templateSummary.innerHTML = `
     <p><strong>${template.label}</strong></p>
     <p>${template.terminology}</p>
@@ -966,7 +963,7 @@ function renderLawyerStudio() {
     : `<p>Sign in as a lawyer to manage your practice profile and submit bids.</p>`;
   elements.bidAccessNote.innerHTML = isLawyer
     ? state.currentUser.status === "verified"
-      ? `<p>Your account is verified. You can bid on matching paid matters.</p>`
+      ? `<p>Your account is verified. You can respond with stage-based estimates on matching paid matters.</p>`
       : `<p>Your account is pending verification. You can complete your profile, but bidding stays locked until approval.</p>`
     : `<p>Lawyer login required to submit bids.</p>`;
 
@@ -1025,19 +1022,21 @@ function renderLawyerStudio() {
 }
 
 function renderBidDefaults() {
-  if (!elements.bidCaseSelect || !elements.feeType || !elements.disbursements || !elements.compliancePreview) {
+  if (!elements.bidCaseSelect || !elements.feeType || !elements.totalFee || !elements.disbursements || !elements.compliancePreview) {
     return;
   }
   const matter = state.cases.find((entry) => entry.id === elements.bidCaseSelect.value);
   if (!matter) {
     elements.feeType.placeholder = "Select an eligible matter";
+    elements.totalFee.placeholder = "Overall range";
+    elements.disbursements.placeholder = "Excluded costs / taxes";
     elements.compliancePreview.innerHTML = "<li>Select an eligible matter to preview conduct checks.</li>";
     return;
   }
   const country = getCountry(matter.countryCode);
-  const template = getTemplate(matter.countryCode, matter.practiceAreaId);
-  elements.feeType.placeholder = country.code === "US" ? "Contingency / hourly blend" : "Fixed or staged fee";
-  elements.disbursements.placeholder = template.terminology;
+  elements.feeType.placeholder = country.code === "US" ? "Stage-based hourly or capped estimate" : "Stage-based fixed or capped fee estimate";
+  elements.totalFee.placeholder = country.code === "US" ? "USD 3,500 - 6,000" : `${country.currencyCode} 4,800 - 7,500`;
+  elements.disbursements.placeholder = "Court filing, barrister, expert, GST/VAT if separate";
 }
 
 function renderCompliancePreview() {
@@ -1047,6 +1046,7 @@ function renderCompliancePreview() {
     !elements.strategyNextSteps ||
     !elements.strategyRisks ||
     !elements.strategyTimeline ||
+    !elements.strategyPriceFactors ||
     !elements.bidWordCount ||
     !elements.compliancePreview
   ) {
@@ -1058,6 +1058,7 @@ function renderCompliancePreview() {
     elements.strategyNextSteps.value,
     elements.strategyRisks.value,
     elements.strategyTimeline.value,
+    elements.strategyPriceFactors.value,
   ].join(" ");
   const words = content.trim() ? content.trim().split(/\s+/).length : 0;
   elements.bidWordCount.textContent = `${words} words`;
@@ -1150,7 +1151,7 @@ function renderClientBoard() {
           <p class="case-card-summary">${entry.summary}</p>
           <div class="case-meta">
             <span class="pill neutral">${entry.region}</span>
-            <span class="pill neutral">${entry.quoteMode}</span>
+            ${entry.documents?.length ? `<span class="pill neutral">${entry.documents.length} document${entry.documents.length === 1 ? "" : "s"}</span>` : ""}
             <span class="pill neutral">${needsPayment ? "Ready for checkout" : entry.status}</span>
           </div>
           <div class="case-card-actions">
@@ -1174,7 +1175,7 @@ function renderClientBoard() {
     <div class="case-meta">
       <span class="pill neutral">${getCountry(matter.countryCode).name}</span>
       <span class="pill neutral">${matter.region}</span>
-      <span class="pill neutral">${matter.quoteMode}</span>
+      ${matter.documents?.length ? `<span class="pill neutral">${matter.documents.length} document${matter.documents.length === 1 ? "" : "s"}</span>` : ""}
       <span class="pill neutral">${matter.status}</span>
       <span class="pill neutral">${matter.paymentStatus}</span>
     </div>
@@ -1220,17 +1221,19 @@ function renderBidCard(bid, matter) {
       <div>
         <strong>${lawyer?.name || "Lawyer"}</strong>
         <div class="case-meta">
-          <span class="pill neutral">${bid.feeType}</span>
-          <span class="pill neutral">${bid.totalFee || "Price on request"}</span>
+          <span class="pill neutral">${bid.feeType || "Structured estimate"}</span>
+          <span class="pill neutral">${bid.totalFee || "Range on request"}</span>
           ${shortlisted ? '<span class="pill">Shortlisted</span>' : ""}
           ${accepted ? '<span class="pill">Accepted</span>' : ""}
         </div>
       </div>
-      <p>${bid.sections.position || ""}</p>
+      <p><strong>Excluded costs / taxes:</strong> ${bid.disbursements || "Included in overall range unless otherwise stated."}</p>
       <ul>
-        <li><strong>Next steps:</strong> ${bid.sections.nextSteps || ""}</li>
-        <li><strong>Risks:</strong> ${bid.sections.risks || ""}</li>
-        <li><strong>Timeline:</strong> ${bid.sections.timeline || ""}</li>
+        <li><strong>Stage 1 estimate:</strong> ${bid.sections.stageOne || bid.sections.position || "Not provided"}</li>
+        <li><strong>Stage 2 estimate:</strong> ${bid.sections.stageTwo || bid.sections.nextSteps || "Not provided"}</li>
+        <li><strong>Stage 3 estimate:</strong> ${bid.sections.stageThree || bid.sections.risks || "Not provided"}</li>
+        <li><strong>Assumptions and scope:</strong> ${bid.sections.assumptions || bid.sections.timeline || "Not provided"}</li>
+        <li><strong>What could change the fee:</strong> ${bid.sections.priceFactors || "Not provided"}</li>
       </ul>
       ${
         bid.compliance?.flags?.length
@@ -1518,7 +1521,6 @@ async function submitMatter(event) {
       countryCode: formData.get("countryCode"),
       region: formData.get("region"),
       practiceAreaId: formData.get("practiceAreaId"),
-      quoteMode: formData.get("quoteMode"),
       summary: formData.get("summary"),
       budget: formData.get("budget"),
       documents: state.matterDocuments.map((entry) => ({
@@ -1591,10 +1593,11 @@ async function submitBid(event) {
         disbursements: elements.disbursements.value,
         privateBid: document.getElementById("privateBid").checked,
         sections: {
-          position: elements.strategyPosition.value,
-          nextSteps: elements.strategyNextSteps.value,
-          risks: elements.strategyRisks.value,
-          timeline: elements.strategyTimeline.value,
+          stageOne: elements.strategyPosition.value,
+          stageTwo: elements.strategyNextSteps.value,
+          stageThree: elements.strategyRisks.value,
+          assumptions: elements.strategyTimeline.value,
+          priceFactors: elements.strategyPriceFactors.value,
         },
       }),
     });
@@ -1753,6 +1756,60 @@ function getPracticeArea(id) {
 
 function getTemplate(countryCode, practiceAreaId) {
   return state.bootstrap.templateCatalog[countryCode].find((template) => template.areaId === practiceAreaId);
+}
+
+function getBudgetCurrencyPrefix(country) {
+  switch (country?.currencyCode) {
+    case "AUD":
+      return "A$";
+    case "NZD":
+      return "NZ$";
+    case "CAD":
+      return "C$";
+    case "GBP":
+      return "£";
+    case "EUR":
+      return "EUR ";
+    default:
+      return "$";
+  }
+}
+
+function buildBudgetRangeOptions(country) {
+  const prefix = getBudgetCurrencyPrefix(country);
+  return [
+    "Unsure, this is my first time",
+    `${prefix}1,000 to ${prefix}5,000`,
+    `${prefix}5,000 to ${prefix}10,000`,
+    `${prefix}10,000 to ${prefix}20,000`,
+    `${prefix}20,000 to ${prefix}30,000`,
+    `${prefix}30,000 to ${prefix}50,000`,
+    `${prefix}50,000 to ${prefix}75,000`,
+    `${prefix}75,000 to ${prefix}100,000`,
+    `${prefix}100,000+`,
+  ];
+}
+
+function populateBudgetOptions(select, country, selectedValue) {
+  if (!select) {
+    return;
+  }
+
+  const options = buildBudgetRangeOptions(country);
+  const normalizedSelected = String(selectedValue || "").trim();
+  const selectedExists = normalizedSelected && options.includes(normalizedSelected);
+  const renderedOptions = selectedExists || !normalizedSelected ? options : [...options, normalizedSelected];
+
+  select.innerHTML = "";
+  renderedOptions.forEach((label) => {
+    const option = document.createElement("option");
+    option.value = label;
+    option.textContent = !selectedExists && normalizedSelected && label === normalizedSelected ? `${label} (saved)` : label;
+    if (normalizedSelected ? label === normalizedSelected : label === options[0]) {
+      option.selected = true;
+    }
+    select.appendChild(option);
+  });
 }
 
 function setFormEnabled(form, enabled) {
