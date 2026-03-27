@@ -61,7 +61,7 @@
     </header>
 
     <main>
-      <section class="page-hero reveal">
+      <section class="page-hero reveal" id="accountHeroSection">
         <div class="page-hero-shell">
           <article class="page-hero-card page-hero-primary">
             <p class="eyebrow" id="accountHeroEyebrow">Sign in</p>
@@ -96,7 +96,8 @@
           <h2 id="accountWorkspaceTitle">Create your account or sign in, then continue into the part of Kamieno you need.</h2>
         </div>
         <div class="workspace-grid">
-          <div class="stack-column">
+          <div class="stack-column" id="accountPrimaryColumn">
+            <div id="accountSignedInPanel" hidden></div>
             <form class="panel" id="signupForm">
               <div class="panel-header">
                 <h3 id="signupPanelTitle">Create your account</h3>
@@ -151,7 +152,7 @@
 
           <aside class="panel insight-panel">
             <div class="panel-header">
-              <h3>Your account status</h3>
+              <h3 id="accountStatusPanelTitle">Your account status</h3>
               <span class="pill neutral" id="stripeStatus"></span>
             </div>
             <div id="sessionCard" class="template-summary"></div>

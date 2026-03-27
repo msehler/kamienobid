@@ -47,6 +47,7 @@ function cacheElements() {
     "signupRole",
     "loginForm",
     "logoutButton",
+    "accountHeroSection",
     "accountHeroEyebrow",
     "accountHeroTitle",
     "accountHeroSummary",
@@ -60,6 +61,9 @@ function cacheElements() {
     "signupSubmitLabel",
     "accountInsightEyebrow",
     "accountInsightBody",
+    "accountPrimaryColumn",
+    "accountSignedInPanel",
+    "accountStatusPanelTitle",
     "countryInsights",
     "clientMarketingHero",
     "clientMarketingDetails",
@@ -592,30 +596,82 @@ function renderHero() {
 }
 
 function renderAuth() {
-  if (!elements.sessionCard || !elements.stripeStatus || !elements.signupForm || !elements.loginForm || !elements.logoutButton) {
+  if (
+    !elements.sessionCard ||
+    !elements.stripeStatus ||
+    !elements.signupForm ||
+    !elements.loginForm ||
+    !elements.logoutButton ||
+    !elements.accountSignedInPanel
+  ) {
     return;
   }
   const user = state.currentUser;
+  const isAccountPage = window.location.pathname === "/account";
   elements.stripeStatus.textContent = state.bootstrap.stripeReady ? "Stripe ready" : "Demo checkout";
 
-  if (user) {
-    elements.sessionCard.innerHTML = `
-      <p><strong>${user.name}</strong></p>
-      <p>${user.email}</p>
-      <p>Role: ${user.role}</p>
-      <p>Status: ${user.status}</p>
-      ${user.jurisdictions?.length ? `<p>${user.jurisdictions.join(", ")}</p>` : "<p>No jurisdictions on file yet.</p>"}
+  if (user && isAccountPage) {
+    if (elements.accountHeroSection) {
+      elements.accountHeroSection.hidden = true;
+    }
+    if (elements.accountWorkspaceEyebrow) {
+      elements.accountWorkspaceEyebrow.textContent = "My account";
+    }
+    if (elements.accountWorkspaceTitle) {
+      elements.accountWorkspaceTitle.textContent = "Review the details attached to your Kamieno profile and what this screen is for.";
+    }
+    if (elements.accountStatusPanelTitle) {
+      elements.accountStatusPanelTitle.textContent = "About this screen";
+    }
+    elements.stripeStatus.style.display = "none";
+    elements.accountSignedInPanel.hidden = false;
+    elements.accountSignedInPanel.innerHTML = `
+      <article class="panel account-summary-panel">
+        <div class="panel-header">
+          <h3>My account</h3>
+          <span class="pill neutral">${user.role}</span>
+        </div>
+        <div class="template-summary account-summary">
+          <p><strong>${user.name}</strong></p>
+          <p>${user.email}</p>
+          <p>Role: ${user.role}</p>
+          <p>Status: ${user.status}</p>
+          ${user.jurisdictions?.length ? `<p>Jurisdictions: ${user.jurisdictions.join(", ")}</p>` : "<p>No jurisdictions on file yet.</p>"}
+        </div>
+      </article>
     `;
+    elements.sessionCard.innerHTML = `
+      <p><strong>This page shows your core Kamieno profile details.</strong></p>
+      <p>Use it to confirm the name, email, role, and account status tied to your signed-in account.</p>
+      <p>${user.role === "client" ? "When you are ready to work on a matter, use Add new case from the menu or return to your dashboard from the signed-in link." : "If you are a lawyer, this page confirms your account role and current verification state before you continue into your profile workflow."}</p>
+    `;
+    if (elements.accountInsightEyebrow) {
+      elements.accountInsightEyebrow.textContent = "What to do next";
+    }
+    if (elements.accountInsightBody) {
+      elements.accountInsightBody.textContent = user.role === "client"
+        ? "Use the signed-in menu to return to your dashboard, create a new case, or sign out when you are finished."
+        : "Use the signed-in menu to return to your lawyer workspace, review your account details here, or sign out when you are finished.";
+    }
   } else {
+    if (elements.accountHeroSection) {
+      elements.accountHeroSection.hidden = false;
+    }
+    if (elements.accountStatusPanelTitle) {
+      elements.accountStatusPanelTitle.textContent = "Your account status";
+    }
+    elements.stripeStatus.style.display = "";
+    elements.accountSignedInPanel.hidden = true;
+    elements.accountSignedInPanel.innerHTML = "";
     elements.sessionCard.innerHTML = `
       <p><strong>Public preview</strong></p>
       <p>Create a client or lawyer account to use the workflow. Admin access is provisioned separately.</p>
     `;
   }
 
-  elements.signupForm.style.display = user ? "none" : "";
-  elements.loginForm.style.display = user ? "none" : "";
-  elements.logoutButton.style.display = user ? "" : "none";
+  elements.signupForm.style.display = user && isAccountPage ? "none" : "";
+  elements.loginForm.style.display = user && isAccountPage ? "none" : "";
+  elements.logoutButton.style.display = user && isAccountPage ? "none" : user ? "" : "none";
 }
 
 function renderCountryRail() {
