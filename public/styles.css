@@ -20,6 +20,8 @@
   --panel-radius-sm: 30px;
   --page-heading-size: clamp(2.8rem, 6.3vw, 4.9rem);
   --page-heading-size-mobile: clamp(2.2rem, 10.5vw, 3.22rem);
+  --workspace-heading-size: clamp(1.9rem, 3vw, 3rem);
+  --workspace-heading-size-mobile: clamp(2rem, 11vw, 3rem);
   --sans: "Avenir Next", "Gill Sans", "Century Gothic", sans-serif;
   --serif: "Iowan Old Style", "Baskerville", "Times New Roman", serif;
 }
@@ -1144,7 +1146,7 @@ body[data-page="account"] .page-hero-card::before {
 .workspace-header h2 {
   margin: 0;
   max-width: 16ch;
-  font-size: var(--page-heading-size);
+  font-size: var(--workspace-heading-size);
   line-height: 0.92;
   color: white;
   letter-spacing: -0.04em;
@@ -1180,7 +1182,7 @@ body[data-page="account"] .page-hero-card::before {
 #clientDashboard .workspace-header h2,
 .dashboard-title {
   max-width: 22ch;
-  font-size: var(--page-heading-size);
+  font-size: var(--workspace-heading-size);
   line-height: 0.98;
 }
 
@@ -1907,9 +1909,14 @@ textarea {
 
   .quote-title,
   .page-title,
-  .section-heading h2,
-  .workspace-header h2 {
+  .page-title {
     font-size: var(--page-heading-size-mobile);
+  }
+
+  .section-heading h2,
+  .workspace-header h2,
+  .dashboard-title {
+    font-size: var(--workspace-heading-size-mobile);
   }
 
   .footer-menu,
