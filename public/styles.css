@@ -1145,7 +1145,7 @@ body[data-page="account"] .page-hero-card::before {
 .section-heading h2,
 .workspace-header h2 {
   margin: 0;
-  max-width: 16ch;
+  max-width: 40vw;
   font-size: var(--workspace-heading-size);
   line-height: 0.92;
   color: white;
@@ -1181,7 +1181,7 @@ body[data-page="account"] .page-hero-card::before {
 
 #clientDashboard .workspace-header h2,
 .dashboard-title {
-  max-width: 22ch;
+  max-width: 40vw;
   font-size: var(--workspace-heading-size);
   line-height: 0.98;
 }
@@ -1915,6 +1915,7 @@ textarea {
   .section-heading h2,
   .workspace-header h2,
   .dashboard-title {
+    max-width: 100%;
     font-size: var(--workspace-heading-size-mobile);
   }
 
