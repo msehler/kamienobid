@@ -261,8 +261,10 @@ function initMobileNav() {
     }
   });
 
-  panel.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", closeMenu);
+  panel.addEventListener("click", (event) => {
+    if (event.target.closest("a")) {
+      closeMenu();
+    }
   });
 
   document.addEventListener("keydown", (event) => {
@@ -481,6 +483,9 @@ function renderAll() {
 
 function renderHeader() {
   const country = getCountry(state.selectedCountryCode);
+  const pathname = window.location.pathname;
+  const params = new URLSearchParams(window.location.search);
+  const isClientSignedIn = state.currentUser?.role === "client";
   if (elements.globalDisclaimer) {
     elements.globalDisclaimer.textContent = country.disclaimer;
   }
@@ -493,23 +498,57 @@ function renderHeader() {
       : `<a class="button ghost" href="/account">Sign in</a>`;
   }
 
-  document.querySelectorAll(".nav-user-label").forEach((node) => node.remove());
-  document.querySelectorAll(".main-nav-primary > a[href=\"/account\"], .mobile-nav-primary > a[href=\"/account\"]").forEach((link) => {
-    if (state.currentUser) {
-      link.textContent = "Logout";
-      link.setAttribute("href", "#logout");
-      link.setAttribute("data-nav-logout", "true");
-      const label = document.createElement("a");
-      label.className = "button secondary nav-user-label";
-      label.textContent = `Signed in as ${state.currentUser.name}`;
-      label.href = getDashboardPath(state.currentUser);
-      const targetContainer = link.closest(".main-nav-primary, .mobile-nav-primary")?.nextElementSibling;
-      targetContainer?.prepend(label);
-    } else {
-      link.textContent = "Sign in";
-      link.setAttribute("href", "/account");
-      link.removeAttribute("data-nav-logout");
+  document.querySelectorAll(".main-nav-primary, .mobile-nav-primary").forEach((container) => {
+    if (isClientSignedIn) {
+      const addNewCaseCurrent = pathname === "/client" && params.get("view") === "composer" ? ' aria-current="page"' : "";
+      const myAccountCurrent = pathname === "/account" ? ' aria-current="page"' : "";
+      container.innerHTML = `
+        <a class="main-nav-cta" href="/client?view=composer"${addNewCaseCurrent}>Add new case</a>
+        <a href="/account"${myAccountCurrent}>My Account</a>
+      `;
+      return;
     }
+
+    if (!state.currentUser) {
+      container.innerHTML = getPublicPrimaryNavMarkup(pathname);
+      return;
+    }
+
+    const accountLink = container.querySelector('a[href="/account"]');
+    if (state.currentUser && accountLink) {
+      accountLink.textContent = "Logout";
+      accountLink.setAttribute("href", "#logout");
+      accountLink.setAttribute("data-nav-logout", "true");
+      return;
+    }
+
+    if (accountLink) {
+      accountLink.textContent = "Sign in";
+      accountLink.setAttribute("href", "/account");
+      accountLink.removeAttribute("data-nav-logout");
+    }
+  });
+
+  document.querySelectorAll(".main-nav-secondary, .mobile-nav-secondary").forEach((container) => {
+    if (isClientSignedIn) {
+      container.innerHTML = `
+        <a class="button secondary nav-user-label" href="${getDashboardPath(state.currentUser)}">Signed in as ${state.currentUser.name}</a>
+        <a href="#logout" data-nav-logout="true">Logout</a>
+        <span class="header-jurisdiction-chip" data-region-badge>Detected region: <strong></strong></span>
+      `;
+      return;
+    }
+
+    if (!state.currentUser) {
+      container.innerHTML = getPublicSecondaryNavMarkup(pathname);
+      return;
+    }
+
+    document.querySelectorAll(".nav-user-label").forEach((node) => node.remove());
+  });
+
+  document.querySelectorAll("[data-region-badge] strong").forEach((badge) => {
+    badge.textContent = country.name;
   });
 
   document.querySelectorAll("[data-nav-logout]").forEach((link) => {
@@ -1699,6 +1738,27 @@ function getDashboardPath(user) {
     return "/lawyer";
   }
   return "/account";
+}
+
+function getPublicPrimaryNavMarkup(pathname) {
+  const clientCurrent = pathname === "/client" ? ' aria-current="page"' : "";
+  const aboutCurrent = pathname === "/about" ? ' aria-current="page"' : "";
+  const contactCurrent = pathname === "/contact" ? ' aria-current="page"' : "";
+  const accountCurrent = pathname === "/account" ? ' aria-current="page"' : "";
+  return `
+    <a class="main-nav-cta" href="/client"${clientCurrent}>Post a new case</a>
+    <a href="/about"${aboutCurrent}>About us</a>
+    <a href="/contact"${contactCurrent}>Contact us</a>
+    <a href="/account"${accountCurrent}>Sign in</a>
+  `;
+}
+
+function getPublicSecondaryNavMarkup(pathname) {
+  const lawyerCurrent = pathname === "/lawyer" ? ' aria-current="page"' : "";
+  return `
+    <a href="/account?role=lawyer"${lawyerCurrent}>Register as a lawyer</a>
+    <span class="header-jurisdiction-chip" data-region-badge>Detected region: <strong></strong></span>
+  `;
 }
 
 function normalizeInternalPath(value) {
