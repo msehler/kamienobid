@@ -512,11 +512,9 @@ function renderHeader() {
     if (isClientSignedIn) {
       const dashboardCurrent =
         pathname === "/client" && (params.get("view") === "dashboard" || !params.get("view")) ? ' aria-current="page"' : "";
-      const addNewCaseCurrent = pathname === "/client" && params.get("view") === "composer" ? ' aria-current="page"' : "";
       const myAccountCurrent = pathname === "/account" ? ' aria-current="page"' : "";
       container.innerHTML = `
         <a href="/client?view=dashboard"${dashboardCurrent}>Dashboard</a>
-        <a class="main-nav-cta" href="/client?view=composer"${addNewCaseCurrent}>Add new case</a>
         <a href="/account"${myAccountCurrent}>My account</a>
       `;
       return;
@@ -652,7 +650,7 @@ function renderAuth() {
     elements.sessionCard.innerHTML = `
       <p><strong>This page shows your core Kamieno profile details.</strong></p>
       <p>Use it to confirm the name, email, role, and account status tied to your signed-in account.</p>
-      <p>${user.role === "client" ? "When you are ready to work on a matter, use Add new case from the menu or return to your dashboard from the signed-in link." : "If you are a lawyer, this page confirms your account role and current verification state before you continue into your profile workflow."}</p>
+      <p>${user.role === "client" ? "When you are ready to work on a matter, return to your dashboard from the signed-in link and create a new case there." : "If you are a lawyer, this page confirms your account role and current verification state before you continue into your profile workflow."}</p>
     `;
     if (elements.accountInsightEyebrow) {
       elements.accountInsightEyebrow.textContent = "What to do next";
@@ -1079,13 +1077,21 @@ function renderCompliancePreview() {
 }
 
 function renderClientBoard() {
-  if (!elements.clientBoardAccess || !elements.caseList || !elements.caseDetails || !elements.bidList || !elements.engagementLetter) {
+  if (
+    !elements.clientBoardAccess ||
+    !elements.clientCreateCaseButton ||
+    !elements.caseList ||
+    !elements.caseDetails ||
+    !elements.bidList ||
+    !elements.engagementLetter
+  ) {
     return;
   }
   const isClient = state.currentUser?.role === "client";
   elements.clientBoardAccess.innerHTML = isClient
     ? "<p>Manage your case drafts, published matters, and proposal decisions from one client dashboard.</p>"
     : "<p>Sign in as a client to view your dashboard.</p>";
+  elements.clientCreateCaseButton.hidden = !isClient || !state.cases.length;
 
   if (!isClient) {
     elements.caseList.innerHTML = "";
