@@ -59,6 +59,7 @@ function cacheElements() {
     "signupPanelTitle",
     "signupPanelPill",
     "signupSubmitLabel",
+    "signupHotButton",
     "accountInsightEyebrow",
     "accountInsightBody",
     "accountPrimaryColumn",
@@ -183,6 +184,9 @@ function bindEvents() {
 
   if (elements.signupForm) {
     elements.signupForm.addEventListener("submit", submitSignup);
+  }
+  if (elements.signupHotButton) {
+    elements.signupHotButton.addEventListener("click", submitHotSignup);
   }
   if (elements.loginForm) {
     elements.loginForm.addEventListener("submit", submitLogin);
@@ -1362,6 +1366,38 @@ async function submitSignup(event) {
   const formData = new FormData(elements.signupForm);
   const firstName = normalizeNamePart(formData.get("firstName"));
   const lastName = normalizeNamePart(formData.get("lastName"));
+  await performSignup({
+    firstName,
+    lastName,
+    email: formData.get("email"),
+    password: formData.get("password"),
+    role: formData.get("role"),
+  });
+}
+
+async function submitHotSignup() {
+  const payload = buildDummySignupPayload();
+  if (elements.signupFirstName) {
+    elements.signupFirstName.value = payload.firstName;
+  }
+  if (elements.signupLastName) {
+    elements.signupLastName.value = payload.lastName;
+  }
+  const signupEmail = document.getElementById("signupEmail");
+  const signupPassword = document.getElementById("signupPassword");
+  if (signupEmail) {
+    signupEmail.value = payload.email;
+  }
+  if (signupPassword) {
+    signupPassword.value = payload.password;
+  }
+  if (elements.signupRole) {
+    elements.signupRole.value = payload.role;
+  }
+  await performSignup(payload);
+}
+
+async function performSignup({ firstName, lastName, email, password, role }) {
   try {
     if (elements.signupFirstName) {
       elements.signupFirstName.value = firstName;
@@ -1374,15 +1410,15 @@ async function submitSignup(event) {
       body: JSON.stringify({
         action: "signup",
         name: [firstName, lastName].filter(Boolean).join(" "),
-        email: formData.get("email"),
-        password: formData.get("password"),
-        role: formData.get("role"),
+        email,
+        password,
+        role,
       }),
     });
     showToast(response.message);
     storeUser(response.user);
     elements.signupForm.reset();
-    if (redirectAfterAuth(response.user, formData.get("role"))) {
+    if (redirectAfterAuth(response.user, role)) {
       return;
     }
     await refreshApp();
@@ -1727,6 +1763,17 @@ function handleSignupNameInput(event) {
   if (event.target.value !== normalized) {
     event.target.value = normalized;
   }
+}
+
+function buildDummySignupPayload() {
+  const token = Date.now().toString(36);
+  return {
+    firstName: "Demo",
+    lastName: `Client ${token.slice(-4).toUpperCase()}`,
+    email: `demo.client.${token}@kamieno.local`,
+    password: "DemoClient2026!",
+    role: "client",
+  };
 }
 
 function formatMoney(value, currencyCode) {
