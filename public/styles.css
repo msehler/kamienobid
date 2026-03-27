@@ -1106,6 +1106,12 @@ body[data-page="account"] .page-hero-card::before {
   align-items: end;
 }
 
+.workspace-header-actions-only {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: end;
+  margin-bottom: 18px;
+}
+
 .section-heading .eyebrow,
 .workspace-header .eyebrow {
   color: rgba(255, 255, 255, 0.72);

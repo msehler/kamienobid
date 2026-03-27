@@ -71,6 +71,8 @@ function cacheElements() {
     "clientDashboard",
     "clientCreateCaseButton",
     "clientComposer",
+    "clientComposerHeader",
+    "clientComposerIntro",
     "clientComposerEyebrow",
     "clientComposerTitle",
     "clientComposerSummary",
@@ -851,6 +853,8 @@ function renderMatterComposer() {
     !elements.matterSubmitButton ||
     !elements.matterFormTitle ||
     !elements.matterFormPill ||
+    !elements.clientComposerHeader ||
+    !elements.clientComposerIntro ||
     !elements.clientComposerEyebrow ||
     !elements.clientComposerTitle ||
     !elements.clientComposerSummary ||
@@ -910,6 +914,8 @@ function renderMatterComposer() {
       ? "Save case changes"
       : "Save draft changes"
     : "Save draft";
+  elements.clientComposerHeader.classList.add("workspace-header-actions-only");
+  elements.clientComposerIntro.hidden = true;
   elements.matterAccessNote.hidden = isClient;
   elements.matterAccessNote.innerHTML = isClient ? "" : `<p>Sign in as a client to create and publish a matter.</p>`;
   setFormEnabled(elements.matterForm, isClient);
