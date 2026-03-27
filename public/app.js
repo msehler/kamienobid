@@ -510,9 +510,12 @@ function renderHeader() {
 
   document.querySelectorAll(".main-nav-primary, .mobile-nav-primary").forEach((container) => {
     if (isClientSignedIn) {
+      const dashboardCurrent =
+        pathname === "/client" && (params.get("view") === "dashboard" || !params.get("view")) ? ' aria-current="page"' : "";
       const addNewCaseCurrent = pathname === "/client" && params.get("view") === "composer" ? ' aria-current="page"' : "";
       const myAccountCurrent = pathname === "/account" ? ' aria-current="page"' : "";
       container.innerHTML = `
+        <a href="/client?view=dashboard"${dashboardCurrent}>Dashboard</a>
         <a class="main-nav-cta" href="/client?view=composer"${addNewCaseCurrent}>Add new case</a>
         <a href="/account"${myAccountCurrent}>My account</a>
       `;
