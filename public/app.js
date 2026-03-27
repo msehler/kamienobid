@@ -86,6 +86,7 @@ function cacheElements() {
     "regionSelect",
     "regionLabel",
     "practiceAreaSelect",
+    "scopeOfWork",
     "promptFields",
     "requiredUploads",
     "templateSummary",
@@ -105,6 +106,7 @@ function cacheElements() {
     "lawyerRoster",
     "lawyerSelect",
     "bidCaseSelect",
+    "bidMatterBrief",
     "bidForm",
     "bidAccessNote",
     "feeType",
@@ -813,6 +815,9 @@ function prepareNewMatterForm() {
   if (elements.budgetInput) {
     elements.budgetInput.value = elements.budgetInput.options[0]?.value || "";
   }
+  if (elements.scopeOfWork) {
+    elements.scopeOfWork.value = elements.scopeOfWork.options[0]?.value || "";
+  }
   if (elements.caseName) {
     elements.caseName.value = "";
   }
@@ -840,6 +845,10 @@ function populateMatterFormFromCase(matter) {
     populateBudgetOptions(elements.budgetInput, getCountry(matter.countryCode), matter.budget || "");
     elements.budgetInput.value = matter.budget || elements.budgetInput.options[0]?.value || "";
   }
+  if (elements.scopeOfWork) {
+    populateScopeOfWorkOptions(elements.scopeOfWork, matter.practiceAreaId, matter.scopeOfWork || "");
+    elements.scopeOfWork.value = matter.scopeOfWork || elements.scopeOfWork.options[0]?.value || "";
+  }
 
   Array.from(elements.promptFields?.querySelectorAll("textarea") || []).forEach((field) => {
     const prompt = field.name.replace(/^prompt:/, "");
@@ -855,6 +864,7 @@ function renderMatterComposer() {
     !elements.regionSelect ||
     !elements.templateSummary ||
     !elements.paymentFlowSummary ||
+    !elements.scopeOfWork ||
     !elements.promptFields ||
     !elements.requiredUploads ||
     !elements.matterDocumentUploader ||
@@ -878,10 +888,12 @@ function renderMatterComposer() {
   const country = getCountry(state.selectedCountryCode);
   const template = getTemplate(state.selectedCountryCode, state.selectedPracticeAreaId);
   const currentBudgetValue = elements.budgetInput?.value || "";
+  const currentScopeValue = elements.scopeOfWork?.value || "";
   state.selectedCountryCode = country.code;
   elements.regionLabel.textContent = country.regionLabel;
   populateRegionSelect(elements.regionSelect, country, elements.regionSelect.value);
   populateBudgetOptions(elements.budgetInput, country, currentBudgetValue);
+  populateScopeOfWorkOptions(elements.scopeOfWork, state.selectedPracticeAreaId, currentScopeValue);
   elements.templateSummary.innerHTML = `
     <p><strong>${template.label}</strong></p>
     <p>${template.terminology}</p>
@@ -1022,7 +1034,7 @@ function renderLawyerStudio() {
 }
 
 function renderBidDefaults() {
-  if (!elements.bidCaseSelect || !elements.feeType || !elements.totalFee || !elements.disbursements || !elements.compliancePreview) {
+  if (!elements.bidCaseSelect || !elements.feeType || !elements.totalFee || !elements.disbursements || !elements.compliancePreview || !elements.bidMatterBrief) {
     return;
   }
   const matter = state.cases.find((entry) => entry.id === elements.bidCaseSelect.value);
@@ -1030,6 +1042,7 @@ function renderBidDefaults() {
     elements.feeType.placeholder = "Select an eligible matter";
     elements.totalFee.placeholder = "Overall range";
     elements.disbursements.placeholder = "Excluded costs / taxes";
+    elements.bidMatterBrief.innerHTML = "<p>Select a visible matter to review the requested scope and budget range.</p>";
     elements.compliancePreview.innerHTML = "<li>Select an eligible matter to preview conduct checks.</li>";
     return;
   }
@@ -1037,6 +1050,12 @@ function renderBidDefaults() {
   elements.feeType.placeholder = country.code === "US" ? "Stage-based hourly or capped estimate" : "Stage-based fixed or capped fee estimate";
   elements.totalFee.placeholder = country.code === "US" ? "USD 3,500 - 6,000" : `${country.currencyCode} 4,800 - 7,500`;
   elements.disbursements.placeholder = "Court filing, barrister, expert, GST/VAT if separate";
+  elements.bidMatterBrief.innerHTML = `
+    <p class="eyebrow">Selected matter brief</p>
+    <p><strong>Scope of work:</strong> ${escapeHtml(matter.scopeOfWork || "Not specified")}</p>
+    <p><strong>Budget range:</strong> ${escapeHtml(matter.budget || "Not specified")}</p>
+    <p><strong>Summary:</strong> ${escapeHtml(matter.summary || "Not provided")}</p>
+  `;
 }
 
 function renderCompliancePreview() {
@@ -1151,6 +1170,7 @@ function renderClientBoard() {
           <p class="case-card-summary">${entry.summary}</p>
           <div class="case-meta">
             <span class="pill neutral">${entry.region}</span>
+            ${entry.scopeOfWork ? `<span class="pill neutral">${entry.scopeOfWork}</span>` : ""}
             ${entry.documents?.length ? `<span class="pill neutral">${entry.documents.length} document${entry.documents.length === 1 ? "" : "s"}</span>` : ""}
             <span class="pill neutral">${needsPayment ? "Ready for checkout" : entry.status}</span>
           </div>
@@ -1171,6 +1191,7 @@ function renderClientBoard() {
   elements.caseDetails.innerHTML = `
     <p><strong>${matter.caseName || getPracticeArea(matter.practiceAreaId).label}</strong></p>
     <p class="eyebrow">${getPracticeArea(matter.practiceAreaId).label}</p>
+    ${matter.scopeOfWork ? `<p><strong>Scope of work:</strong> ${escapeHtml(matter.scopeOfWork)}</p>` : ""}
     <p>${matter.summary}</p>
     <div class="case-meta">
       <span class="pill neutral">${getCountry(matter.countryCode).name}</span>
@@ -1521,6 +1542,7 @@ async function submitMatter(event) {
       countryCode: formData.get("countryCode"),
       region: formData.get("region"),
       practiceAreaId: formData.get("practiceAreaId"),
+      scopeOfWork: formData.get("scopeOfWork"),
       summary: formData.get("summary"),
       budget: formData.get("budget"),
       documents: state.matterDocuments.map((entry) => ({
@@ -1788,6 +1810,109 @@ function buildBudgetRangeOptions(country) {
     `${prefix}75,000 to ${prefix}100,000`,
     `${prefix}100,000+`,
   ];
+}
+
+function buildScopeOfWorkOptions(practiceAreaId) {
+  const id = String(practiceAreaId || "");
+
+  if (["family-divorce", "child-custody"].includes(id)) {
+    return [
+      "Review and advise on the family matter",
+      "Single task only: parenting plan, consent orders, or disclosure review",
+      "Advise and represent the family matter through to completion",
+    ];
+  }
+  if (["employment"].includes(id)) {
+    return [
+      "Review and advise on the workplace issue",
+      "Single task only: letter, response, settlement review, or contract review",
+      "Advise and act on the matter through to resolution or tribunal",
+    ];
+  }
+  if (["criminal-defence", "traffic"].includes(id)) {
+    return [
+      "Review and advise on the allegation or charge",
+      "Single task only: bail application, plea advice, or document review",
+      "Advise and represent the matter through hearings",
+    ];
+  }
+  if (["personal-injury", "medical-negligence"].includes(id)) {
+    return [
+      "Review and advise on the claim prospects",
+      "Single task only: insurer response, demand letter, or evidence review",
+      "Advise and run the claim through to settlement or hearing",
+    ];
+  }
+  if (["property"].includes(id)) {
+    return [
+      "Review and advise on the property matter",
+      "Single task only: contract review, special conditions, or title issue",
+      "Advise and handle the property matter through to completion",
+    ];
+  }
+  if (["commercial", "contract-disputes", "ip", "consumer", "debt-insolvency", "construction", "environmental", "administrative"].includes(id)) {
+    return [
+      "Review and advise on the business or dispute matter",
+      "Single task only: contract drafting, contract review, negotiation support, or demand letter",
+      "Advise and act on the full matter through to completion",
+    ];
+  }
+  if (["wills-probate", "estate-litigation", "elder-law", "retirement"].includes(id)) {
+    return [
+      "Review and advise on the wills, estate, or elder law matter",
+      "Single task only: probate application, will review, or executor correspondence",
+      "Advise and manage the matter through to completion",
+    ];
+  }
+  if (["immigration"].includes(id)) {
+    return [
+      "Review and advise on options and prospects",
+      "Single task only: application review, response draft, or submission preparation",
+      "Advise and act on the visa or appeal matter through to completion",
+    ];
+  }
+  if (["tax"].includes(id)) {
+    return [
+      "Review and advise on the tax issue",
+      "Single task only: response draft, objection review, or document advice",
+      "Advise and act on the tax matter through to completion",
+    ];
+  }
+  if (["neighbourhood", "other"].includes(id)) {
+    return [
+      "Review and advise on the matter",
+      "Single task only: letter, agreement, or one-off advice task",
+      "Advise and act on the matter through to completion",
+    ];
+  }
+
+  return [
+    "Review and advise on the matter",
+    "Single task only: a defined one-off task",
+    "Advise and act on the matter through to completion",
+  ];
+}
+
+function populateScopeOfWorkOptions(select, practiceAreaId, selectedValue) {
+  if (!select) {
+    return;
+  }
+
+  const options = buildScopeOfWorkOptions(practiceAreaId);
+  const normalizedSelected = String(selectedValue || "").trim();
+  const selectedExists = normalizedSelected && options.includes(normalizedSelected);
+  const renderedOptions = selectedExists || !normalizedSelected ? options : [...options, normalizedSelected];
+
+  select.innerHTML = "";
+  renderedOptions.forEach((label) => {
+    const option = document.createElement("option");
+    option.value = label;
+    option.textContent = !selectedExists && normalizedSelected && label === normalizedSelected ? `${label} (saved)` : label;
+    if (normalizedSelected ? label === normalizedSelected : label === options[0]) {
+      option.selected = true;
+    }
+    select.appendChild(option);
+  });
 }
 
 function populateBudgetOptions(select, country, selectedValue) {
