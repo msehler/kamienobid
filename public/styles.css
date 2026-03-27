@@ -18,6 +18,7 @@
   --panel-radius-lg: 30px;
   --panel-radius-md: 30px;
   --panel-radius-sm: 30px;
+  --page-heading-size: clamp(1.9rem, 3vw, 3rem);
   --sans: "Avenir Next", "Gill Sans", "Century Gothic", sans-serif;
   --serif: "Iowan Old Style", "Baskerville", "Times New Roman", serif;
 }
@@ -711,7 +712,7 @@ a {
 .page-title {
   margin: 0;
   max-width: 11ch;
-  font-size: clamp(2.8rem, 6vw, 5rem);
+  font-size: var(--page-heading-size);
   line-height: 0.9;
   letter-spacing: -0.05em;
   color: var(--ink);
@@ -1115,7 +1116,7 @@ body[data-page="account"] .page-hero-card::before {
 .workspace-header h2 {
   margin: 0;
   max-width: 16ch;
-  font-size: clamp(2.3rem, 4.4vw, 4rem);
+  font-size: var(--page-heading-size);
   line-height: 0.92;
   color: white;
   letter-spacing: -0.04em;
@@ -1151,7 +1152,7 @@ body[data-page="account"] .page-hero-card::before {
 #clientDashboard .workspace-header h2,
 .dashboard-title {
   max-width: 22ch;
-  font-size: clamp(1.9rem, 3vw, 3rem);
+  font-size: var(--page-heading-size);
   line-height: 0.98;
 }
 
