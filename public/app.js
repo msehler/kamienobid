@@ -75,6 +75,7 @@ function cacheElements() {
     "matterFormTitle",
     "matterFormPill",
     "matterAccessNote",
+    "matterCancelButton",
     "matterSubmitButton",
     "caseName",
     "countrySelect",
@@ -170,6 +171,9 @@ function bindEvents() {
     .forEach((field) => field.addEventListener("input", renderCompliancePreview));
   if (elements.clientCreateCaseButton) {
     elements.clientCreateCaseButton.addEventListener("click", () => openMatterComposer());
+  }
+  if (elements.matterCancelButton) {
+    elements.matterCancelButton.addEventListener("click", closeMatterComposer);
   }
   [elements.caseList, elements.caseDetails].filter(Boolean).forEach((container) => {
     container.addEventListener("click", handleClientCaseAction);
@@ -845,6 +849,7 @@ function renderMatterComposer() {
     !elements.matterSubmitButton ||
     !elements.matterFormTitle ||
     !elements.matterFormPill ||
+    !elements.matterCancelButton ||
     !elements.clientName ||
     !elements.clientEmail ||
     !elements.caseName
@@ -891,7 +896,7 @@ function renderMatterComposer() {
     ? String(editingMatter.paymentStatus).startsWith("paid")
       ? "Save case changes"
       : "Save draft changes"
-    : "Save draft";
+    : "Save draft changes";
   elements.matterAccessNote.hidden = isClient;
   elements.matterAccessNote.innerHTML = isClient ? "" : `<p>Sign in as a client to create and publish a matter.</p>`;
   setFormEnabled(elements.matterForm, isClient);

@@ -1128,6 +1128,7 @@ body[data-page="account"] .page-hero-card::before {
 }
 
 .workspace-actions,
+.form-actions,
 .signup-actions,
 .panel-badges,
 .case-card-header,
@@ -1140,6 +1141,10 @@ body[data-page="account"] .page-hero-card::before {
 }
 
 .signup-actions {
+  margin-top: 18px;
+}
+
+.matter-form-actions {
   margin-top: 18px;
 }
 
@@ -1307,7 +1312,7 @@ form.panel > .button {
 .matter-form .panel-header,
 .insight-panel .panel-header,
 .matter-form .access-note,
-.matter-form > .button,
+.matter-form .matter-form-actions,
 .matter-form .prompt-grid {
   margin: 0;
 }
