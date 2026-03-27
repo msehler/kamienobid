@@ -1139,6 +1139,10 @@ body[data-page="account"] .page-hero-card::before {
   flex-wrap: wrap;
 }
 
+.signup-actions {
+  margin-top: 18px;
+}
+
 #clientDashboard .workspace-header h2,
 .dashboard-title {
   max-width: 22ch;
