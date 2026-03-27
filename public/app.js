@@ -504,7 +504,7 @@ function renderHeader() {
       const myAccountCurrent = pathname === "/account" ? ' aria-current="page"' : "";
       container.innerHTML = `
         <a class="main-nav-cta" href="/client?view=composer"${addNewCaseCurrent}>Add new case</a>
-        <a href="/account"${myAccountCurrent}>My Account</a>
+        <a href="/account"${myAccountCurrent}>My account</a>
       `;
       return;
     }
