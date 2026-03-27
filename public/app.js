@@ -60,15 +60,19 @@ function cacheElements() {
     "accountHeroNotes",
     "accountWorkspaceEyebrow",
     "accountWorkspaceTitle",
+    "accountWorkspaceGrid",
     "signupPanelTitle",
     "signupPanelPill",
     "signupSubmitLabel",
     "signupHotButton",
+    "signupSwitchLink",
+    "loginSwitchLink",
     "accountInsightEyebrow",
     "accountInsightBody",
     "accountPrimaryColumn",
     "accountSignedInPanel",
     "accountStatusPanelTitle",
+    "accountInsightPanel",
     "countryInsights",
     "clientMarketingHero",
     "clientMarketingDetails",
@@ -325,10 +329,18 @@ function applySignupRolePrefill() {
   }
 }
 
-function applyAccountPageMode() {
+function getAccountAuthConfig() {
   const params = new URLSearchParams(window.location.search);
-  const role = params.get("role");
-  const mode = params.get("mode");
+  return {
+    role: params.get("role") === "lawyer" ? "lawyer" : "client",
+    mode: params.get("mode") === "signup" ? "signup" : "signin",
+  };
+}
+
+function applyAccountPageMode() {
+  const { role, mode } = getAccountAuthConfig();
+  const signupHref = role === "lawyer" ? "/account?role=lawyer&mode=signup" : "/account?mode=signup";
+  const signinHref = "/account?mode=signin";
 
   if (role === "lawyer") {
     if (elements.accountHeroEyebrow) {
@@ -361,7 +373,9 @@ function applyAccountPageMode() {
       elements.accountWorkspaceEyebrow.textContent = "Lawyer onboarding";
     }
     if (elements.accountWorkspaceTitle) {
-      elements.accountWorkspaceTitle.textContent = "Start your Kamieno lawyer account here, then complete verification and bidding from your lawyer workspace.";
+      elements.accountWorkspaceTitle.textContent = mode === "signup"
+        ? "Create your lawyer account to start the verification and bidding workflow."
+        : "Sign in to continue your lawyer profile and jurisdiction workflow.";
     }
     if (elements.signupPanelTitle) {
       elements.signupPanelTitle.textContent = "Register as a lawyer";
@@ -378,10 +392,7 @@ function applyAccountPageMode() {
     if (elements.accountInsightBody) {
       elements.accountInsightBody.textContent = "Kamieno is designed to help lawyers compete on relevance, jurisdiction fit, and quality of approach before a client makes first contact. After registration, complete your profile in the lawyer workspace to enter verification.";
     }
-    return;
-  }
-
-  if (mode === "signin") {
+  } else if (mode === "signin") {
     if (elements.accountHeroEyebrow) {
       elements.accountHeroEyebrow.textContent = "Client sign in";
     }
@@ -395,12 +406,33 @@ function applyAccountPageMode() {
       elements.accountWorkspaceEyebrow.textContent = "Client access";
     }
     if (elements.accountWorkspaceTitle) {
-      elements.accountWorkspaceTitle.textContent = "Sign in to open your client dashboard. If you are new here, you can still create a client account below.";
+      elements.accountWorkspaceTitle.textContent = "Sign in to open your client dashboard.";
     }
-    if (elements.loginForm && elements.signupForm) {
-      elements.loginForm.style.order = "-1";
-      elements.signupForm.style.order = "1";
+  } else {
+    if (elements.accountHeroEyebrow) {
+      elements.accountHeroEyebrow.textContent = "Client sign up";
     }
+    if (elements.accountHeroTitle) {
+      elements.accountHeroTitle.innerHTML = 'Create your client account <span>and start your first case.</span>';
+    }
+    if (elements.accountHeroSummary) {
+      elements.accountHeroSummary.textContent = "Create your Kamieno client account to save drafts, manage cases, and continue through checkout when you are ready.";
+    }
+    if (elements.accountWorkspaceEyebrow) {
+      elements.accountWorkspaceEyebrow.textContent = "Client sign up";
+    }
+    if (elements.accountWorkspaceTitle) {
+      elements.accountWorkspaceTitle.textContent = "Create your account to open your client dashboard.";
+    }
+  }
+
+  if (elements.signupSwitchLink) {
+    elements.signupSwitchLink.href = signinHref;
+    elements.signupSwitchLink.textContent = "Already have an account? Sign in";
+  }
+  if (elements.loginSwitchLink) {
+    elements.loginSwitchLink.href = signupHref;
+    elements.loginSwitchLink.textContent = role === "lawyer" ? "Need a lawyer account? Sign up" : "Need an account? Sign up";
   }
 }
 
@@ -634,6 +666,7 @@ function renderAuth() {
   }
   const user = state.currentUser;
   const isAccountPage = window.location.pathname === "/account";
+  const { role, mode } = getAccountAuthConfig();
   elements.stripeStatus.textContent = state.bootstrap.stripeReady ? "Stripe ready" : "Demo checkout";
 
   if (user && isAccountPage) {
@@ -698,8 +731,33 @@ function renderAuth() {
     `;
   }
 
-  elements.signupForm.style.display = user && isAccountPage ? "none" : "";
-  elements.loginForm.style.display = user && isAccountPage ? "none" : "";
+  if (isAccountPage && !user) {
+    if (elements.accountHeroSection) {
+      elements.accountHeroSection.hidden = true;
+    }
+    if (elements.accountInsightPanel) {
+      elements.accountInsightPanel.hidden = true;
+    }
+    if (elements.accountWorkspaceGrid) {
+      elements.accountWorkspaceGrid.classList.add("auth-simple");
+    }
+    if (elements.accountWorkspaceEyebrow) {
+      elements.accountWorkspaceEyebrow.textContent = role === "lawyer" ? "Lawyer account" : "Client account";
+    }
+    if (elements.accountStatusPanelTitle) {
+      elements.accountStatusPanelTitle.textContent = mode === "signup" ? "Create your account" : "Sign in";
+    }
+  } else {
+    if (elements.accountInsightPanel) {
+      elements.accountInsightPanel.hidden = Boolean(!user && isAccountPage);
+    }
+    if (elements.accountWorkspaceGrid) {
+      elements.accountWorkspaceGrid.classList.remove("auth-simple");
+    }
+  }
+
+  elements.signupForm.style.display = user && isAccountPage ? "none" : isAccountPage && mode !== "signup" ? "none" : "";
+  elements.loginForm.style.display = user && isAccountPage ? "none" : isAccountPage && mode !== "signin" ? "none" : "";
   elements.logoutButton.style.display = user && isAccountPage ? "none" : user ? "" : "none";
 }
 
@@ -2373,12 +2431,15 @@ function getPublicPrimaryNavMarkup(pathname) {
   const clientCurrent = pathname === "/client" ? ' aria-current="page"' : "";
   const aboutCurrent = pathname === "/about" ? ' aria-current="page"' : "";
   const contactCurrent = pathname === "/contact" ? ' aria-current="page"' : "";
-  const accountCurrent = pathname === "/account" ? ' aria-current="page"' : "";
+  const params = new URLSearchParams(window.location.search);
+  const signupCurrent = pathname === "/account" && params.get("mode") === "signup" ? ' aria-current="page"' : "";
+  const signinCurrent = pathname === "/account" && params.get("mode") !== "signup" ? ' aria-current="page"' : "";
   return `
     <a class="main-nav-cta" href="/client"${clientCurrent}>Post a new case</a>
     <a href="/about"${aboutCurrent}>About us</a>
     <a href="/contact"${contactCurrent}>Contact us</a>
-    <a href="/account"${accountCurrent}>Sign in</a>
+    <a href="/account?mode=signup"${signupCurrent}>Sign up</a>
+    <a href="/account?mode=signin"${signinCurrent}>Sign in</a>
   `;
 }
 

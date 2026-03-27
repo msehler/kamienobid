@@ -38,7 +38,8 @@
             <a class="main-nav-cta" href="/client">Post a new case</a>
             <a href="/about">About us</a>
             <a href="/contact">Contact us</a>
-            <a href="/account" aria-current="page">Sign in</a>
+            <a href="/account?mode=signup">Sign up</a>
+            <a href="/account?mode=signin" aria-current="page">Sign in</a>
           </div>
           <div class="main-nav-secondary">
             <a href="/account?role=lawyer">Register as a lawyer</a>
@@ -51,7 +52,8 @@
           <a class="main-nav-cta" href="/client">Post a new case</a>
           <a href="/about">About us</a>
           <a href="/contact">Contact us</a>
-          <a href="/account" aria-current="page">Sign in</a>
+          <a href="/account?mode=signup">Sign up</a>
+          <a href="/account?mode=signin" aria-current="page">Sign in</a>
         </div>
         <div class="mobile-nav-secondary">
           <a href="/account?role=lawyer">Register as a lawyer</a>
@@ -95,7 +97,7 @@
           <p class="eyebrow" id="accountWorkspaceEyebrow">Account access</p>
           <h2 id="accountWorkspaceTitle">Create your account or sign in, then continue into the part of Kamieno you need.</h2>
         </div>
-        <div class="workspace-grid">
+        <div class="workspace-grid" id="accountWorkspaceGrid">
           <div class="stack-column" id="accountPrimaryColumn">
             <div id="accountSignedInPanel" hidden></div>
             <form class="panel" id="signupForm">
@@ -120,18 +122,12 @@
                   Password
                   <input id="signupPassword" name="password" type="password" placeholder="Minimum 10 characters" required />
                 </label>
-                <label>
-                  Role
-                  <select id="signupRole" name="role">
-                    <option value="client">Client</option>
-                    <option value="lawyer">Lawyer</option>
-                  </select>
-                </label>
               </div>
+              <input id="signupRole" name="role" type="hidden" value="client" />
               <div class="signup-actions">
                 <button class="button primary" id="signupSubmitLabel" type="submit">Create account</button>
-                <button class="button secondary" id="signupHotButton" type="button">Use dummy account</button>
               </div>
+              <p class="auth-switch"><a id="signupSwitchLink" href="/account?mode=signin">Already have an account? Sign in</a></p>
             </form>
 
             <form class="panel" id="loginForm">
@@ -149,11 +145,12 @@
                   <input id="loginPassword" name="password" type="password" placeholder="Your password" required />
                 </label>
               </div>
-              <button class="button secondary" type="submit">Sign in</button>
+              <button class="button primary" type="submit">Sign in</button>
+              <p class="auth-switch"><a id="loginSwitchLink" href="/account?mode=signup">Need an account? Sign up</a></p>
             </form>
           </div>
 
-          <aside class="panel insight-panel">
+          <aside class="panel insight-panel" id="accountInsightPanel">
             <div class="panel-header">
               <h3 id="accountStatusPanelTitle">Your account status</h3>
               <span class="pill neutral" id="stripeStatus"></span>
