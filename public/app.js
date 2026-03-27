@@ -71,16 +71,10 @@ function cacheElements() {
     "clientDashboard",
     "clientCreateCaseButton",
     "clientComposer",
-    "clientComposerHeader",
-    "clientComposerIntro",
-    "clientComposerEyebrow",
-    "clientComposerTitle",
-    "clientComposerSummary",
     "matterForm",
     "matterFormTitle",
     "matterFormPill",
     "matterAccessNote",
-    "matterCancelButton",
     "matterSubmitButton",
     "caseName",
     "countrySelect",
@@ -176,9 +170,6 @@ function bindEvents() {
     .forEach((field) => field.addEventListener("input", renderCompliancePreview));
   if (elements.clientCreateCaseButton) {
     elements.clientCreateCaseButton.addEventListener("click", () => openMatterComposer());
-  }
-  if (elements.matterCancelButton) {
-    elements.matterCancelButton.addEventListener("click", closeMatterComposer);
   }
   [elements.caseList, elements.caseDetails].filter(Boolean).forEach((container) => {
     container.addEventListener("click", handleClientCaseAction);
@@ -854,11 +845,6 @@ function renderMatterComposer() {
     !elements.matterSubmitButton ||
     !elements.matterFormTitle ||
     !elements.matterFormPill ||
-    !elements.clientComposerHeader ||
-    !elements.clientComposerIntro ||
-    !elements.clientComposerEyebrow ||
-    !elements.clientComposerTitle ||
-    !elements.clientComposerSummary ||
     !elements.clientName ||
     !elements.clientEmail ||
     !elements.caseName
@@ -899,15 +885,6 @@ function renderMatterComposer() {
   const isClient = state.currentUser?.role === "client";
   const editingMatter = state.cases.find((entry) => entry.id === state.editingCaseId) || null;
 
-  elements.clientComposerEyebrow.textContent = editingMatter ? "Edit case brief" : "Case brief";
-  elements.clientComposerTitle.textContent = editingMatter
-    ? "Update your case details, then save your changes."
-    : "Tell Kamieno what legal help you need.";
-  elements.clientComposerSummary.textContent = editingMatter
-    ? String(editingMatter.paymentStatus).startsWith("paid")
-      ? "Review the published case information below, then save your changes."
-      : "Review the draft below, save your changes, and add it to cart later from your dashboard when you are ready for checkout."
-    : "Complete the case brief below to save your draft. You can add it to cart from your dashboard when you are ready for checkout.";
   elements.matterFormTitle.textContent = editingMatter ? "Edit your case" : "Create your case";
   elements.matterFormPill.textContent = editingMatter ? "Existing case" : "New draft";
   elements.matterSubmitButton.textContent = editingMatter
@@ -915,8 +892,6 @@ function renderMatterComposer() {
       ? "Save case changes"
       : "Save draft changes"
     : "Save draft";
-  elements.clientComposerHeader.classList.add("workspace-header-actions-only");
-  elements.clientComposerIntro.hidden = true;
   elements.matterAccessNote.hidden = isClient;
   elements.matterAccessNote.innerHTML = isClient ? "" : `<p>Sign in as a client to create and publish a matter.</p>`;
   setFormEnabled(elements.matterForm, isClient);
