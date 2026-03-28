@@ -168,6 +168,11 @@
               Case name
               <input id="caseName" name="caseName" type="text" placeholder="e.g. Taylor Shaw -v- John Smith" required />
             </label>
+            <label>
+              What do you need a lawyer for?
+              <select id="intakeReasonSelect" name="intakeReason" required></select>
+            </label>
+            <div class="access-note" id="intakeReasonGuide" hidden></div>
             <div class="form-grid">
               <label>
                 Client name
@@ -185,7 +190,7 @@
                 <span id="regionLabel">Region</span>
                 <select id="regionSelect" name="region" required></select>
               </label>
-              <label>
+              <label id="practiceAreaField" hidden>
                 Practice area
                 <select id="practiceAreaSelect" name="practiceAreaId" required></select>
               </label>

@@ -14,6 +14,7 @@ const state = {
   clientView: "marketing",
   editingCaseId: null,
   accountEditMode: false,
+  intakeReason: "",
   matterDocuments: [],
   singleTaskDetails: [],
 };
@@ -23,8 +24,90 @@ const STORED_USER_KEY = "kamieno.rememberedUser";
 const MAX_MATTER_DOCUMENTS = 10;
 const MAX_MATTER_DOCUMENT_BYTES_PER_FILE = 2 * 1024 * 1024;
 const MAX_MATTER_DOCUMENT_BYTES_TOTAL = 3 * 1024 * 1024;
+const INTAKE_REASON_KEY = "__intakeReason";
 const SINGLE_TASK_DETAIL_KEY = "__singleTaskDetail";
 const SINGLE_TASK_DETAILS_KEY = "__singleTaskDetails";
+
+const INTAKE_REASON_OPTIONS = [
+  {
+    id: "legal-advice",
+    label: "I need legal advice",
+    summary: "Use this when you want advice first. You can then choose the practice area you want advice on, like family, criminal, employment, or commercial.",
+    prompts: ["What has happened so far?", "What advice or outcome are you looking for?", "Is there any urgent deadline?"],
+  },
+  {
+    id: "document-drafting-review",
+    label: "I need a document drafted or reviewed",
+    summary: "Use this when you need help preparing, reviewing, or negotiating a document.",
+    prompts: ["What document do you need help with?", "Do you already have a draft or received version?", "When do you need it reviewed or prepared by?"],
+  },
+  {
+    id: "defending-claim",
+    label: "Someone is making a claim against me",
+    summary: "Use this when you have received a claim, allegation, charge, complaint, or legal demand and need to respond.",
+    prompts: ["Who is making the claim or allegation?", "What documents or notices have you received?", "When do you need to respond by?"],
+  },
+  {
+    id: "making-claim",
+    label: "I want to make a claim against someone",
+    summary: "Use this when you want to take legal action, recover money, or pursue a formal complaint or claim.",
+    prompts: ["Who is the claim against?", "What outcome are you seeking?", "What key evidence or documents do you already have?"],
+  },
+  {
+    id: "court-tribunal-process",
+    label: "I need help with a court, tribunal, or government process",
+    summary: "Use this when you already have a formal process underway or need help preparing for one.",
+    prompts: ["Which court, tribunal, or agency is involved?", "What stage is the matter at?", "What is the next hearing date or deadline?"],
+  },
+  {
+    id: "personal-situation",
+    label: "I need help with a personal situation",
+    summary: "Use this for private-client matters affecting you or your family, even if you are not yet sure of the legal category.",
+    practiceAreaIds: [
+      "family-divorce",
+      "child-custody",
+      "personal-injury",
+      "medical-negligence",
+      "criminal-defence",
+      "traffic",
+      "wills-probate",
+      "estate-litigation",
+      "consumer",
+      "immigration",
+      "retirement",
+      "elder-law",
+      "neighbourhood",
+      "other",
+    ],
+    prompts: ["What is happening in plain language?", "What result are you hoping for?", "Is anything urgent right now?"],
+  },
+  {
+    id: "business-issue",
+    label: "I need help with a business issue",
+    summary: "Use this when the matter involves your company, commercial dealings, contracts, staff, or a regulator.",
+    practiceAreaIds: [
+      "employment",
+      "property",
+      "commercial",
+      "contract-disputes",
+      "ip",
+      "consumer",
+      "debt-insolvency",
+      "tax",
+      "construction",
+      "environmental",
+      "administrative",
+      "other",
+    ],
+    prompts: ["What is the business issue?", "Who is the other side or decision-maker?", "What commercial outcome do you need?"],
+  },
+  {
+    id: "not-sure",
+    label: "I'm not sure",
+    summary: "Use this if you want to describe the problem first and then choose the closest practice area.",
+    prompts: ["What happened?", "What help do you think you need?", "Is there any deadline or urgency?"],
+  },
+];
 
 document.addEventListener("DOMContentLoaded", async () => {
   cacheElements();
@@ -98,6 +181,9 @@ function cacheElements() {
     "countrySelect",
     "regionSelect",
     "regionLabel",
+    "intakeReasonSelect",
+    "intakeReasonGuide",
+    "practiceAreaField",
     "practiceAreaSelect",
     "scopeOfWorkField",
     "scopeOfWork",
@@ -164,6 +250,18 @@ function bindEvents() {
     field.addEventListener("input", handleSignupNameInput);
     field.addEventListener("blur", handleSignupNameInput);
   });
+
+  if (elements.intakeReasonSelect) {
+    elements.intakeReasonSelect.addEventListener("change", () => {
+      state.intakeReason = elements.intakeReasonSelect.value;
+      state.selectedPracticeAreaId = "";
+      state.singleTaskDetails = [];
+      if (elements.scopeOfWork) {
+        elements.scopeOfWork.value = "";
+      }
+      renderMatterComposer();
+    });
+  }
 
   if (elements.countrySelect) {
     elements.countrySelect.addEventListener("change", () => {
@@ -1037,7 +1135,9 @@ function openMatterComposer(caseId = null) {
     state.selectedCaseId = matter.id;
     state.selectedCountryCode = matter.countryCode;
     state.selectedPracticeAreaId = matter.practiceAreaId;
+    state.intakeReason = getSavedIntakeReason(matter) || deriveIntakeReasonFromMatter(matter);
   } else {
+    state.intakeReason = "";
     state.selectedPracticeAreaId = "";
     setMatterDocuments([]);
   }
@@ -1066,6 +1166,7 @@ function prepareNewMatterForm() {
   }
   elements.matterForm.reset();
   state.editingCaseId = null;
+  state.intakeReason = "";
   state.selectedPracticeAreaId = "";
   state.singleTaskDetails = [];
   setMatterDocuments([]);
@@ -1089,6 +1190,7 @@ function populateMatterFormFromCase(matter) {
     return;
   }
   state.selectedCountryCode = matter.countryCode;
+  state.intakeReason = getSavedIntakeReason(matter) || deriveIntakeReasonFromMatter(matter);
   state.selectedPracticeAreaId = matter.practiceAreaId;
   setMatterDocuments(matter.documents || []);
   renderMatterComposer();
@@ -1122,7 +1224,10 @@ function populateMatterFormFromCase(matter) {
 
 function renderMatterComposer() {
   if (
+    !elements.intakeReasonSelect ||
+    !elements.intakeReasonGuide ||
     !elements.countrySelect ||
+    !elements.practiceAreaField ||
     !elements.practiceAreaSelect ||
     !elements.regionLabel ||
     !elements.regionSelect ||
@@ -1150,12 +1255,23 @@ function renderMatterComposer() {
   ) {
     return;
   }
+  if (state.intakeReason) {
+    const allowedPracticeAreaIds = new Set(getPracticeAreasForIntakeReason(state.intakeReason).map((area) => area.id));
+    if (state.selectedPracticeAreaId && !allowedPracticeAreaIds.has(state.selectedPracticeAreaId)) {
+      state.selectedPracticeAreaId = "";
+      state.singleTaskDetails = [];
+    }
+  }
+  populateIntakeReasonOptions(elements.intakeReasonSelect, state.intakeReason);
   populateCountrySelect(elements.countrySelect, state.selectedCountryCode);
   populatePracticeAreas();
 
   const country = getCountry(state.selectedCountryCode);
+  const intakeReason = getIntakeReasonConfig(state.intakeReason);
+  const hasIntakeReason = Boolean(intakeReason);
   const hasPracticeArea = Boolean(state.selectedPracticeAreaId);
   const template = hasPracticeArea ? getTemplate(state.selectedCountryCode, state.selectedPracticeAreaId) : null;
+  const matterPrompts = buildMatterPrompts(state.intakeReason, template);
   const currentBudgetValue = elements.budgetInput?.value || "";
   const currentScopeValue = elements.scopeOfWork?.value || "";
   const currentSingleTaskDetails = readSingleTaskDetailsFromDom();
@@ -1166,6 +1282,13 @@ function renderMatterComposer() {
   elements.regionLabel.textContent = country.regionLabel;
   populateRegionSelect(elements.regionSelect, country, elements.regionSelect.value);
   populateBudgetOptions(elements.budgetInput, country, currentBudgetValue);
+  elements.intakeReasonGuide.hidden = !hasIntakeReason;
+  elements.intakeReasonGuide.innerHTML = intakeReason
+    ? `<p><strong>${escapeHtml(intakeReason.label)}</strong></p><p>${escapeHtml(intakeReason.summary)}</p>`
+    : "";
+  elements.practiceAreaField.hidden = !hasIntakeReason;
+  elements.practiceAreaSelect.disabled = !hasIntakeReason;
+  elements.practiceAreaSelect.required = hasIntakeReason;
   populateScopeOfWorkOptions(elements.scopeOfWork, state.selectedPracticeAreaId, currentScopeValue);
   elements.scopeOfWorkField.hidden = !hasPracticeArea;
   elements.scopeOfWork.disabled = !hasPracticeArea;
@@ -1183,22 +1306,30 @@ function renderMatterComposer() {
   renderSingleTaskFields(state.selectedPracticeAreaId, showSingleTaskDetail);
   elements.templateSummary.innerHTML = template
     ? `
+        <p class="eyebrow">${escapeHtml(intakeReason?.label || "Selected intake path")}</p>
         <p><strong>${template.label}</strong></p>
         <p>${template.terminology}</p>
         <p>${template.disclaimer}</p>
-        <ul>${template.prompts.map((prompt) => `<li>${prompt}</li>`).join("")}</ul>
+        <ul>${matterPrompts.map((prompt) => `<li>${prompt}</li>`).join("")}</ul>
       `
-    : `
-        <p><strong>Select a practice area</strong></p>
-        <p>Choose a practice area to load the scope of work options and the case brief that lawyers will see.</p>
-      `;
+    : hasIntakeReason
+      ? `
+          <p class="eyebrow">${escapeHtml(intakeReason?.label || "Selected intake path")}</p>
+          <p><strong>Select a practice area</strong></p>
+          <p>Next, choose the closest practice area so Kamieno can tailor the case brief and suggested uploads.</p>
+          <ul>${(intakeReason?.prompts || []).map((prompt) => `<li>${prompt}</li>`).join("")}</ul>
+        `
+      : `
+          <p><strong>Start with the kind of help you need</strong></p>
+          <p>Choose what you need a lawyer for first, and Kamieno will narrow the practice areas and intake questions from there.</p>
+        `;
   elements.paymentFlowSummary.innerHTML = `
     <p class="eyebrow">Publishing flow</p>
     <p>Save your draft first, then add it to cart from your dashboard when you are ready for checkout and payment.</p>
   `;
   elements.caseName.placeholder = buildCaseNamePlaceholder(state.currentUser?.name);
   elements.promptFields.innerHTML = template
-    ? template.prompts
+    ? matterPrompts
         .map(
           (prompt) => `
             <label>
@@ -1211,7 +1342,9 @@ function renderMatterComposer() {
     : "";
   elements.requiredUploads.innerHTML = template
     ? template.uploads.map((entry) => `<li>${entry}</li>`).join("")
-    : "<li>Select a practice area to see the suggested uploads.</li>";
+    : hasIntakeReason
+      ? "<li>Select a practice area to see the suggested uploads.</li>"
+      : "<li>Choose what you need help with first to tailor the suggested uploads.</li>";
   renderMatterDocumentList();
 
   const isClient = state.currentUser?.role === "client";
@@ -1348,6 +1481,7 @@ function renderBidDefaults() {
   elements.disbursements.placeholder = "Court filing, barrister, expert, GST/VAT if separate";
   elements.bidMatterBrief.innerHTML = `
     <p class="eyebrow">Selected matter brief</p>
+    ${renderIntakeReasonSummary(matter)}
     <p><strong>Scope of work:</strong> ${escapeHtml(matter.scopeOfWork || "Not specified")}</p>
     ${renderSingleTaskSummary(matter)}
     <p><strong>Budget range:</strong> ${escapeHtml(matter.budget || "Not specified")}</p>
@@ -1488,6 +1622,7 @@ function renderClientBoard() {
   elements.caseDetails.innerHTML = `
     <p><strong>${matter.caseName || getPracticeArea(matter.practiceAreaId).label}</strong></p>
     <p class="eyebrow">${getPracticeArea(matter.practiceAreaId).label}</p>
+    ${renderIntakeReasonSummary(matter)}
     ${matter.scopeOfWork ? `<p><strong>Scope of work:</strong> ${escapeHtml(matter.scopeOfWork)}</p>` : ""}
     ${renderSingleTaskSummary(matter)}
     <p>${matter.summary}</p>
@@ -1863,11 +1998,15 @@ async function submitMatter(event) {
   }
 
   const template = getTemplate(elements.countrySelect.value, elements.practiceAreaSelect.value);
+  const matterPrompts = buildMatterPrompts(elements.intakeReasonSelect?.value, template);
   const formData = new FormData(elements.matterForm);
   const customAnswers = {};
-  template.prompts.forEach((prompt) => {
+  matterPrompts.forEach((prompt) => {
     customAnswers[prompt] = formData.get(`prompt:${prompt}`) || "";
   });
+  if (elements.intakeReasonSelect?.value) {
+    customAnswers[INTAKE_REASON_KEY] = elements.intakeReasonSelect.value;
+  }
   const singleTaskDetails = readSingleTaskDetailsFromDom().map((value) => value.trim()).filter(Boolean);
   if (singleTaskDetails.length) {
     customAnswers[SINGLE_TASK_DETAILS_KEY] = singleTaskDetails;
@@ -2042,13 +2181,40 @@ function populateCountrySelect(select, selectedValue) {
     .join("");
 }
 
+function getIntakeReasonConfig(id) {
+  return INTAKE_REASON_OPTIONS.find((option) => option.id === id) || null;
+}
+
+function populateIntakeReasonOptions(select, selectedValue) {
+  if (!select) {
+    return;
+  }
+
+  select.innerHTML = [
+    `<option value="" ${!selectedValue ? "selected" : ""}>Select</option>`,
+    ...INTAKE_REASON_OPTIONS.map(
+      (option) => `<option value="${option.id}" ${option.id === selectedValue ? "selected" : ""}>${option.label}</option>`,
+    ),
+  ].join("");
+}
+
+function getPracticeAreasForIntakeReason(reasonId) {
+  const config = getIntakeReasonConfig(reasonId);
+  if (!config?.practiceAreaIds?.length) {
+    return [...state.bootstrap.practiceAreas];
+  }
+  const allowedIds = new Set(config.practiceAreaIds);
+  return state.bootstrap.practiceAreas.filter((area) => allowedIds.has(area.id));
+}
+
 function populatePracticeAreas() {
   if (!elements.practiceAreaSelect) {
     return;
   }
+  const practiceAreas = state.intakeReason ? getPracticeAreasForIntakeReason(state.intakeReason) : [];
   elements.practiceAreaSelect.innerHTML = [
     `<option value="" ${!state.selectedPracticeAreaId ? "selected" : ""}>Select</option>`,
-    ...state.bootstrap.practiceAreas.map(
+    ...practiceAreas.map(
       (area) => `<option value="${area.id}" ${area.id === state.selectedPracticeAreaId ? "selected" : ""}>${area.label}</option>`,
     ),
   ].join("");
@@ -2080,7 +2246,36 @@ function getSingleTaskDetails(source) {
 }
 
 function getVisibleCustomAnswers(customAnswers) {
-  return Object.entries(customAnswers || {}).filter(([key]) => key !== SINGLE_TASK_DETAIL_KEY && key !== SINGLE_TASK_DETAILS_KEY);
+  return Object.entries(customAnswers || {})
+    .filter(([key]) => key !== SINGLE_TASK_DETAIL_KEY && key !== SINGLE_TASK_DETAILS_KEY && key !== INTAKE_REASON_KEY);
+}
+
+function getSavedIntakeReason(source) {
+  const customAnswers = source?.customAnswers || source || {};
+  const saved = String(customAnswers?.[INTAKE_REASON_KEY] || "").trim();
+  return getIntakeReasonConfig(saved) ? saved : "";
+}
+
+function deriveIntakeReasonFromMatter(matter) {
+  const scope = String(matter?.scopeOfWork || "").toLowerCase();
+  const areaId = String(matter?.practiceAreaId || "");
+
+  if (/single task/.test(scope)) {
+    return "document-drafting-review";
+  }
+  if (["criminal-defence", "traffic"].includes(areaId)) {
+    return "defending-claim";
+  }
+  if (["personal-injury", "medical-negligence", "contract-disputes", "debt-insolvency", "estate-litigation"].includes(areaId)) {
+    return "making-claim";
+  }
+  if (["family-divorce", "child-custody", "wills-probate", "consumer", "immigration", "retirement", "elder-law", "neighbourhood"].includes(areaId)) {
+    return "personal-situation";
+  }
+  if (["commercial", "employment", "property", "ip", "tax", "construction", "environmental", "administrative"].includes(areaId)) {
+    return "business-issue";
+  }
+  return "legal-advice";
 }
 
 function readSingleTaskDetailsFromDom() {
@@ -2119,6 +2314,20 @@ function getSingleTaskPlaceholder(practiceAreaId) {
     return "For example: review an objection, draft a response, or advise on a tax notice.";
   }
   return "For example: review an agreement, draft a letter of demand, or give one-off advice on a specific task.";
+}
+
+function buildMatterPrompts(intakeReasonId, template) {
+  const intakePrompts = getIntakeReasonConfig(intakeReasonId)?.prompts || [];
+  const areaPrompts = template?.prompts || [];
+  const seen = new Set();
+  return [...intakePrompts, ...areaPrompts].filter((prompt) => {
+    const normalized = String(prompt || "").trim().toLowerCase();
+    if (!normalized || seen.has(normalized)) {
+      return false;
+    }
+    seen.add(normalized);
+    return true;
+  });
 }
 
 function renderSingleTaskFields(practiceAreaId, isVisible) {
@@ -2176,6 +2385,14 @@ function renderSingleTaskSummary(matter) {
       <ul>${tasks.map((task) => `<li>${escapeHtml(task)}</li>`).join("")}</ul>
     </div>
   `;
+}
+
+function renderIntakeReasonSummary(matter) {
+  const label = getIntakeReasonConfig(getSavedIntakeReason(matter))?.label;
+  if (!label) {
+    return "";
+  }
+  return `<p><strong>What they need help with:</strong> ${escapeHtml(label)}</p>`;
 }
 
 function renderLawyerRegionOptions() {
