@@ -733,88 +733,120 @@ function renderAuth() {
     const roleLabel = formatLabel(user.role);
     const statusLabel = formatLabel(user.status);
     const hasJurisdictions = Array.isArray(user.jurisdictions) && user.jurisdictions.length;
+    const phoneDisplay = accountPhone || "Add your best contact number";
+    const addressDisplay = accountAddress ? accountAddress.replace(/\n/g, "<br />") : "Add your address for engagement and billing records";
     elements.accountSignedInPanel.innerHTML = `
-      <form class="panel account-settings-panel" id="accountSettingsForm">
-        <div class="panel-header">
-          <div class="account-panel-heading">
-            <h3>My account</h3>
-            <p>Keep your contact details current and update your password whenever you need to.</p>
-          </div>
-          <div class="panel-badges">
-            <span class="pill neutral">${escapeHtml(roleLabel)}</span>
-            <span class="pill neutral">${escapeHtml(statusLabel)}</span>
-          </div>
-        </div>
-        <div class="account-settings-grid">
-          <label class="account-field">
-            <span>Full name</span>
-            <input name="name" type="text" value="${accountName}" ${state.accountEditMode ? "" : "disabled"} required />
-          </label>
-          <label class="account-field">
-            <span>Email</span>
-            <input name="email" type="email" value="${accountEmail}" ${state.accountEditMode ? "" : "disabled"} required />
-          </label>
-          <label class="account-field">
-            <span>Phone number</span>
-            <input
-              name="phone"
-              type="tel"
-              value="${accountPhone}"
-              placeholder="Add your best contact number"
-              ${state.accountEditMode ? "" : "disabled"}
-            />
-          </label>
-          <label class="account-field account-field-full">
-            <span>Address</span>
-            <textarea name="address" rows="3" placeholder="Add your address for engagement and billing records" ${state.accountEditMode ? "" : "disabled"}>${accountAddress}</textarea>
-          </label>
-          <div class="account-security-card account-field-full">
-            <div class="account-password-row">
-              <div class="account-password-copy">
-                <p class="account-field-title">Password</p>
-                <p class="account-field-hint">
-                  ${state.accountEditMode
-                    ? "Change your password here if you want to rotate it now."
-                    : "Your password stays hidden. Switch into edit mode to change it securely."}
-                </p>
+      ${
+        state.accountEditMode
+          ? `
+            <form class="panel account-settings-panel" id="accountSettingsForm">
+              <div class="panel-header">
+                <div class="account-panel-heading">
+                  <h3>My account</h3>
+                  <p>Update your contact details here, then save when you are ready.</p>
+                </div>
+                <div class="panel-badges">
+                  <span class="pill neutral">${escapeHtml(roleLabel)}</span>
+                  <span class="pill neutral">${escapeHtml(statusLabel)}</span>
+                </div>
               </div>
-              ${
-                state.accountEditMode
-                  ? '<button class="button ghost account-password-toggle" type="button" data-account-toggle-password>Change password</button>'
-                  : '<span class="pill neutral">Protected</span>'
-              }
-            </div>
-            <input type="password" value="Password protected" disabled />
-            <div class="account-password-fields" data-account-password-fields hidden>
-              <label class="account-field">
-                <span>Current password</span>
-                <input name="currentPassword" type="password" placeholder="Enter your current password" />
-              </label>
-              <label class="account-field">
-                <span>New password</span>
-                <input name="newPassword" type="password" placeholder="Use at least 10 characters" />
-              </label>
-              <label class="account-field">
-                <span>Confirm new password</span>
-                <input name="confirmPassword" type="password" placeholder="Re-enter the new password" />
-              </label>
-              <p class="account-password-note">
-                Security recommendation: use 10 or more characters, avoid reusing an old password, and prefer a memorable passphrase with numbers or symbols.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div class="account-actions">
-          ${
-            state.accountEditMode
-              ? `
+              <div class="account-settings-grid">
+                <label class="account-field">
+                  <span>Full name</span>
+                  <input name="name" type="text" value="${accountName}" required />
+                </label>
+                <label class="account-field">
+                  <span>Email</span>
+                  <input name="email" type="email" value="${accountEmail}" required />
+                </label>
+                <label class="account-field">
+                  <span>Phone number</span>
+                  <input name="phone" type="tel" value="${accountPhone}" placeholder="Add your best contact number" />
+                </label>
+                <label class="account-field account-field-full">
+                  <span>Address</span>
+                  <textarea name="address" rows="3" placeholder="Add your address for engagement and billing records">${accountAddress}</textarea>
+                </label>
+                <div class="account-security-card account-field-full">
+                  <div class="account-password-row">
+                    <div class="account-password-copy">
+                      <p class="account-field-title">Password</p>
+                      <p class="account-field-hint">Change your password here if you want to rotate it now.</p>
+                    </div>
+                    <button class="button ghost account-password-toggle" type="button" data-account-toggle-password>Change password</button>
+                  </div>
+                  <input type="password" value="Password protected" disabled />
+                  <div class="account-password-fields" data-account-password-fields hidden>
+                    <label class="account-field">
+                      <span>Current password</span>
+                      <input name="currentPassword" type="password" placeholder="Enter your current password" />
+                    </label>
+                    <label class="account-field">
+                      <span>New password</span>
+                      <input name="newPassword" type="password" placeholder="Use at least 10 characters" />
+                    </label>
+                    <label class="account-field">
+                      <span>Confirm new password</span>
+                      <input name="confirmPassword" type="password" placeholder="Re-enter the new password" />
+                    </label>
+                    <p class="account-password-note">
+                      Security recommendation: use 10 or more characters, avoid reusing an old password, and prefer a memorable passphrase with numbers or symbols.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="account-actions">
                 <button class="button primary" type="submit">Save changes</button>
                 <button class="button secondary" type="button" data-account-cancel>Cancel</button>
-              `
-              : '<button class="button primary" type="button" data-account-edit>Edit details</button>'
-          }
-        </div>
-      </form>
+              </div>
+            </form>
+          `
+          : `
+            <article class="panel account-settings-panel account-settings-panel-readonly">
+              <div class="panel-header">
+                <div class="account-panel-heading">
+                  <h3>My account</h3>
+                  <p>Review the details currently attached to your Kamieno account.</p>
+                </div>
+                <div class="panel-badges">
+                  <span class="pill neutral">${escapeHtml(roleLabel)}</span>
+                  <span class="pill neutral">${escapeHtml(statusLabel)}</span>
+                </div>
+              </div>
+              <div class="account-readonly-grid">
+                <article class="account-readonly-item">
+                  <p class="account-readonly-label">Full name</p>
+                  <p class="account-readonly-value">${accountName}</p>
+                </article>
+                <article class="account-readonly-item">
+                  <p class="account-readonly-label">Email</p>
+                  <p class="account-readonly-value">${accountEmail}</p>
+                </article>
+                <article class="account-readonly-item">
+                  <p class="account-readonly-label">Phone number</p>
+                  <p class="account-readonly-value ${accountPhone ? "" : "is-muted"}">${phoneDisplay}</p>
+                </article>
+                <article class="account-readonly-item account-readonly-item-full">
+                  <p class="account-readonly-label">Address</p>
+                  <p class="account-readonly-value ${accountAddress ? "" : "is-muted"}">${addressDisplay}</p>
+                </article>
+                <article class="account-readonly-item account-readonly-item-full">
+                  <div class="account-password-row">
+                    <div class="account-password-copy">
+                      <p class="account-readonly-label">Password</p>
+                      <p class="account-field-hint">Your password is hidden. Switch into edit mode if you want to change it securely.</p>
+                    </div>
+                    <span class="pill neutral">Protected</span>
+                  </div>
+                  <p class="account-security-display">••••••••••••</p>
+                </article>
+              </div>
+              <div class="account-actions">
+                <button class="button primary" type="button" data-account-edit>Edit details</button>
+              </div>
+            </article>
+          `
+      }
     `;
     elements.sessionCard.innerHTML = `
       <p><strong>Use this page to manage the contact details tied to your Kamieno account.</strong></p>
@@ -890,11 +922,8 @@ function bindAccountSettingsPanel() {
   }
 
   const form = elements.accountSignedInPanel.querySelector("#accountSettingsForm");
-  if (!form) {
-    return;
-  }
 
-  const editButton = form.querySelector("[data-account-edit]");
+  const editButton = elements.accountSignedInPanel.querySelector("[data-account-edit]");
   if (editButton) {
     editButton.addEventListener("click", () => {
       state.accountEditMode = true;
@@ -902,12 +931,16 @@ function bindAccountSettingsPanel() {
     });
   }
 
-  const cancelButton = form.querySelector("[data-account-cancel]");
+  const cancelButton = elements.accountSignedInPanel.querySelector("[data-account-cancel]");
   if (cancelButton) {
     cancelButton.addEventListener("click", () => {
       state.accountEditMode = false;
       renderAuth();
     });
+  }
+
+  if (!form) {
+    return;
   }
 
   const passwordToggle = form.querySelector("[data-account-toggle-password]");
