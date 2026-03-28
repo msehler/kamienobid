@@ -1659,6 +1659,10 @@ form.panel > .button {
   gap: 16px;
 }
 
+.field-span-full {
+  grid-column: 1 / -1;
+}
+
 label {
   display: grid;
   gap: 12px;
