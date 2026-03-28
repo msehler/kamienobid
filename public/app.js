@@ -161,7 +161,11 @@ function bindEvents() {
 
   if (elements.practiceAreaSelect) {
     elements.practiceAreaSelect.addEventListener("change", () => {
+      const previousPracticeAreaId = state.selectedPracticeAreaId;
       state.selectedPracticeAreaId = elements.practiceAreaSelect.value;
+      if (elements.scopeOfWork && previousPracticeAreaId !== state.selectedPracticeAreaId) {
+        elements.scopeOfWork.value = "";
+      }
       renderMatterComposer();
     });
   }
@@ -520,7 +524,9 @@ function initializeSelections() {
   state.selectedCountryCode = enabledCountries.some((country) => country.code === state.selectedCountryCode)
     ? state.selectedCountryCode
     : detectedCountry || enabledCountries[0]?.code || "AU";
-  state.selectedPracticeAreaId = state.selectedPracticeAreaId || state.bootstrap.practiceAreas[0]?.id;
+  state.selectedPracticeAreaId = state.bootstrap.practiceAreas.some((area) => area.id === state.selectedPracticeAreaId)
+    ? state.selectedPracticeAreaId
+    : "";
   state.selectedCaseId = state.cases.some((matter) => matter.id === state.selectedCaseId)
     ? state.selectedCaseId
     : state.cases[0]?.id || null;
@@ -872,6 +878,7 @@ function prepareNewMatterForm() {
   }
   elements.matterForm.reset();
   state.editingCaseId = null;
+  state.selectedPracticeAreaId = "";
   setMatterDocuments([]);
   renderMatterComposer();
   if (elements.matterSummary) {
@@ -951,7 +958,8 @@ function renderMatterComposer() {
   populatePracticeAreas();
 
   const country = getCountry(state.selectedCountryCode);
-  const template = getTemplate(state.selectedCountryCode, state.selectedPracticeAreaId);
+  const hasPracticeArea = Boolean(state.selectedPracticeAreaId);
+  const template = hasPracticeArea ? getTemplate(state.selectedCountryCode, state.selectedPracticeAreaId) : null;
   const currentBudgetValue = elements.budgetInput?.value || "";
   const currentScopeValue = elements.scopeOfWork?.value || "";
   state.selectedCountryCode = country.code;
@@ -959,28 +967,37 @@ function renderMatterComposer() {
   populateRegionSelect(elements.regionSelect, country, elements.regionSelect.value);
   populateBudgetOptions(elements.budgetInput, country, currentBudgetValue);
   populateScopeOfWorkOptions(elements.scopeOfWork, state.selectedPracticeAreaId, currentScopeValue);
-  elements.templateSummary.innerHTML = `
-    <p><strong>${template.label}</strong></p>
-    <p>${template.terminology}</p>
-    <p>${template.disclaimer}</p>
-    <ul>${template.prompts.map((prompt) => `<li>${prompt}</li>`).join("")}</ul>
-  `;
+  elements.templateSummary.innerHTML = template
+    ? `
+        <p><strong>${template.label}</strong></p>
+        <p>${template.terminology}</p>
+        <p>${template.disclaimer}</p>
+        <ul>${template.prompts.map((prompt) => `<li>${prompt}</li>`).join("")}</ul>
+      `
+    : `
+        <p><strong>Select a practice area</strong></p>
+        <p>Choose a practice area to load the scope of work options and the case brief that lawyers will see.</p>
+      `;
   elements.paymentFlowSummary.innerHTML = `
     <p class="eyebrow">Publishing flow</p>
     <p>Save your draft first, then add it to cart from your dashboard when you are ready for checkout and payment.</p>
   `;
   elements.caseName.placeholder = buildCaseNamePlaceholder(state.currentUser?.name);
-  elements.promptFields.innerHTML = template.prompts
-    .map(
-      (prompt) => `
-        <label>
-          ${prompt}
-          <textarea name="prompt:${prompt}" rows="4" placeholder="Provide matter-specific detail"></textarea>
-        </label>
-      `,
-    )
-    .join("");
-  elements.requiredUploads.innerHTML = template.uploads.map((entry) => `<li>${entry}</li>`).join("");
+  elements.promptFields.innerHTML = template
+    ? template.prompts
+        .map(
+          (prompt) => `
+            <label>
+              ${prompt}
+              <textarea name="prompt:${prompt}" rows="4" placeholder="Provide matter-specific detail"></textarea>
+            </label>
+          `,
+        )
+        .join("")
+    : "";
+  elements.requiredUploads.innerHTML = template
+    ? template.uploads.map((entry) => `<li>${entry}</li>`).join("")
+    : "<li>Select a practice area to see the suggested uploads.</li>";
   renderMatterDocumentList();
 
   const isClient = state.currentUser?.role === "client";
@@ -1772,9 +1789,12 @@ function populatePracticeAreas() {
   if (!elements.practiceAreaSelect) {
     return;
   }
-  elements.practiceAreaSelect.innerHTML = state.bootstrap.practiceAreas
-    .map((area) => `<option value="${area.id}" ${area.id === state.selectedPracticeAreaId ? "selected" : ""}>${area.label}</option>`)
-    .join("");
+  elements.practiceAreaSelect.innerHTML = [
+    `<option value="" ${!state.selectedPracticeAreaId ? "selected" : ""}>Select</option>`,
+    ...state.bootstrap.practiceAreas.map(
+      (area) => `<option value="${area.id}" ${area.id === state.selectedPracticeAreaId ? "selected" : ""}>${area.label}</option>`,
+    ),
+  ].join("");
 }
 
 function populateRegionSelect(select, country, selectedValue) {
@@ -1879,6 +1899,9 @@ function buildBudgetRangeOptions(country) {
 
 function buildScopeOfWorkOptions(practiceAreaId) {
   const id = String(practiceAreaId || "");
+  if (!id) {
+    return [];
+  }
 
   if (["family-divorce", "child-custody"].includes(id)) {
     return [
@@ -1969,11 +1992,16 @@ function populateScopeOfWorkOptions(select, practiceAreaId, selectedValue) {
   const renderedOptions = selectedExists || !normalizedSelected ? options : [...options, normalizedSelected];
 
   select.innerHTML = "";
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "Select";
+  placeholder.selected = !normalizedSelected;
+  select.appendChild(placeholder);
   renderedOptions.forEach((label) => {
     const option = document.createElement("option");
     option.value = label;
     option.textContent = !selectedExists && normalizedSelected && label === normalizedSelected ? `${label} (saved)` : label;
-    if (normalizedSelected ? label === normalizedSelected : label === options[0]) {
+    if (normalizedSelected && label === normalizedSelected) {
       option.selected = true;
     }
     select.appendChild(option);
