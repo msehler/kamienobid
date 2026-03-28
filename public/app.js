@@ -30,8 +30,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindEvents();
   initMobileNav();
   observeReveals();
-  await refreshApp();
-  await handleCheckoutReturn();
+  try {
+    await refreshApp();
+    await handleCheckoutReturn();
+  } finally {
+    document.body.classList.remove("app-shell-pending");
+    document.body.classList.add("app-ready");
+  }
 });
 
 function cacheElements() {
@@ -1801,8 +1806,11 @@ function populateRegionSelect(select, country, selectedValue) {
   if (!select) {
     return;
   }
-  const fallback = selectedValue && country.regions.includes(selectedValue) ? selectedValue : country.regions[0];
-  select.innerHTML = country.regions.map((region) => `<option value="${region}" ${region === fallback ? "selected" : ""}>${region}</option>`).join("");
+  const fallback = selectedValue && country.regions.includes(selectedValue) ? selectedValue : "";
+  select.innerHTML = [
+    `<option value="" ${!fallback ? "selected" : ""}>Select</option>`,
+    ...country.regions.map((region) => `<option value="${region}" ${region === fallback ? "selected" : ""}>${region}</option>`),
+  ].join("");
 }
 
 function renderLawyerRegionOptions() {

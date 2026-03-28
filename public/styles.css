@@ -87,6 +87,11 @@ body[data-page="admin"] {
     linear-gradient(180deg, #123ecf 0%, #1538b6 46%, #092a8b 100%);
 }
 
+body.app-shell-pending[data-page="account"] main,
+body.app-shell-pending[data-page="client"] main {
+  visibility: hidden;
+}
+
 a {
   color: inherit;
 }
