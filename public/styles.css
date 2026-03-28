@@ -92,6 +92,11 @@ body.app-shell-pending[data-page="client"] main {
   visibility: hidden;
 }
 
+#scopeOfWorkField[hidden],
+#singleTaskDetailField[hidden] {
+  display: none !important;
+}
+
 a {
   color: inherit;
 }

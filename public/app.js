@@ -872,7 +872,8 @@ function openMatterComposer(caseId = null) {
     state.selectedCountryCode = matter.countryCode;
     state.selectedPracticeAreaId = matter.practiceAreaId;
   } else {
-    elements.matterForm?.reset();
+    state.selectedPracticeAreaId = "";
+    setMatterDocuments([]);
   }
 
   renderClientExperience();
