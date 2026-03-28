@@ -235,7 +235,6 @@ function cacheElements() {
     "practiceAreaAnalytics",
     "verificationQueue",
     "clientName",
-    "clientEmail",
     "lawyerName",
     "lawyerEmail",
     "lawyerFirm",
@@ -1250,7 +1249,6 @@ function renderMatterComposer() {
     !elements.matterFormPill ||
     !elements.matterCancelButton ||
     !elements.clientName ||
-    !elements.clientEmail ||
     !elements.caseName
   ) {
     return;
@@ -1365,12 +1363,9 @@ function renderMatterComposer() {
 
   if (state.currentUser) {
     elements.clientName.value = state.currentUser.name;
-    elements.clientEmail.value = state.currentUser.email;
     elements.clientName.readOnly = true;
-    elements.clientEmail.readOnly = true;
   } else {
     elements.clientName.readOnly = false;
-    elements.clientEmail.readOnly = false;
   }
 }
 
@@ -2628,7 +2623,7 @@ function setFormEnabled(form, enabled) {
     if (element.id === "privateBid" || element.tagName === "BUTTON" || element.name?.startsWith("prompt:")) {
       return;
     }
-    if (element.id === "clientName" || element.id === "clientEmail" || element.id === "lawyerEmail") {
+    if (element.id === "clientName" || element.id === "lawyerEmail") {
       return;
     }
     element.disabled = !enabled;
