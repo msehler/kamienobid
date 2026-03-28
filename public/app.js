@@ -21,6 +21,7 @@ const STORED_USER_KEY = "kamieno.rememberedUser";
 const MAX_MATTER_DOCUMENTS = 10;
 const MAX_MATTER_DOCUMENT_BYTES_PER_FILE = 2 * 1024 * 1024;
 const MAX_MATTER_DOCUMENT_BYTES_TOTAL = 3 * 1024 * 1024;
+const SINGLE_TASK_DETAIL_KEY = "__singleTaskDetail";
 
 document.addEventListener("DOMContentLoaded", async () => {
   cacheElements();
@@ -95,7 +96,10 @@ function cacheElements() {
     "regionSelect",
     "regionLabel",
     "practiceAreaSelect",
+    "scopeOfWorkField",
     "scopeOfWork",
+    "singleTaskDetailField",
+    "singleTaskDetail",
     "promptFields",
     "requiredUploads",
     "templateSummary",
@@ -170,6 +174,18 @@ function bindEvents() {
       state.selectedPracticeAreaId = elements.practiceAreaSelect.value;
       if (elements.scopeOfWork && previousPracticeAreaId !== state.selectedPracticeAreaId) {
         elements.scopeOfWork.value = "";
+      }
+      if (elements.singleTaskDetail && previousPracticeAreaId !== state.selectedPracticeAreaId) {
+        elements.singleTaskDetail.value = "";
+      }
+      renderMatterComposer();
+    });
+  }
+
+  if (elements.scopeOfWork) {
+    elements.scopeOfWork.addEventListener("change", () => {
+      if (elements.singleTaskDetail && !isSingleTaskScope(elements.scopeOfWork.value)) {
+        elements.singleTaskDetail.value = "";
       }
       renderMatterComposer();
     });
@@ -895,6 +911,9 @@ function prepareNewMatterForm() {
   if (elements.scopeOfWork) {
     elements.scopeOfWork.value = elements.scopeOfWork.options[0]?.value || "";
   }
+  if (elements.singleTaskDetail) {
+    elements.singleTaskDetail.value = "";
+  }
   if (elements.caseName) {
     elements.caseName.value = "";
   }
@@ -926,6 +945,11 @@ function populateMatterFormFromCase(matter) {
     populateScopeOfWorkOptions(elements.scopeOfWork, matter.practiceAreaId, matter.scopeOfWork || "");
     elements.scopeOfWork.value = matter.scopeOfWork || elements.scopeOfWork.options[0]?.value || "";
   }
+  if (elements.singleTaskDetail) {
+    elements.singleTaskDetail.value = getSingleTaskDetail(matter) || "";
+  }
+
+  renderMatterComposer();
 
   Array.from(elements.promptFields?.querySelectorAll("textarea") || []).forEach((field) => {
     const prompt = field.name.replace(/^prompt:/, "");
@@ -941,7 +965,10 @@ function renderMatterComposer() {
     !elements.regionSelect ||
     !elements.templateSummary ||
     !elements.paymentFlowSummary ||
+    !elements.scopeOfWorkField ||
     !elements.scopeOfWork ||
+    !elements.singleTaskDetailField ||
+    !elements.singleTaskDetail ||
     !elements.promptFields ||
     !elements.requiredUploads ||
     !elements.matterDocumentUploader ||
@@ -967,11 +994,23 @@ function renderMatterComposer() {
   const template = hasPracticeArea ? getTemplate(state.selectedCountryCode, state.selectedPracticeAreaId) : null;
   const currentBudgetValue = elements.budgetInput?.value || "";
   const currentScopeValue = elements.scopeOfWork?.value || "";
+  const currentSingleTaskDetail = elements.singleTaskDetail?.value || "";
   state.selectedCountryCode = country.code;
   elements.regionLabel.textContent = country.regionLabel;
   populateRegionSelect(elements.regionSelect, country, elements.regionSelect.value);
   populateBudgetOptions(elements.budgetInput, country, currentBudgetValue);
   populateScopeOfWorkOptions(elements.scopeOfWork, state.selectedPracticeAreaId, currentScopeValue);
+  elements.scopeOfWorkField.hidden = !hasPracticeArea;
+  elements.scopeOfWork.disabled = !hasPracticeArea;
+  elements.scopeOfWork.required = hasPracticeArea;
+  if (!hasPracticeArea) {
+    elements.scopeOfWork.value = "";
+  }
+  const showSingleTaskDetail = hasPracticeArea && isSingleTaskScope(elements.scopeOfWork.value || currentScopeValue);
+  elements.singleTaskDetailField.hidden = !showSingleTaskDetail;
+  elements.singleTaskDetail.disabled = !showSingleTaskDetail;
+  elements.singleTaskDetail.required = showSingleTaskDetail;
+  elements.singleTaskDetail.value = showSingleTaskDetail ? currentSingleTaskDetail : "";
   elements.templateSummary.innerHTML = template
     ? `
         <p><strong>${template.label}</strong></p>
@@ -1140,6 +1179,7 @@ function renderBidDefaults() {
   elements.bidMatterBrief.innerHTML = `
     <p class="eyebrow">Selected matter brief</p>
     <p><strong>Scope of work:</strong> ${escapeHtml(matter.scopeOfWork || "Not specified")}</p>
+    ${getSingleTaskDetail(matter) ? `<p><strong>Single task:</strong> ${escapeHtml(getSingleTaskDetail(matter))}</p>` : ""}
     <p><strong>Budget range:</strong> ${escapeHtml(matter.budget || "Not specified")}</p>
     <p><strong>Summary:</strong> ${escapeHtml(matter.summary || "Not provided")}</p>
   `;
@@ -1279,6 +1319,7 @@ function renderClientBoard() {
     <p><strong>${matter.caseName || getPracticeArea(matter.practiceAreaId).label}</strong></p>
     <p class="eyebrow">${getPracticeArea(matter.practiceAreaId).label}</p>
     ${matter.scopeOfWork ? `<p><strong>Scope of work:</strong> ${escapeHtml(matter.scopeOfWork)}</p>` : ""}
+    ${getSingleTaskDetail(matter) ? `<p><strong>Single task:</strong> ${escapeHtml(getSingleTaskDetail(matter))}</p>` : ""}
     <p>${matter.summary}</p>
     <div class="case-meta">
       <span class="pill neutral">${getCountry(matter.countryCode).name}</span>
@@ -1294,7 +1335,7 @@ function renderClientBoard() {
     </div>
     <div class="checklist-card">
       <p class="eyebrow">Dynamic prompts</p>
-      <ul>${Object.entries(matter.customAnswers || {})
+      <ul>${getVisibleCustomAnswers(matter.customAnswers)
         .map(([key, value]) => `<li><strong>${key}</strong>: ${value || "Not provided"}</li>`)
         .join("")}</ul>
     </div>
@@ -1621,6 +1662,10 @@ async function submitMatter(event) {
   template.prompts.forEach((prompt) => {
     customAnswers[prompt] = formData.get(`prompt:${prompt}`) || "";
   });
+  const singleTaskDetail = String(formData.get("singleTaskDetail") || "").trim();
+  if (singleTaskDetail) {
+    customAnswers[SINGLE_TASK_DETAIL_KEY] = singleTaskDetail;
+  }
 
   try {
     const payload = {
@@ -1811,6 +1856,18 @@ function populateRegionSelect(select, country, selectedValue) {
     `<option value="" ${!fallback ? "selected" : ""}>Select</option>`,
     ...country.regions.map((region) => `<option value="${region}" ${region === fallback ? "selected" : ""}>${region}</option>`),
   ].join("");
+}
+
+function isSingleTaskScope(scopeValue) {
+  return /single task/i.test(String(scopeValue || ""));
+}
+
+function getSingleTaskDetail(matter) {
+  return String(matter?.customAnswers?.[SINGLE_TASK_DETAIL_KEY] || "").trim();
+}
+
+function getVisibleCustomAnswers(customAnswers) {
+  return Object.entries(customAnswers || {}).filter(([key]) => key !== SINGLE_TASK_DETAIL_KEY);
 }
 
 function renderLawyerRegionOptions() {
