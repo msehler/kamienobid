@@ -97,6 +97,16 @@ body.app-shell-pending[data-page="client"] main {
   display: none !important;
 }
 
+.single-task-field,
+.single-task-list {
+  display: grid;
+  gap: 12px;
+}
+
+.single-task-add {
+  width: fit-content;
+}
+
 a {
   color: inherit;
 }

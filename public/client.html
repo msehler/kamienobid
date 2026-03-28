@@ -194,15 +194,11 @@
                 <select id="scopeOfWork" name="scopeOfWork" required></select>
               </label>
             </div>
-            <label id="singleTaskDetailField" hidden>
-              What single task do you need help with?
-              <textarea
-                id="singleTaskDetail"
-                name="singleTaskDetail"
-                rows="3"
-                placeholder="For example: draft a parenting plan, review a shareholder agreement, or prepare a letter of demand."
-              ></textarea>
-            </label>
+            <div id="singleTaskDetailField" class="single-task-field" hidden>
+              <div class="document-field-label">What single task do you need help with?</div>
+              <div id="singleTaskList" class="single-task-list"></div>
+              <button class="button secondary single-task-add" id="addSingleTaskButton" type="button">Add another task</button>
+            </div>
             <label>
               Matter summary
               <textarea

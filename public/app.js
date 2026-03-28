@@ -14,6 +14,7 @@ const state = {
   clientView: "marketing",
   editingCaseId: null,
   matterDocuments: [],
+  singleTaskDetails: [],
 };
 
 const elements = {};
@@ -22,6 +23,7 @@ const MAX_MATTER_DOCUMENTS = 10;
 const MAX_MATTER_DOCUMENT_BYTES_PER_FILE = 2 * 1024 * 1024;
 const MAX_MATTER_DOCUMENT_BYTES_TOTAL = 3 * 1024 * 1024;
 const SINGLE_TASK_DETAIL_KEY = "__singleTaskDetail";
+const SINGLE_TASK_DETAILS_KEY = "__singleTaskDetails";
 
 document.addEventListener("DOMContentLoaded", async () => {
   cacheElements();
@@ -99,7 +101,8 @@ function cacheElements() {
     "scopeOfWorkField",
     "scopeOfWork",
     "singleTaskDetailField",
-    "singleTaskDetail",
+    "singleTaskList",
+    "addSingleTaskButton",
     "promptFields",
     "requiredUploads",
     "templateSummary",
@@ -175,8 +178,8 @@ function bindEvents() {
       if (elements.scopeOfWork && previousPracticeAreaId !== state.selectedPracticeAreaId) {
         elements.scopeOfWork.value = "";
       }
-      if (elements.singleTaskDetail && previousPracticeAreaId !== state.selectedPracticeAreaId) {
-        elements.singleTaskDetail.value = "";
+      if (previousPracticeAreaId !== state.selectedPracticeAreaId) {
+        state.singleTaskDetails = [];
       }
       renderMatterComposer();
     });
@@ -184,11 +187,15 @@ function bindEvents() {
 
   if (elements.scopeOfWork) {
     elements.scopeOfWork.addEventListener("change", () => {
-      if (elements.singleTaskDetail && !isSingleTaskScope(elements.scopeOfWork.value)) {
-        elements.singleTaskDetail.value = "";
+      if (!isSingleTaskScope(elements.scopeOfWork.value)) {
+        state.singleTaskDetails = [];
       }
       renderMatterComposer();
     });
+  }
+
+  if (elements.addSingleTaskButton) {
+    elements.addSingleTaskButton.addEventListener("click", addSingleTaskField);
   }
 
   if (elements.lawyerCountrySelect) {
@@ -901,6 +908,7 @@ function prepareNewMatterForm() {
   elements.matterForm.reset();
   state.editingCaseId = null;
   state.selectedPracticeAreaId = "";
+  state.singleTaskDetails = [];
   setMatterDocuments([]);
   renderMatterComposer();
   if (elements.matterSummary) {
@@ -911,9 +919,6 @@ function prepareNewMatterForm() {
   }
   if (elements.scopeOfWork) {
     elements.scopeOfWork.value = elements.scopeOfWork.options[0]?.value || "";
-  }
-  if (elements.singleTaskDetail) {
-    elements.singleTaskDetail.value = "";
   }
   if (elements.caseName) {
     elements.caseName.value = "";
@@ -946,9 +951,7 @@ function populateMatterFormFromCase(matter) {
     populateScopeOfWorkOptions(elements.scopeOfWork, matter.practiceAreaId, matter.scopeOfWork || "");
     elements.scopeOfWork.value = matter.scopeOfWork || elements.scopeOfWork.options[0]?.value || "";
   }
-  if (elements.singleTaskDetail) {
-    elements.singleTaskDetail.value = getSingleTaskDetail(matter) || "";
-  }
+  state.singleTaskDetails = getSingleTaskDetails(matter);
 
   renderMatterComposer();
 
@@ -969,7 +972,8 @@ function renderMatterComposer() {
     !elements.scopeOfWorkField ||
     !elements.scopeOfWork ||
     !elements.singleTaskDetailField ||
-    !elements.singleTaskDetail ||
+    !elements.singleTaskList ||
+    !elements.addSingleTaskButton ||
     !elements.promptFields ||
     !elements.requiredUploads ||
     !elements.matterDocumentUploader ||
@@ -995,7 +999,10 @@ function renderMatterComposer() {
   const template = hasPracticeArea ? getTemplate(state.selectedCountryCode, state.selectedPracticeAreaId) : null;
   const currentBudgetValue = elements.budgetInput?.value || "";
   const currentScopeValue = elements.scopeOfWork?.value || "";
-  const currentSingleTaskDetail = elements.singleTaskDetail?.value || "";
+  const currentSingleTaskDetails = readSingleTaskDetailsFromDom();
+  if (currentSingleTaskDetails.length) {
+    state.singleTaskDetails = currentSingleTaskDetails;
+  }
   state.selectedCountryCode = country.code;
   elements.regionLabel.textContent = country.regionLabel;
   populateRegionSelect(elements.regionSelect, country, elements.regionSelect.value);
@@ -1009,9 +1016,12 @@ function renderMatterComposer() {
   }
   const showSingleTaskDetail = hasPracticeArea && isSingleTaskScope(elements.scopeOfWork.value || currentScopeValue);
   elements.singleTaskDetailField.hidden = !showSingleTaskDetail;
-  elements.singleTaskDetail.disabled = !showSingleTaskDetail;
-  elements.singleTaskDetail.required = showSingleTaskDetail;
-  elements.singleTaskDetail.value = showSingleTaskDetail ? currentSingleTaskDetail : "";
+  if (!showSingleTaskDetail) {
+    state.singleTaskDetails = [];
+  } else if (!state.singleTaskDetails.length) {
+    state.singleTaskDetails = [""];
+  }
+  renderSingleTaskFields(state.selectedPracticeAreaId, showSingleTaskDetail);
   elements.templateSummary.innerHTML = template
     ? `
         <p><strong>${template.label}</strong></p>
@@ -1180,7 +1190,7 @@ function renderBidDefaults() {
   elements.bidMatterBrief.innerHTML = `
     <p class="eyebrow">Selected matter brief</p>
     <p><strong>Scope of work:</strong> ${escapeHtml(matter.scopeOfWork || "Not specified")}</p>
-    ${getSingleTaskDetail(matter) ? `<p><strong>Single task:</strong> ${escapeHtml(getSingleTaskDetail(matter))}</p>` : ""}
+    ${renderSingleTaskSummary(matter)}
     <p><strong>Budget range:</strong> ${escapeHtml(matter.budget || "Not specified")}</p>
     <p><strong>Summary:</strong> ${escapeHtml(matter.summary || "Not provided")}</p>
   `;
@@ -1320,7 +1330,7 @@ function renderClientBoard() {
     <p><strong>${matter.caseName || getPracticeArea(matter.practiceAreaId).label}</strong></p>
     <p class="eyebrow">${getPracticeArea(matter.practiceAreaId).label}</p>
     ${matter.scopeOfWork ? `<p><strong>Scope of work:</strong> ${escapeHtml(matter.scopeOfWork)}</p>` : ""}
-    ${getSingleTaskDetail(matter) ? `<p><strong>Single task:</strong> ${escapeHtml(getSingleTaskDetail(matter))}</p>` : ""}
+    ${renderSingleTaskSummary(matter)}
     <p>${matter.summary}</p>
     <div class="case-meta">
       <span class="pill neutral">${getCountry(matter.countryCode).name}</span>
@@ -1663,9 +1673,10 @@ async function submitMatter(event) {
   template.prompts.forEach((prompt) => {
     customAnswers[prompt] = formData.get(`prompt:${prompt}`) || "";
   });
-  const singleTaskDetail = String(formData.get("singleTaskDetail") || "").trim();
-  if (singleTaskDetail) {
-    customAnswers[SINGLE_TASK_DETAIL_KEY] = singleTaskDetail;
+  const singleTaskDetails = readSingleTaskDetailsFromDom().map((value) => value.trim()).filter(Boolean);
+  if (singleTaskDetails.length) {
+    customAnswers[SINGLE_TASK_DETAILS_KEY] = singleTaskDetails;
+    customAnswers[SINGLE_TASK_DETAIL_KEY] = singleTaskDetails[0];
   }
 
   try {
@@ -1863,12 +1874,113 @@ function isSingleTaskScope(scopeValue) {
   return /single task/i.test(String(scopeValue || ""));
 }
 
-function getSingleTaskDetail(matter) {
-  return String(matter?.customAnswers?.[SINGLE_TASK_DETAIL_KEY] || "").trim();
+function getSingleTaskDetails(source) {
+  const customAnswers = source?.customAnswers || source || {};
+  const storedList = customAnswers?.[SINGLE_TASK_DETAILS_KEY];
+  if (Array.isArray(storedList)) {
+    return storedList.map((value) => String(value || "").trim()).filter(Boolean);
+  }
+  const legacy = String(customAnswers?.[SINGLE_TASK_DETAIL_KEY] || "").trim();
+  return legacy ? [legacy] : [];
 }
 
 function getVisibleCustomAnswers(customAnswers) {
-  return Object.entries(customAnswers || {}).filter(([key]) => key !== SINGLE_TASK_DETAIL_KEY);
+  return Object.entries(customAnswers || {}).filter(([key]) => key !== SINGLE_TASK_DETAIL_KEY && key !== SINGLE_TASK_DETAILS_KEY);
+}
+
+function readSingleTaskDetailsFromDom() {
+  return Array.from(document.querySelectorAll("[data-single-task-input]"))
+    .map((field) => field.value)
+    .filter((value, index, items) => index < items.length);
+}
+
+function getSingleTaskPlaceholder(practiceAreaId) {
+  const id = String(practiceAreaId || "");
+  if (["family-divorce", "child-custody"].includes(id)) {
+    return "For example: draft a parenting plan, review consent orders, or prepare disclosure requests.";
+  }
+  if (["employment"].includes(id)) {
+    return "For example: review an employment contract, draft a workplace response, or assess a settlement deed.";
+  }
+  if (["criminal-defence", "traffic"].includes(id)) {
+    return "For example: prepare a bail application, review a brief of evidence, or give plea advice.";
+  }
+  if (["personal-injury", "medical-negligence"].includes(id)) {
+    return "For example: review medical records, draft a letter to the insurer, or advise on claim prospects.";
+  }
+  if (["property"].includes(id)) {
+    return "For example: review a contract of sale, draft special conditions, or advise on a title issue.";
+  }
+  if (["commercial", "contract-disputes", "ip", "consumer", "debt-insolvency", "construction", "environmental", "administrative"].includes(id)) {
+    return "For example: draft a contract, review terms, prepare a letter of demand, or support a negotiation.";
+  }
+  if (["wills-probate", "estate-litigation", "elder-law", "retirement"].includes(id)) {
+    return "For example: review a will, prepare a probate filing, or draft executor correspondence.";
+  }
+  if (["immigration"].includes(id)) {
+    return "For example: review a visa application, draft submissions, or respond to a request for information.";
+  }
+  if (["tax"].includes(id)) {
+    return "For example: review an objection, draft a response, or advise on a tax notice.";
+  }
+  return "For example: review an agreement, draft a letter of demand, or give one-off advice on a specific task.";
+}
+
+function renderSingleTaskFields(practiceAreaId, isVisible) {
+  if (!elements.singleTaskDetailField || !elements.singleTaskList || !elements.addSingleTaskButton) {
+    return;
+  }
+
+  elements.singleTaskDetailField.hidden = !isVisible;
+  elements.addSingleTaskButton.hidden = !isVisible;
+  elements.addSingleTaskButton.disabled = !isVisible;
+
+  if (!isVisible) {
+    elements.singleTaskList.innerHTML = "";
+    return;
+  }
+
+  const placeholder = getSingleTaskPlaceholder(practiceAreaId);
+  const values = state.singleTaskDetails.length ? state.singleTaskDetails : [""];
+  elements.singleTaskList.innerHTML = values
+    .map(
+      (value, index) => `
+        <label>
+          ${values.length > 1 ? `Task ${index + 1}` : "Task"}
+          <textarea
+            name="singleTaskDetail[]"
+            data-single-task-input
+            rows="2"
+          ></textarea>
+        </label>
+      `,
+    )
+    .join("");
+  Array.from(elements.singleTaskList.querySelectorAll("[data-single-task-input]")).forEach((field, index) => {
+    field.placeholder = placeholder;
+    field.value = values[index] || "";
+  });
+}
+
+function addSingleTaskField() {
+  state.singleTaskDetails = [...readSingleTaskDetailsFromDom(), ""];
+  renderSingleTaskFields(state.selectedPracticeAreaId, true);
+}
+
+function renderSingleTaskSummary(matter) {
+  const tasks = getSingleTaskDetails(matter);
+  if (!tasks.length) {
+    return "";
+  }
+  if (tasks.length === 1) {
+    return `<p><strong>Single task:</strong> ${escapeHtml(tasks[0])}</p>`;
+  }
+  return `
+    <div class="checklist-card">
+      <p><strong>Single tasks:</strong></p>
+      <ul>${tasks.map((task) => `<li>${escapeHtml(task)}</li>`).join("")}</ul>
+    </div>
+  `;
 }
 
 function renderLawyerRegionOptions() {
