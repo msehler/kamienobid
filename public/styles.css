@@ -1360,6 +1360,95 @@ form.panel > .button {
   gap: 18px;
 }
 
+.account-settings-panel,
+.account-settings-grid,
+.account-security-card,
+.account-password-fields,
+.account-panel-heading,
+.account-password-copy {
+  display: grid;
+  gap: 14px;
+}
+
+.account-settings-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.account-field {
+  display: grid;
+  gap: 10px;
+}
+
+.account-field > span,
+.account-field-title {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.account-field-full {
+  grid-column: 1 / -1;
+}
+
+.account-panel-heading p,
+.account-field-hint,
+.account-password-note {
+  margin: 0;
+  color: rgba(21, 57, 200, 0.72);
+}
+
+.account-panel-heading p,
+.account-field-hint {
+  font-size: 0.98rem;
+  line-height: 1.45;
+}
+
+.account-password-row,
+.account-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.account-security-card {
+  padding: 22px;
+  border-radius: var(--panel-radius-md);
+  background: rgba(244, 245, 255, 0.68);
+  border: 1px solid rgba(21, 57, 200, 0.08);
+}
+
+.account-security-card > input[disabled],
+.account-settings-panel input[disabled],
+.account-settings-panel textarea[disabled] {
+  color: rgba(21, 57, 200, 0.88);
+  background: rgba(255, 255, 255, 0.78);
+  -webkit-text-fill-color: rgba(21, 57, 200, 0.88);
+  opacity: 1;
+  cursor: default;
+}
+
+.account-security-card textarea,
+.account-settings-panel textarea {
+  min-height: 116px;
+  resize: vertical;
+}
+
+.account-password-fields {
+  padding-top: 6px;
+}
+
+.account-password-note {
+  font-size: 0.94rem;
+  line-height: 1.5;
+}
+
+.account-password-toggle {
+  min-height: 42px;
+}
+
 .matter-form .panel-header,
 .insight-panel .panel-header,
 .matter-form .access-note,
@@ -1769,6 +1858,10 @@ textarea {
 }
 
 @media (max-width: 1180px) {
+  .account-settings-grid {
+    grid-template-columns: 1fr;
+  }
+
   .home-steps-grid,
   .page-hero-shell,
   .hero-shell,
@@ -1852,6 +1945,16 @@ textarea {
 }
 
 @media (max-width: 720px) {
+  .account-actions,
+  .account-password-row {
+    align-items: stretch;
+  }
+
+  .account-actions .button,
+  .account-password-toggle {
+    width: 100%;
+  }
+
   .home-hero,
   .home-steps,
   .page-hero,

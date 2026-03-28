@@ -7,6 +7,7 @@ const {
   sessionPayload,
   setSessionCookie,
   signUp,
+  updateAccount,
 } = require("../lib/auth");
 
 module.exports = function handler(req, res) {
@@ -45,6 +46,19 @@ module.exports = function handler(req, res) {
         setSessionCookie(res, result.body.token);
         rememberAccount(res, req, req.body?.email);
         delete result.body.token;
+      }
+      res.status(result.status).json(result.body);
+      return;
+    }
+
+    if (req.body?.action === "update-account") {
+      if (!req.viewer) {
+        res.status(401).json({ error: "Please sign in to continue." });
+        return;
+      }
+      const result = updateAccount(req.viewer, req.body || {});
+      if (result.body?.user) {
+        rememberAccount(res, req, result.body.user.email);
       }
       res.status(result.status).json(result.body);
       return;

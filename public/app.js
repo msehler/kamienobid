@@ -13,6 +13,7 @@ const state = {
   checkoutHandled: false,
   clientView: "marketing",
   editingCaseId: null,
+  accountEditMode: false,
   matterDocuments: [],
   singleTaskDetails: [],
 };
@@ -721,38 +722,118 @@ function renderAuth() {
       elements.accountWorkspaceTitle.hidden = true;
     }
     if (elements.accountStatusPanelTitle) {
-      elements.accountStatusPanelTitle.textContent = "About this screen";
+      elements.accountStatusPanelTitle.textContent = "Account guidance";
     }
     elements.stripeStatus.style.display = "none";
     elements.accountSignedInPanel.hidden = false;
+    const accountName = escapeHtml(user.name || "");
+    const accountEmail = escapeHtml(user.email || "");
+    const accountPhone = escapeHtml(user.phone || "");
+    const accountAddress = escapeHtml(user.address || "");
+    const roleLabel = formatLabel(user.role);
+    const statusLabel = formatLabel(user.status);
+    const hasJurisdictions = Array.isArray(user.jurisdictions) && user.jurisdictions.length;
     elements.accountSignedInPanel.innerHTML = `
-      <article class="panel account-summary-panel">
+      <form class="panel account-settings-panel" id="accountSettingsForm">
         <div class="panel-header">
-          <h3>My account</h3>
-          <span class="pill neutral">${user.role}</span>
+          <div class="account-panel-heading">
+            <h3>My account</h3>
+            <p>Keep your contact details current and update your password whenever you need to.</p>
+          </div>
+          <div class="panel-badges">
+            <span class="pill neutral">${escapeHtml(roleLabel)}</span>
+            <span class="pill neutral">${escapeHtml(statusLabel)}</span>
+          </div>
         </div>
-        <div class="template-summary account-summary">
-          <p><strong>${user.name}</strong></p>
-          <p>${user.email}</p>
-          <p>Role: ${user.role}</p>
-          <p>Status: ${user.status}</p>
-          ${user.jurisdictions?.length ? `<p>Jurisdictions: ${user.jurisdictions.join(", ")}</p>` : "<p>No jurisdictions on file yet.</p>"}
+        <div class="account-settings-grid">
+          <label class="account-field">
+            <span>Full name</span>
+            <input name="name" type="text" value="${accountName}" ${state.accountEditMode ? "" : "disabled"} required />
+          </label>
+          <label class="account-field">
+            <span>Email</span>
+            <input name="email" type="email" value="${accountEmail}" ${state.accountEditMode ? "" : "disabled"} required />
+          </label>
+          <label class="account-field">
+            <span>Phone number</span>
+            <input
+              name="phone"
+              type="tel"
+              value="${accountPhone}"
+              placeholder="Add your best contact number"
+              ${state.accountEditMode ? "" : "disabled"}
+            />
+          </label>
+          <label class="account-field account-field-full">
+            <span>Address</span>
+            <textarea name="address" rows="3" placeholder="Add your address for engagement and billing records" ${state.accountEditMode ? "" : "disabled"}>${accountAddress}</textarea>
+          </label>
+          <div class="account-security-card account-field-full">
+            <div class="account-password-row">
+              <div class="account-password-copy">
+                <p class="account-field-title">Password</p>
+                <p class="account-field-hint">
+                  ${state.accountEditMode
+                    ? "Change your password here if you want to rotate it now."
+                    : "Your password stays hidden. Switch into edit mode to change it securely."}
+                </p>
+              </div>
+              ${
+                state.accountEditMode
+                  ? '<button class="button ghost account-password-toggle" type="button" data-account-toggle-password>Change password</button>'
+                  : '<span class="pill neutral">Protected</span>'
+              }
+            </div>
+            <input type="password" value="Password protected" disabled />
+            <div class="account-password-fields" data-account-password-fields hidden>
+              <label class="account-field">
+                <span>Current password</span>
+                <input name="currentPassword" type="password" placeholder="Enter your current password" />
+              </label>
+              <label class="account-field">
+                <span>New password</span>
+                <input name="newPassword" type="password" placeholder="Use at least 10 characters" />
+              </label>
+              <label class="account-field">
+                <span>Confirm new password</span>
+                <input name="confirmPassword" type="password" placeholder="Re-enter the new password" />
+              </label>
+              <p class="account-password-note">
+                Security recommendation: use 10 or more characters, avoid reusing an old password, and prefer a memorable passphrase with numbers or symbols.
+              </p>
+            </div>
+          </div>
         </div>
-      </article>
+        <div class="account-actions">
+          ${
+            state.accountEditMode
+              ? `
+                <button class="button primary" type="submit">Save changes</button>
+                <button class="button secondary" type="button" data-account-cancel>Cancel</button>
+              `
+              : '<button class="button primary" type="button" data-account-edit>Edit details</button>'
+          }
+        </div>
+      </form>
     `;
     elements.sessionCard.innerHTML = `
-      <p><strong>This page shows your core Kamieno profile details.</strong></p>
-      <p>Use it to confirm the name, email, role, and account status tied to your signed-in account.</p>
-      <p>${user.role === "client" ? "When you are ready to work on a matter, return to your dashboard from the signed-in link and create a new case there." : "If you are a lawyer, this page confirms your account role and current verification state before you continue into your profile workflow."}</p>
+      <p><strong>Use this page to manage the contact details tied to your Kamieno account.</strong></p>
+      <p>Name and email control your signed-in identity. Phone and address help keep engagement and billing details current once you start working with a lawyer.</p>
+      <p>${hasJurisdictions
+        ? `Jurisdictions on file: ${escapeHtml(user.jurisdictions.join(", "))}.`
+        : user.role === "lawyer"
+          ? "No jurisdictions are on file yet. Add them from the lawyer workspace when you are ready."
+          : "Clients do not need jurisdictions on file to manage cases."}</p>
     `;
     if (elements.accountInsightEyebrow) {
-      elements.accountInsightEyebrow.textContent = "What to do next";
+      elements.accountInsightEyebrow.textContent = "Security and next steps";
     }
     if (elements.accountInsightBody) {
       elements.accountInsightBody.textContent = user.role === "client"
-        ? "Use the signed-in menu to return to your dashboard, create a new case, or sign out when you are finished."
-        : "Use the signed-in menu to return to your lawyer workspace, review your account details here, or sign out when you are finished.";
+        ? "Keep your details current here, then use the signed-in menu to return to your dashboard and manage your cases."
+        : "Keep your identity details current here, and change your password here whenever you need to tighten account security.";
     }
+    bindAccountSettingsPanel();
   } else {
     if (elements.accountHeroSection) {
       elements.accountHeroSection.hidden = false;
@@ -766,6 +847,7 @@ function renderAuth() {
     elements.stripeStatus.style.display = "";
     elements.accountSignedInPanel.hidden = true;
     elements.accountSignedInPanel.innerHTML = "";
+    state.accountEditMode = false;
     elements.sessionCard.innerHTML = `
       <p><strong>Public preview</strong></p>
       <p>Create a client or lawyer account to use the workflow. Admin access is provisioned separately.</p>
@@ -800,6 +882,50 @@ function renderAuth() {
   elements.signupForm.style.display = user && isAccountPage ? "none" : isAccountPage && mode !== "signup" ? "none" : "";
   elements.loginForm.style.display = user && isAccountPage ? "none" : isAccountPage && mode !== "signin" ? "none" : "";
   elements.logoutButton.style.display = user && isAccountPage ? "none" : user ? "" : "none";
+}
+
+function bindAccountSettingsPanel() {
+  if (!elements.accountSignedInPanel) {
+    return;
+  }
+
+  const form = elements.accountSignedInPanel.querySelector("#accountSettingsForm");
+  if (!form) {
+    return;
+  }
+
+  const editButton = form.querySelector("[data-account-edit]");
+  if (editButton) {
+    editButton.addEventListener("click", () => {
+      state.accountEditMode = true;
+      renderAuth();
+    });
+  }
+
+  const cancelButton = form.querySelector("[data-account-cancel]");
+  if (cancelButton) {
+    cancelButton.addEventListener("click", () => {
+      state.accountEditMode = false;
+      renderAuth();
+    });
+  }
+
+  const passwordToggle = form.querySelector("[data-account-toggle-password]");
+  const passwordFields = form.querySelector("[data-account-password-fields]");
+  if (passwordToggle && passwordFields) {
+    passwordToggle.addEventListener("click", () => {
+      const shouldShow = passwordFields.hidden;
+      passwordFields.hidden = !shouldShow;
+      passwordToggle.textContent = shouldShow ? "Hide password fields" : "Change password";
+      if (!shouldShow) {
+        passwordFields.querySelectorAll("input").forEach((input) => {
+          input.value = "";
+        });
+      }
+    });
+  }
+
+  form.addEventListener("submit", submitAccountUpdate);
 }
 
 function renderCountryRail() {
@@ -1652,9 +1778,45 @@ async function submitLogout() {
     state.engagementLetter = null;
     state.clientView = "marketing";
     state.editingCaseId = null;
+    state.accountEditMode = false;
     clearStoredUser();
     showToast(response.message);
     await refreshApp();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function submitAccountUpdate(event) {
+  event.preventDefault();
+  if (!state.currentUser) {
+    showToast("Please sign in to continue.");
+    return;
+  }
+
+  const formData = new FormData(event.currentTarget);
+  try {
+    const response = await request("/api/auth", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "update-account",
+        name: formData.get("name"),
+        email: formData.get("email"),
+        phone: formData.get("phone"),
+        address: formData.get("address"),
+        currentPassword: formData.get("currentPassword"),
+        newPassword: formData.get("newPassword"),
+        confirmPassword: formData.get("confirmPassword"),
+      }),
+    });
+    state.currentUser = response.user;
+    if (state.bootstrap) {
+      state.bootstrap.currentUser = response.user;
+    }
+    state.accountEditMode = false;
+    storeUser(response.user);
+    showToast(response.message);
+    renderAll();
   } catch (error) {
     showToast(error.message);
   }
@@ -2539,6 +2701,15 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
+function formatLabel(value) {
+  return String(value || "")
+    .trim()
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 function normalizeNamePart(value) {
   return String(value || "")
     .trim()
@@ -2759,6 +2930,8 @@ function storeUser(user) {
       role: user.role,
       name: user.name,
       email: user.email,
+      phone: user.phone || "",
+      address: user.address || "",
       status: user.status,
       jurisdictions: user.jurisdictions || [],
     }));
