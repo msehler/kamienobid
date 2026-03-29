@@ -1710,13 +1710,6 @@ function renderClientBoard() {
     ${matter.scopeOfWork ? `<p><strong>Scope of work:</strong> ${escapeHtml(matter.scopeOfWork)}</p>` : ""}
     ${renderSingleTaskSummary(matter)}
     <p>${matter.summary}</p>
-    <div class="case-meta">
-      <span class="pill neutral">${getCountry(matter.countryCode).name}</span>
-      <span class="pill neutral">${matter.region}</span>
-      ${matter.documents?.length ? `<span class="pill neutral">${matter.documents.length} document${matter.documents.length === 1 ? "" : "s"}</span>` : ""}
-      <span class="pill neutral">${matter.status}</span>
-      <span class="pill neutral">${matter.paymentStatus}</span>
-    </div>
     <div class="case-primary-actions">
       <button class="button secondary" type="button" data-case-action="edit" data-case-id="${matter.id}">Edit</button>
       <button class="button ghost" type="button" data-case-action="delete" data-case-id="${matter.id}" ${canDelete ? "" : "disabled"}>Delete</button>
