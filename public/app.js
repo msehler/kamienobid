@@ -171,6 +171,7 @@ function cacheElements() {
     "clientDashboard",
     "clientCreateCaseButton",
     "clientComposer",
+    "clientCheckout",
     "matterForm",
     "matterFormTitle",
     "matterFormPill",
@@ -194,6 +195,16 @@ function cacheElements() {
     "requiredUploads",
     "templateSummary",
     "paymentFlowSummary",
+    "clientCheckoutForm",
+    "checkoutAccessNote",
+    "checkoutCaseSummary",
+    "checkoutAccountName",
+    "checkoutAccountEmail",
+    "checkoutPhone",
+    "checkoutAddress",
+    "checkoutBackButton",
+    "checkoutSubmitButton",
+    "checkoutFeeSummary",
     "matterSummary",
     "budgetInput",
     "matterDocumentUploader",
@@ -332,6 +343,12 @@ function bindEvents() {
   }
   if (elements.matterCancelButton) {
     elements.matterCancelButton.addEventListener("click", closeMatterComposer);
+  }
+  if (elements.clientCheckoutForm) {
+    elements.clientCheckoutForm.addEventListener("submit", submitClientCheckout);
+  }
+  if (elements.checkoutBackButton) {
+    elements.checkoutBackButton.addEventListener("click", closeClientCheckout);
   }
   [elements.caseList, elements.caseDetails].filter(Boolean).forEach((container) => {
     container.addEventListener("click", handleClientCaseAction);
@@ -1085,6 +1102,7 @@ function renderClientExperience() {
   const showMarketing = !isClient;
   const showDashboard = isClient && state.clientView === "dashboard";
   const showComposer = isClient && state.clientView === "composer";
+  const showCheckout = isClient && state.clientView === "checkout";
 
   if (elements.clientMarketingHero) {
     elements.clientMarketingHero.hidden = !showMarketing;
@@ -1098,11 +1116,15 @@ function renderClientExperience() {
   if (elements.clientComposer) {
     elements.clientComposer.hidden = !showComposer;
   }
+  if (elements.clientCheckout) {
+    elements.clientCheckout.hidden = !showCheckout;
+  }
 
   renderMatterComposer();
   renderClientBoard();
+  renderClientCheckout();
 
-  if (isClient && !showDashboard && !showComposer) {
+  if (isClient && !showDashboard && !showComposer && !showCheckout) {
     state.clientView = "dashboard";
     if (elements.clientMarketingHero) {
       elements.clientMarketingHero.hidden = true;
@@ -1157,6 +1179,73 @@ function closeMatterComposer() {
   state.editingCaseId = null;
   renderClientExperience();
   elements.clientDashboard?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function openClientCheckout(caseId) {
+  if (state.currentUser?.role !== "client") {
+    window.location.assign("/account?role=client&returnTo=%2Fclient");
+    return;
+  }
+  const matter = state.cases.find((entry) => entry.id === caseId);
+  if (!matter) {
+    showToast("That case could not be loaded.");
+    return;
+  }
+  state.selectedCaseId = matter.id;
+  state.clientView = "checkout";
+  state.editingCaseId = null;
+  renderClientExperience();
+  elements.clientCheckout?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function closeClientCheckout() {
+  state.clientView = state.currentUser?.role === "client" ? "dashboard" : "marketing";
+  renderClientExperience();
+  elements.clientDashboard?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function submitClientCheckout(event) {
+  event.preventDefault();
+  if (state.currentUser?.role !== "client") {
+    showToast("Client login required.");
+    return;
+  }
+
+  const matter = state.cases.find((entry) => entry.id === state.selectedCaseId);
+  if (!matter) {
+    showToast("Select a draft to continue.");
+    return;
+  }
+
+  const formData = new FormData(event.currentTarget);
+  const phone = String(formData.get("phone") || "").trim();
+  const address = String(formData.get("address") || "").trim();
+
+  if (!phone || !address) {
+    showToast("Phone number and address are required before payment.");
+    return;
+  }
+
+  try {
+    const accountResponse = await request("/api/auth", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "update-account",
+        name: state.currentUser.name,
+        email: state.currentUser.email,
+        phone,
+        address,
+      }),
+    });
+    state.currentUser = accountResponse.user;
+    if (state.bootstrap) {
+      state.bootstrap.currentUser = accountResponse.user;
+    }
+    storeUser(accountResponse.user);
+    await continueCaseCheckout(matter.id);
+  } catch (error) {
+    showToast(error.message);
+  }
 }
 
 function prepareNewMatterForm() {
@@ -1322,8 +1411,8 @@ function renderMatterComposer() {
           <p>Choose what you need a lawyer for first, and Kamieno will narrow the practice areas and intake questions from there.</p>
         `;
   elements.paymentFlowSummary.innerHTML = `
-    <p class="eyebrow">Publishing flow</p>
-    <p>Save your draft first, then add it to cart from your dashboard when you are ready for checkout and payment.</p>
+    <p class="eyebrow">Submitting flow</p>
+    <p>Save your draft first, then submit it from your dashboard. Before payment, you will review the summary and complete any missing account details.</p>
   `;
   elements.caseName.placeholder = buildCaseNamePlaceholder(state.currentUser?.name);
   elements.promptFields.innerHTML = template
@@ -1598,12 +1687,12 @@ function renderClientBoard() {
             <span class="pill neutral">${entry.region}</span>
             ${entry.scopeOfWork ? `<span class="pill neutral">${entry.scopeOfWork}</span>` : ""}
             ${entry.documents?.length ? `<span class="pill neutral">${entry.documents.length} document${entry.documents.length === 1 ? "" : "s"}</span>` : ""}
-            <span class="pill neutral">${needsPayment ? "Ready for checkout" : entry.status}</span>
+            <span class="pill neutral">${needsPayment ? "Ready to submit" : entry.status}</span>
           </div>
           <div class="case-card-actions">
             <button class="button secondary" type="button" data-case-action="edit" data-case-id="${entry.id}">Edit</button>
             <button class="button ghost" type="button" data-case-action="delete" data-case-id="${entry.id}" ${entry.status === "engaged" || entry.acceptedBidId ? "disabled" : ""}>Delete</button>
-            ${needsPayment ? `<button class="button primary" type="button" data-case-action="publish" data-case-id="${entry.id}">Add to cart</button>` : ""}
+            ${needsPayment ? `<button class="button primary" type="button" data-case-action="publish" data-case-id="${entry.id}">Submit</button>` : ""}
           </div>
         </article>
       `;
@@ -1631,7 +1720,7 @@ function renderClientBoard() {
     <div class="case-primary-actions">
       <button class="button secondary" type="button" data-case-action="edit" data-case-id="${matter.id}">Edit</button>
       <button class="button ghost" type="button" data-case-action="delete" data-case-id="${matter.id}" ${canDelete ? "" : "disabled"}>Delete</button>
-      ${needsPayment ? `<button class="button primary" type="button" data-case-action="publish" data-case-id="${matter.id}">Add to cart</button>` : ""}
+      ${needsPayment ? `<button class="button primary" type="button" data-case-action="publish" data-case-id="${matter.id}">Submit</button>` : ""}
     </div>
     <div class="checklist-card">
       <p class="eyebrow">Dynamic prompts</p>
@@ -1659,6 +1748,77 @@ function renderClientBoard() {
   elements.engagementLetter.innerHTML = state.engagementLetter
     ? `<h4>${state.engagementLetter.heading}</h4><p>${state.engagementLetter.body}</p>`
     : "";
+}
+
+function renderClientCheckout() {
+  if (
+    !elements.clientCheckoutForm ||
+    !elements.checkoutAccessNote ||
+    !elements.checkoutCaseSummary ||
+    !elements.checkoutAccountName ||
+    !elements.checkoutAccountEmail ||
+    !elements.checkoutPhone ||
+    !elements.checkoutAddress ||
+    !elements.checkoutSubmitButton ||
+    !elements.checkoutFeeSummary
+  ) {
+    return;
+  }
+
+  const isClient = state.currentUser?.role === "client";
+  const matter = state.cases.find((entry) => entry.id === state.selectedCaseId);
+
+  if (!isClient || !matter) {
+    elements.checkoutAccessNote.innerHTML = "<p>Select a draft from your dashboard to continue to payment.</p>";
+    elements.checkoutCaseSummary.innerHTML = "<p>No draft selected.</p>";
+    elements.checkoutFeeSummary.innerHTML = "<p>Publish a draft from your dashboard to review payment.</p>";
+    setFormEnabled(elements.clientCheckoutForm, false);
+    return;
+  }
+
+  const country = getCountry(matter.countryCode);
+  const missing = [];
+  if (!String(state.currentUser.phone || "").trim()) {
+    missing.push("phone number");
+  }
+  if (!String(state.currentUser.address || "").trim()) {
+    missing.push("address");
+  }
+
+  elements.checkoutAccessNote.innerHTML = missing.length
+    ? `<p>Add your ${missing.join(" and ")} before payment so your account and billing details are complete.</p>`
+    : "<p>Review your draft, confirm your account details, and then continue to payment.</p>";
+  elements.checkoutCaseSummary.innerHTML = `
+    <p class="eyebrow">Matter summary</p>
+    <p><strong>${escapeHtml(matter.caseName || getPracticeArea(matter.practiceAreaId).label)}</strong></p>
+    <p>${escapeHtml(matter.summary || "No summary provided.")}</p>
+    <div class="case-meta">
+      <span class="pill neutral">${getPracticeArea(matter.practiceAreaId).label}</span>
+      <span class="pill neutral">${country.name}</span>
+      <span class="pill neutral">${matter.region}</span>
+      ${matter.scopeOfWork ? `<span class="pill neutral">${escapeHtml(matter.scopeOfWork)}</span>` : ""}
+    </div>
+    ${renderIntakeReasonSummary(matter)}
+    ${renderSingleTaskSummaryPlain(matter)}
+    <p class="eyebrow">Included in this submission</p>
+    <ul>${getVisibleCustomAnswers(matter.customAnswers)
+      .map(([key, value]) => `<li><strong>${key}</strong>: ${escapeHtml(value || "Not provided")}</li>`)
+      .join("")}</ul>
+  `;
+  elements.checkoutAccountName.value = state.currentUser.name || "";
+  elements.checkoutAccountEmail.value = state.currentUser.email || "";
+  elements.checkoutPhone.value = state.currentUser.phone || "";
+  elements.checkoutAddress.value = state.currentUser.address || "";
+  elements.checkoutFeeSummary.innerHTML = `
+    <p class="eyebrow">Payment summary</p>
+    <p><strong>${formatMoney(country.clientFee, country.currencyCode)}</strong> publishing fee</p>
+    <p>This payment publishes your matter to matching lawyers so they can submit proposals.</p>
+    <p>After payment, the matter moves from draft to live tendering.</p>
+  `;
+  elements.checkoutSubmitButton.textContent = "Pay and receive proposals";
+  setFormEnabled(elements.clientCheckoutForm, isClient);
+  elements.checkoutAccountName.disabled = true;
+  elements.checkoutAccountEmail.disabled = true;
 }
 
 function renderBidCard(bid, matter) {
@@ -1726,7 +1886,7 @@ async function handleClientCaseAction(event) {
   }
 
   if (action === "publish") {
-    await continueCaseCheckout(caseId);
+    openClientCheckout(caseId);
     return;
   }
 
@@ -2379,6 +2539,20 @@ function renderSingleTaskSummary(matter) {
       <p><strong>Single tasks:</strong></p>
       <ul>${tasks.map((task) => `<li>${escapeHtml(task)}</li>`).join("")}</ul>
     </div>
+  `;
+}
+
+function renderSingleTaskSummaryPlain(matter) {
+  const tasks = getSingleTaskDetails(matter);
+  if (!tasks.length) {
+    return "";
+  }
+  if (tasks.length === 1) {
+    return `<p><strong>Single task:</strong> ${escapeHtml(tasks[0])}</p>`;
+  }
+  return `
+    <p><strong>Single tasks:</strong></p>
+    <ul>${tasks.map((task) => `<li>${escapeHtml(task)}</li>`).join("")}</ul>
   `;
 }
 

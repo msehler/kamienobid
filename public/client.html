@@ -249,6 +249,57 @@
           </aside>
         </div>
       </section>
+
+      <section class="workspace reveal" id="clientCheckout" hidden>
+        <div class="workspace-grid">
+          <form class="panel matter-form" id="clientCheckoutForm">
+            <div class="panel-header">
+              <h3>Review and submit your case</h3>
+              <div class="panel-badges">
+                <span class="pill">Final step</span>
+              </div>
+            </div>
+            <div class="access-note" id="checkoutAccessNote"></div>
+            <div class="checklist-card" id="checkoutCaseSummary"></div>
+            <div class="document-field">
+              <div class="document-field-label">Account details for publishing and billing</div>
+              <div class="form-grid">
+                <label>
+                  Full name
+                  <input id="checkoutAccountName" type="text" disabled />
+                </label>
+                <label>
+                  Email
+                  <input id="checkoutAccountEmail" type="email" disabled />
+                </label>
+                <label>
+                  Phone number
+                  <input id="checkoutPhone" name="phone" type="tel" placeholder="Add the best number for account and billing contact" required />
+                </label>
+                <label class="field-span-full">
+                  Address
+                  <textarea id="checkoutAddress" name="address" rows="3" placeholder="Add your address for account and billing records" required></textarea>
+                </label>
+              </div>
+            </div>
+            <div class="form-actions matter-form-actions">
+              <button class="button secondary" id="checkoutBackButton" type="button">Back to dashboard</button>
+              <button class="button primary" id="checkoutSubmitButton" type="submit">Pay and receive proposals</button>
+            </div>
+          </form>
+
+          <aside class="panel insight-panel">
+            <div class="panel-header">
+              <h3>What happens next</h3>
+            </div>
+            <div class="template-summary" id="checkoutFeeSummary"></div>
+            <div class="launch-panel">
+              <p class="eyebrow">Before publishing</p>
+              <p>We will save any missing account contact details first. After payment, your matter is published to lawyers so they can start tendering proposals.</p>
+            </div>
+          </aside>
+        </div>
+      </section>
     </main>
 
     <footer class="site-footer reveal">
