@@ -1677,7 +1677,7 @@ function renderClientBoard() {
         <article class="case-card ${selected ? "is-selected" : ""}" data-case-action="select" data-case-id="${entry.id}">
           <div class="case-card-header">
             <div>
-              <p class="eyebrow">${getCountry(entry.countryCode).name}</p>
+              <p class="eyebrow">${formatCaseCreatedAt(entry.createdAt)}</p>
               <strong>${entry.caseName || getPracticeArea(entry.practiceAreaId).label}</strong>
             </div>
             <span class="pill neutral">${needsPayment ? "Draft" : "Published"}</span>
@@ -3169,6 +3169,18 @@ function formatMoney(value, currencyCode) {
     currency: currencyCode,
     maximumFractionDigits: 2,
   }).format(value);
+}
+
+function formatCaseCreatedAt(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "Created recently";
+  }
+  return `Created ${new Intl.DateTimeFormat(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date)}`;
 }
 
 function detectCountry() {
