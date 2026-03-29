@@ -1354,6 +1354,38 @@ form.panel > .button {
   gap: 18px;
 }
 
+.matter-form-section {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 24px 0 0;
+  border: 0;
+  border-top: 1px solid rgba(21, 57, 200, 0.12);
+}
+
+.matter-form-section-primary {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.matter-form-section-heading {
+  display: grid;
+  gap: 8px;
+}
+
+.matter-form-section-heading .eyebrow,
+.matter-form-section-heading h4 {
+  margin: 0;
+}
+
+.matter-form-section-heading h4 {
+  max-width: 46ch;
+  font-size: 1rem;
+  line-height: 1.45;
+  font-weight: 500;
+  color: rgba(21, 57, 200, 0.72);
+}
+
 .insight-panel {
   display: grid;
   align-content: start;

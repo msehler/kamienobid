@@ -164,80 +164,116 @@
               </div>
             </div>
             <div class="access-note" id="matterAccessNote"></div>
-            <label>
-              Case name
-              <input id="caseName" name="caseName" type="text" placeholder="e.g. Taylor Shaw -v- John Smith" required />
-            </label>
-            <label>
-              What do you need a lawyer for?
-              <select id="intakeReasonSelect" name="intakeReason" required></select>
-            </label>
-            <div class="access-note" id="intakeReasonGuide" hidden></div>
-            <div class="form-grid">
-              <label>
-                Client name
-                <input id="clientName" name="clientName" type="text" placeholder="Taylor Shaw" required />
-              </label>
-              <label>
-                Country
-                <select id="countrySelect" name="countryCode"></select>
-              </label>
-              <label>
-                <span id="regionLabel">Region</span>
-                <select id="regionSelect" name="region" required></select>
-              </label>
-              <label id="practiceAreaField" hidden>
-                Practice area
-                <select id="practiceAreaSelect" name="practiceAreaId" required></select>
-              </label>
-              <label id="scopeOfWorkField" hidden>
-                Scope of work
-                <select id="scopeOfWork" name="scopeOfWork" required></select>
-              </label>
-            </div>
-            <div id="singleTaskDetailField" class="single-task-field" hidden>
-              <div class="document-field-label">What single task do you need help with?</div>
-              <div id="singleTaskList" class="single-task-list"></div>
-              <button class="button secondary single-task-add" id="addSingleTaskButton" type="button">Add another task</button>
-            </div>
-            <label>
-              Matter summary
-              <textarea
-                id="matterSummary"
-                name="summary"
-                rows="5"
-                placeholder="Describe the dispute, timing, and the outcome you want."
-                required
-              ></textarea>
-            </label>
-            <label>
-              Estimated budget range
-              <select id="budgetInput" name="budget"></select>
-            </label>
-            <div class="prompt-grid" id="promptFields"></div>
-            <div class="document-field">
-              <div class="document-field-label">Supporting documents</div>
-              <div class="document-uploader" id="matterDocumentUploader" role="button" tabindex="0" aria-controls="matterDocumentInput">
-                <input
-                  id="matterDocumentInput"
-                  type="file"
-                  accept=".pdf,.doc,.docx,.txt,.rtf,image/*"
-                  multiple
-                  hidden
-                />
-                <strong>Drag and drop documents here</strong>
-                <p>Or click to add files. For this demo, each file can be up to 2 MB.</p>
+            <section class="matter-form-section matter-form-section-primary">
+              <div class="matter-form-section-heading">
+                <p class="eyebrow">Case basics</p>
+                <h4>Name the case and confirm the account details tied to this draft.</h4>
               </div>
-              <div class="uploaded-document-list" id="matterDocumentList"></div>
-            </div>
-            <div class="checklist-card">
-              <p class="eyebrow">Required uploads</p>
-              <ul id="requiredUploads"></ul>
-            </div>
-            <div class="form-actions matter-form-actions">
-              <button class="button secondary" id="matterCancelButton" type="button">Cancel</button>
-              <button class="button primary" id="matterSubmitButton" type="submit">Save draft changes</button>
-            </div>
+              <label>
+                Case name
+                <input id="caseName" name="caseName" type="text" placeholder="e.g. Taylor Shaw -v- John Smith" required />
+              </label>
+              <div class="form-grid">
+                <label>
+                  Client name
+                  <input id="clientName" name="clientName" type="text" placeholder="Taylor Shaw" required />
+                </label>
+                <label>
+                  Country
+                  <select id="countrySelect" name="countryCode"></select>
+                </label>
+                <label>
+                  <span id="regionLabel">Region</span>
+                  <select id="regionSelect" name="region" required></select>
+                </label>
+              </div>
+            </section>
+
+            <section class="matter-form-section">
+              <div class="matter-form-section-heading">
+                <p class="eyebrow">What you need help with</p>
+                <h4>Set the overall type of help first, then narrow it down.</h4>
+              </div>
+              <label>
+                What do you need a lawyer for?
+                <select id="intakeReasonSelect" name="intakeReason" required></select>
+              </label>
+              <div class="access-note" id="intakeReasonGuide" hidden></div>
+              <div class="form-grid">
+                <label id="practiceAreaField" hidden>
+                  Practice area
+                  <select id="practiceAreaSelect" name="practiceAreaId" required></select>
+                </label>
+                <label id="scopeOfWorkField" hidden>
+                  Scope of work
+                  <select id="scopeOfWork" name="scopeOfWork" required></select>
+                </label>
+              </div>
+              <div id="singleTaskDetailField" class="single-task-field" hidden>
+                <div class="document-field-label">What single task do you need help with?</div>
+                <div id="singleTaskList" class="single-task-list"></div>
+                <button class="button secondary single-task-add" id="addSingleTaskButton" type="button">Add another task</button>
+              </div>
+            </section>
+
+            <section class="matter-form-section">
+              <div class="matter-form-section-heading">
+                <p class="eyebrow">Matter details</p>
+                <h4>Explain the context, budget, and any practice-area specifics lawyers should know.</h4>
+              </div>
+              <label>
+                Matter summary
+                <textarea
+                  id="matterSummary"
+                  name="summary"
+                  rows="5"
+                  placeholder="Describe the dispute, timing, and the outcome you want."
+                  required
+                ></textarea>
+              </label>
+              <label>
+                Estimated budget range
+                <select id="budgetInput" name="budget"></select>
+              </label>
+              <div class="prompt-grid" id="promptFields"></div>
+            </section>
+
+            <section class="matter-form-section">
+              <div class="matter-form-section-heading">
+                <p class="eyebrow">Supporting documents</p>
+                <h4>Upload anything lawyers should review before deciding whether to quote.</h4>
+              </div>
+              <div class="document-field">
+                <div class="document-field-label">Supporting documents</div>
+                <div class="document-uploader" id="matterDocumentUploader" role="button" tabindex="0" aria-controls="matterDocumentInput">
+                  <input
+                    id="matterDocumentInput"
+                    type="file"
+                    accept=".pdf,.doc,.docx,.txt,.rtf,image/*"
+                    multiple
+                    hidden
+                  />
+                  <strong>Drag and drop documents here</strong>
+                  <p>Or click to add files. For this demo, each file can be up to 2 MB.</p>
+                </div>
+                <div class="uploaded-document-list" id="matterDocumentList"></div>
+              </div>
+              <div class="checklist-card">
+                <p class="eyebrow">Required uploads</p>
+                <ul id="requiredUploads"></ul>
+              </div>
+            </section>
+
+            <section class="matter-form-section">
+              <div class="matter-form-section-heading">
+                <p class="eyebrow">Save and continue</p>
+                <h4>Keep your draft now and come back to submit when you are ready.</h4>
+              </div>
+              <div class="form-actions matter-form-actions">
+                <button class="button secondary" id="matterCancelButton" type="button">Cancel</button>
+                <button class="button primary" id="matterSubmitButton" type="submit">Save draft changes</button>
+              </div>
+            </section>
           </form>
 
           <aside class="panel insight-panel">
