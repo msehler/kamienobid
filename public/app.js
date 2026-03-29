@@ -928,11 +928,9 @@ function renderAuth() {
                 </div>
               </div>
               <div class="account-readonly-grid">
-                <article class="account-readonly-item">
+                <article class="account-readonly-item account-readonly-item-full">
                   <p class="account-readonly-label">Full name</p>
                   <p class="account-readonly-value">${accountName}</p>
-                </article>
-                <article class="account-readonly-item">
                   <p class="account-readonly-label">Email</p>
                   <p class="account-readonly-value">${accountEmail}</p>
                 </article>
