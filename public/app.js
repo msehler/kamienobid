@@ -1666,7 +1666,6 @@ function renderClientBoard() {
   state.selectedCaseId = matter.id;
   const template = getTemplate(matter.countryCode, matter.practiceAreaId);
   const matterBids = state.bids.filter((bid) => bid.caseId === matter.id);
-  const canDelete = matter.status !== "engaged" && !matter.acceptedBidId;
   const needsPayment = !String(matter.paymentStatus).startsWith("paid");
 
   elements.caseList.innerHTML = state.cases
@@ -1683,12 +1682,6 @@ function renderClientBoard() {
             <span class="pill neutral">${needsPayment ? "Draft" : "Published"}</span>
           </div>
           <p class="case-card-summary">${entry.summary}</p>
-          <div class="case-meta">
-            <span class="pill neutral">${entry.region}</span>
-            ${entry.scopeOfWork ? `<span class="pill neutral">${entry.scopeOfWork}</span>` : ""}
-            ${entry.documents?.length ? `<span class="pill neutral">${entry.documents.length} document${entry.documents.length === 1 ? "" : "s"}</span>` : ""}
-            <span class="pill neutral">${needsPayment ? "Ready to submit" : entry.status}</span>
-          </div>
           <div class="case-card-actions">
             <button class="button secondary" type="button" data-case-action="edit" data-case-id="${entry.id}">Edit</button>
             <button class="button ghost" type="button" data-case-action="delete" data-case-id="${entry.id}" ${entry.status === "engaged" || entry.acceptedBidId ? "disabled" : ""}>Delete</button>
@@ -1710,11 +1703,6 @@ function renderClientBoard() {
     ${matter.scopeOfWork ? `<p><strong>Scope of work:</strong> ${escapeHtml(matter.scopeOfWork)}</p>` : ""}
     ${renderSingleTaskSummary(matter)}
     <p>${matter.summary}</p>
-    <div class="case-primary-actions">
-      <button class="button secondary" type="button" data-case-action="edit" data-case-id="${matter.id}">Edit</button>
-      <button class="button ghost" type="button" data-case-action="delete" data-case-id="${matter.id}" ${canDelete ? "" : "disabled"}>Delete</button>
-      ${needsPayment ? `<button class="button primary" type="button" data-case-action="publish" data-case-id="${matter.id}">Submit</button>` : ""}
-    </div>
     <div class="checklist-card">
       <p class="eyebrow">Dynamic prompts</p>
       <ul>${getVisibleCustomAnswers(matter.customAnswers)
