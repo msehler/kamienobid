@@ -2490,7 +2490,7 @@ function getGuidedIntakeState(source) {
 }
 
 function getOtherPartyFieldConfig(intakeReasonId, practiceAreaId) {
-  if (!["defending-claim", "making-claim", "court-tribunal-process"].includes(intakeReasonId)) {
+  if (!["legal-advice", "defending-claim", "making-claim", "court-tribunal-process"].includes(intakeReasonId)) {
     return null;
   }
 
