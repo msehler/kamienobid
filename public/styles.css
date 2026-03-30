@@ -1431,12 +1431,12 @@ form.panel > .button {
 .account-readonly-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
+  gap: 28px;
 }
 
 .account-readonly-item {
   display: grid;
-  gap: 8px;
+  gap: 12px;
   padding: 0;
   border: 0;
   background: transparent;
