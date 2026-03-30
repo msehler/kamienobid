@@ -2446,7 +2446,7 @@ function sanitizeGuidedIntakeState(source) {
     next.otherPartyType = "";
   }
 
-  const forumConfig = getCourtForumConfig(state.intakeReason, state.selectedCountryCode, elements.regionSelect?.value || "");
+  const forumConfig = getCourtForumConfig(state.intakeReason, state.selectedCountryCode, elements.regionSelect?.value || "", state.selectedPracticeAreaId);
   if (!forumConfig) {
     next.forumInvolved = "";
     next.forumName = "";
@@ -2523,11 +2523,32 @@ function getOtherPartyFieldConfig(intakeReasonId, practiceAreaId) {
       roleOptions: ["Insurer", "Driver", "Employer", "Medical provider", "Other", "I'm not sure"],
     };
   }
+  if (["wills-probate", "estate-litigation", "elder-law", "retirement"].includes(areaId)) {
+    return {
+      eyebrow: "Other party",
+      copy: "Add the main person, estate representative, or institution involved if you know it.",
+      roleOptions: ["Executor", "Beneficiary", "Trustee", "Attorney / guardian", "Aged care provider", "Other", "I'm not sure"],
+    };
+  }
+  if (["immigration"].includes(areaId)) {
+    return {
+      eyebrow: "Other party",
+      copy: "If a decision-maker or sponsoring party is already involved, add that here.",
+      roleOptions: ["Department", "Sponsor", "Employer", "Review authority", "Other", "I'm not sure"],
+    };
+  }
+  if (["neighbourhood"].includes(areaId)) {
+    return {
+      eyebrow: "Other party",
+      copy: "Name the person or body on the other side of the issue if that is already clear.",
+      roleOptions: ["Neighbour", "Owners corporation", "Landlord", "Tenant", "Council", "Other", "I'm not sure"],
+    };
+  }
   if (["property", "commercial", "contract-disputes", "ip", "consumer", "debt-insolvency", "construction", "environmental", "administrative", "tax"].includes(areaId)) {
     return {
       eyebrow: "Other party",
       copy: "Name the key party or decision-maker involved so lawyers can gauge the dispute setting.",
-      roleOptions: ["Business", "Supplier", "Customer", "Contractor", "Regulator", "Other", "I'm not sure"],
+      roleOptions: ["Business", "Supplier", "Customer", "Contractor", "Developer", "Regulator", "Other", "I'm not sure"],
     };
   }
 
@@ -2552,19 +2573,20 @@ function getOtherPartyFieldConfig(intakeReasonId, practiceAreaId) {
   };
 }
 
-function getCourtForumConfig(intakeReasonId, countryCode, region) {
+function getCourtForumConfig(intakeReasonId, countryCode, region, practiceAreaId) {
   if (!["defending-claim", "making-claim", "court-tribunal-process"].includes(intakeReasonId)) {
     return null;
   }
   return {
     eyebrow: "Court or tribunal",
     copy: "Only add this if a court, tribunal, or government body is already involved.",
-    options: buildCourtForumOptions(countryCode, region),
+    options: buildCourtForumOptions(countryCode, region, practiceAreaId),
   };
 }
 
-function buildCourtForumOptions(countryCode, region) {
+function buildCourtForumOptions(countryCode, region, practiceAreaId) {
   if (countryCode === "AU") {
+    const areaId = String(practiceAreaId || "");
     const lowerCourtByRegion = {
       ACT: "Magistrates Court of the ACT",
       NSW: "Local Court of NSW",
@@ -2602,56 +2624,167 @@ function buildCourtForumOptions(countryCode, region) {
       VIC: "VCAT",
       WA: "SAT",
     };
+    const lowerCourt = { value: lowerCourtByRegion[region] || "Local / Magistrates Court", label: lowerCourtByRegion[region] || "Local / Magistrates Court" };
+    const middleCourt = middleCourtByRegion[region] ? { value: middleCourtByRegion[region], label: middleCourtByRegion[region] } : null;
+    const supremeCourt = { value: supremeByRegion[region] || "Supreme Court", label: supremeByRegion[region] || "Supreme Court" };
+    const stateTribunal = tribunalByRegion[region] ? { value: tribunalByRegion[region], label: tribunalByRegion[region] } : null;
+
+    if (["criminal-defence", "traffic"].includes(areaId)) {
+      return [
+        lowerCourt,
+        ...(middleCourt ? [middleCourt] : []),
+        supremeCourt,
+        { value: "Children's Court", label: "Children's Court" },
+        { value: "__other", label: "Other" },
+        { value: "I'm not sure", label: "I'm not sure" },
+      ];
+    }
+
+    if (["family-divorce", "child-custody"].includes(areaId)) {
+      return [
+        { value: "Federal Circuit and Family Court of Australia", label: "Federal Circuit and Family Court of Australia" },
+        lowerCourt,
+        { value: "Children's Court", label: "Children's Court" },
+        supremeCourt,
+        { value: "__other", label: "Other" },
+        { value: "I'm not sure", label: "I'm not sure" },
+      ];
+    }
+
+    if (["employment"].includes(areaId)) {
+      return [
+        { value: "Fair Work Commission", label: "Fair Work Commission" },
+        { value: "Federal Court of Australia", label: "Federal Court of Australia" },
+        { value: "Federal Circuit and Family Court of Australia", label: "Federal Circuit and Family Court of Australia" },
+        { value: "__other", label: "Other" },
+        { value: "I'm not sure", label: "I'm not sure" },
+      ];
+    }
+
+    if (["immigration", "administrative", "tax"].includes(areaId)) {
+      return [
+        { value: "Administrative Review Tribunal", label: "Administrative Review Tribunal" },
+        { value: "Federal Circuit and Family Court of Australia", label: "Federal Circuit and Family Court of Australia" },
+        { value: "Federal Court of Australia", label: "Federal Court of Australia" },
+        { value: "__other", label: "Other" },
+        { value: "I'm not sure", label: "I'm not sure" },
+      ];
+    }
+
+    if (["consumer", "property", "neighbourhood", "elder-law", "retirement"].includes(areaId)) {
+      return [
+        ...(stateTribunal ? [stateTribunal] : []),
+        lowerCourt,
+        ...(middleCourt ? [middleCourt] : []),
+        supremeCourt,
+        { value: "__other", label: "Other" },
+        { value: "I'm not sure", label: "I'm not sure" },
+      ];
+    }
+
+    if (["wills-probate", "estate-litigation"].includes(areaId)) {
+      return [
+        supremeCourt,
+        lowerCourt,
+        ...(stateTribunal ? [stateTribunal] : []),
+        { value: "__other", label: "Other" },
+        { value: "I'm not sure", label: "I'm not sure" },
+      ];
+    }
+
+    if (["personal-injury", "medical-negligence", "commercial", "contract-disputes", "debt-insolvency", "construction", "environmental", "ip", "other"].includes(areaId)) {
+      return [
+        lowerCourt,
+        ...(middleCourt ? [middleCourt] : []),
+        supremeCourt,
+        { value: "Federal Court of Australia", label: "Federal Court of Australia" },
+        { value: "__other", label: "Other" },
+        { value: "I'm not sure", label: "I'm not sure" },
+      ];
+    }
+
     return [
-      { value: lowerCourtByRegion[region] || "Local / Magistrates Court", label: lowerCourtByRegion[region] || "Local / Magistrates Court" },
-      ...(middleCourtByRegion[region] ? [{ value: middleCourtByRegion[region], label: middleCourtByRegion[region] }] : []),
-      { value: supremeByRegion[region] || "Supreme Court", label: supremeByRegion[region] || "Supreme Court" },
-      ...(tribunalByRegion[region] ? [{ value: tribunalByRegion[region], label: tribunalByRegion[region] }] : []),
-      { value: "Federal Circuit and Family Court of Australia", label: "Federal Circuit and Family Court of Australia" },
-      { value: "Fair Work Commission", label: "Fair Work Commission" },
-      { value: "Administrative Review Tribunal", label: "Administrative Review Tribunal" },
+      lowerCourt,
+      ...(middleCourt ? [middleCourt] : []),
+      supremeCourt,
+      ...(stateTribunal ? [stateTribunal] : []),
       { value: "__other", label: "Other" },
       { value: "I'm not sure", label: "I'm not sure" },
     ];
   }
   if (countryCode === "NZ") {
+    const areaId = String(practiceAreaId || "");
+    if (["employment"].includes(areaId)) {
+      return [
+        { value: "Employment Relations Authority", label: "Employment Relations Authority" },
+        { value: "Employment Court", label: "Employment Court" },
+        { value: "__other", label: "Other" },
+        { value: "I'm not sure", label: "I'm not sure" },
+      ];
+    }
+    if (["family-divorce", "child-custody"].includes(areaId)) {
+      return [
+        { value: "Family Court of New Zealand", label: "Family Court of New Zealand" },
+        { value: "District Court of New Zealand", label: "District Court of New Zealand" },
+        { value: "__other", label: "Other" },
+        { value: "I'm not sure", label: "I'm not sure" },
+      ];
+    }
     return [
       { value: "District Court of New Zealand", label: "District Court of New Zealand" },
-      { value: "Family Court of New Zealand", label: "Family Court of New Zealand" },
-      { value: "Employment Relations Authority", label: "Employment Relations Authority" },
-      { value: "Tenancy Tribunal", label: "Tenancy Tribunal" },
+      { value: "High Court of New Zealand", label: "High Court of New Zealand" },
+      ...( ["consumer", "property", "neighbourhood"].includes(areaId) ? [{ value: "Tenancy Tribunal", label: "Tenancy Tribunal" }] : []),
       { value: "__other", label: "Other" },
       { value: "I'm not sure", label: "I'm not sure" },
     ];
   }
   if (countryCode === "UK") {
+    const areaId = String(practiceAreaId || "");
+    if (["employment"].includes(areaId)) {
+      return [
+        { value: "Employment Tribunal", label: "Employment Tribunal" },
+        { value: "Employment Appeal Tribunal", label: "Employment Appeal Tribunal" },
+        { value: "__other", label: "Other" },
+        { value: "I'm not sure", label: "I'm not sure" },
+      ];
+    }
+    if (["family-divorce", "child-custody"].includes(areaId)) {
+      return [
+        { value: "Family Court", label: "Family Court" },
+        { value: "High Court", label: "High Court" },
+        { value: "Magistrates' Court", label: "Magistrates' Court" },
+        { value: "__other", label: "Other" },
+        { value: "I'm not sure", label: "I'm not sure" },
+      ];
+    }
     return [
       { value: "Magistrates' Court", label: "Magistrates' Court" },
       { value: "County Court", label: "County Court" },
       { value: "High Court", label: "High Court" },
-      { value: "Employment Tribunal", label: "Employment Tribunal" },
-      { value: "First-tier Tribunal", label: "First-tier Tribunal" },
+      ...( ["consumer", "administrative", "immigration", "tax"].includes(areaId) ? [{ value: "First-tier Tribunal", label: "First-tier Tribunal" }] : []),
       { value: "__other", label: "Other" },
       { value: "I'm not sure", label: "I'm not sure" },
     ];
   }
   if (countryCode === "US") {
+    const areaId = String(practiceAreaId || "");
     return [
       { value: "State trial court", label: "State trial court" },
       { value: "Federal District Court", label: "Federal District Court" },
-      { value: "Small claims court", label: "Small claims court" },
-      { value: "Family court", label: "Family court" },
-      { value: "Government agency or board", label: "Government agency or board" },
+      ...( ["consumer", "debt-insolvency", "property", "contract-disputes"].includes(areaId) ? [{ value: "Small claims court", label: "Small claims court" }] : []),
+      ...( ["family-divorce", "child-custody"].includes(areaId) ? [{ value: "Family court", label: "Family court" }] : []),
+      ...( ["administrative", "immigration", "tax", "employment"].includes(areaId) ? [{ value: "Government agency or board", label: "Government agency or board" }] : []),
       { value: "__other", label: "Other" },
       { value: "I'm not sure", label: "I'm not sure" },
     ];
   }
   if (countryCode === "CA") {
+    const areaId = String(practiceAreaId || "");
     return [
       { value: "Provincial court", label: "Provincial court" },
       { value: "Superior court", label: "Superior court" },
-      { value: "Small claims court", label: "Small claims court" },
-      { value: "Tribunal or commission", label: "Tribunal or commission" },
+      ...( ["consumer", "debt-insolvency", "property"].includes(areaId) ? [{ value: "Small claims court", label: "Small claims court" }] : []),
+      ...( ["administrative", "employment", "immigration", "tax"].includes(areaId) ? [{ value: "Tribunal or commission", label: "Tribunal or commission" }] : []),
       { value: "__other", label: "Other" },
       { value: "I'm not sure", label: "I'm not sure" },
     ];
@@ -2672,7 +2805,7 @@ function renderGuidedIntakeFields() {
   }
 
   const otherPartyConfig = getOtherPartyFieldConfig(state.intakeReason, state.selectedPracticeAreaId);
-  const forumConfig = getCourtForumConfig(state.intakeReason, state.selectedCountryCode, elements.regionSelect?.value || "");
+  const forumConfig = getCourtForumConfig(state.intakeReason, state.selectedCountryCode, elements.regionSelect?.value || "", state.selectedPracticeAreaId);
   const groups = [];
 
   if (otherPartyConfig) {
