@@ -17,6 +17,7 @@ const state = {
   intakeReason: "",
   matterDocuments: [],
   singleTaskDetails: [],
+  guidedIntake: {},
 };
 
 const elements = {};
@@ -27,6 +28,13 @@ const MAX_MATTER_DOCUMENT_BYTES_TOTAL = 3 * 1024 * 1024;
 const INTAKE_REASON_KEY = "__intakeReason";
 const SINGLE_TASK_DETAIL_KEY = "__singleTaskDetail";
 const SINGLE_TASK_DETAILS_KEY = "__singleTaskDetails";
+const OTHER_PARTY_INVOLVED_KEY = "__otherPartyInvolved";
+const COURT_FORUM_INVOLVED_KEY = "__courtForumInvolved";
+const OTHER_PARTY_ROLE_LABEL = "Other party role";
+const OTHER_PARTY_NAME_LABEL = "Other party name";
+const COURT_FORUM_LABEL = "Court / tribunal / agency";
+const CASE_REFERENCE_LABEL = "Case or reference number";
+const NEXT_DATE_LABEL = "Next hearing date or deadline";
 
 const INTAKE_REASON_OPTIONS = [
   {
@@ -45,19 +53,19 @@ const INTAKE_REASON_OPTIONS = [
     id: "defending-claim",
     label: "Someone is making a claim against me",
     summary: "Use this when you have received a claim, allegation, charge, complaint, or legal demand and need to respond.",
-    prompts: ["Who is making the claim or allegation?", "What documents or notices have you received?", "When do you need to respond by?"],
+    prompts: ["What documents or notices have you received?", "When do you need to respond by?"],
   },
   {
     id: "making-claim",
     label: "I want to make a claim against someone",
     summary: "Use this when you want to take legal action, recover money, or pursue a formal complaint or claim.",
-    prompts: ["Who is the claim against?", "What outcome are you seeking?", "What key evidence or documents do you already have?"],
+    prompts: ["What outcome are you seeking?", "What key evidence or documents do you already have?"],
   },
   {
     id: "court-tribunal-process",
     label: "I need help with a court, tribunal, or government process",
     summary: "Use this when you already have a formal process underway or need help preparing for one.",
-    prompts: ["Which court, tribunal, or agency is involved?", "What stage is the matter at?", "What is the next hearing date or deadline?"],
+    prompts: ["What stage is the matter at?", "What outcome do you want from the process?"],
   },
   {
     id: "personal-situation",
@@ -191,6 +199,7 @@ function cacheElements() {
     "singleTaskDetailField",
     "singleTaskList",
     "addSingleTaskButton",
+    "guidedIntakeFields",
     "promptFields",
     "requiredUploads",
     "templateSummary",
@@ -266,6 +275,7 @@ function bindEvents() {
       state.intakeReason = elements.intakeReasonSelect.value;
       state.selectedPracticeAreaId = "";
       state.singleTaskDetails = [];
+      state.guidedIntake = {};
       if (elements.scopeOfWork) {
         elements.scopeOfWork.value = "";
       }
@@ -276,6 +286,14 @@ function bindEvents() {
   if (elements.countrySelect) {
     elements.countrySelect.addEventListener("change", () => {
       state.selectedCountryCode = elements.countrySelect.value;
+      state.guidedIntake = sanitizeGuidedIntakeState(state.guidedIntake);
+      renderMatterComposer();
+    });
+  }
+
+  if (elements.regionSelect) {
+    elements.regionSelect.addEventListener("change", () => {
+      state.guidedIntake = sanitizeGuidedIntakeState(state.guidedIntake);
       renderMatterComposer();
     });
   }
@@ -290,6 +308,7 @@ function bindEvents() {
       if (previousPracticeAreaId !== state.selectedPracticeAreaId) {
         state.singleTaskDetails = [];
       }
+      state.guidedIntake = sanitizeGuidedIntakeState(state.guidedIntake);
       renderMatterComposer();
     });
   }
@@ -305,6 +324,10 @@ function bindEvents() {
 
   if (elements.addSingleTaskButton) {
     elements.addSingleTaskButton.addEventListener("click", addSingleTaskField);
+  }
+  if (elements.guidedIntakeFields) {
+    elements.guidedIntakeFields.addEventListener("input", handleGuidedIntakeFieldInput);
+    elements.guidedIntakeFields.addEventListener("change", handleGuidedIntakeFieldChange);
   }
 
   if (elements.lawyerCountrySelect) {
@@ -1255,6 +1278,7 @@ function prepareNewMatterForm() {
   state.intakeReason = "";
   state.selectedPracticeAreaId = "";
   state.singleTaskDetails = [];
+  state.guidedIntake = {};
   setMatterDocuments([]);
   renderMatterComposer();
   if (elements.matterSummary) {
@@ -1278,6 +1302,7 @@ function populateMatterFormFromCase(matter) {
   state.selectedCountryCode = matter.countryCode;
   state.intakeReason = getSavedIntakeReason(matter) || deriveIntakeReasonFromMatter(matter);
   state.selectedPracticeAreaId = matter.practiceAreaId;
+  state.guidedIntake = getGuidedIntakeState(matter);
   setMatterDocuments(matter.documents || []);
   renderMatterComposer();
 
@@ -1324,6 +1349,7 @@ function renderMatterComposer() {
     !elements.singleTaskDetailField ||
     !elements.singleTaskList ||
     !elements.addSingleTaskButton ||
+    !elements.guidedIntakeFields ||
     !elements.promptFields ||
     !elements.requiredUploads ||
     !elements.matterDocumentUploader ||
@@ -1389,6 +1415,8 @@ function renderMatterComposer() {
     state.singleTaskDetails = [""];
   }
   renderSingleTaskFields(state.selectedPracticeAreaId, showSingleTaskDetail);
+  state.guidedIntake = sanitizeGuidedIntakeState(state.guidedIntake);
+  renderGuidedIntakeFields();
   elements.templateSummary.innerHTML = template
     ? `
         <p class="eyebrow">${escapeHtml(intakeReason?.label || "Selected intake path")}</p>
@@ -1564,6 +1592,7 @@ function renderBidDefaults() {
   elements.bidMatterBrief.innerHTML = `
     <p class="eyebrow">Selected matter brief</p>
     ${renderIntakeReasonSummary(matter)}
+    ${renderGuidedMatterContext(matter)}
     <p><strong>Scope of work:</strong> ${escapeHtml(matter.scopeOfWork || "Not specified")}</p>
     ${renderSingleTaskSummary(matter)}
     <p><strong>Budget range:</strong> ${escapeHtml(matter.budget || "Not specified")}</p>
@@ -1698,6 +1727,7 @@ function renderClientBoard() {
     <p><strong>${matter.caseName || getPracticeArea(matter.practiceAreaId).label}</strong></p>
     <p class="eyebrow">${getPracticeArea(matter.practiceAreaId).label}</p>
     ${renderIntakeReasonSummary(matter)}
+    ${renderGuidedMatterContext(matter)}
     ${matter.scopeOfWork ? `<p><strong>Scope of work:</strong> ${escapeHtml(matter.scopeOfWork)}</p>` : ""}
     ${renderSingleTaskSummary(matter)}
     <p>${matter.summary}</p>
@@ -1778,6 +1808,7 @@ function renderClientCheckout() {
       ${matter.scopeOfWork ? `<span class="pill neutral">${escapeHtml(matter.scopeOfWork)}</span>` : ""}
     </div>
     ${renderIntakeReasonSummary(matter)}
+    ${renderGuidedMatterContext(matter)}
     ${renderSingleTaskSummaryPlain(matter)}
     <p class="eyebrow">Included in this submission</p>
     <ul>${getVisibleCustomAnswers(matter.customAnswers)
@@ -2141,6 +2172,7 @@ async function submitMatter(event) {
   if (elements.intakeReasonSelect?.value) {
     customAnswers[INTAKE_REASON_KEY] = elements.intakeReasonSelect.value;
   }
+  Object.assign(customAnswers, buildGuidedIntakeCustomAnswers());
   const singleTaskDetails = readSingleTaskDetailsFromDom().map((value) => value.trim()).filter(Boolean);
   if (singleTaskDetails.length) {
     customAnswers[SINGLE_TASK_DETAILS_KEY] = singleTaskDetails;
@@ -2365,6 +2397,431 @@ function populateRegionSelect(select, country, selectedValue) {
   ].join("");
 }
 
+function handleGuidedIntakeFieldInput(event) {
+  const field = event.target;
+  const key = field?.dataset?.guidedKey;
+  if (!key) {
+    return;
+  }
+  state.guidedIntake = {
+    ...state.guidedIntake,
+    [key]: field.value,
+  };
+}
+
+function handleGuidedIntakeFieldChange(event) {
+  const field = event.target;
+  const key = field?.dataset?.guidedKey;
+  if (!key) {
+    return;
+  }
+  state.guidedIntake = {
+    ...state.guidedIntake,
+    [key]: field.value,
+  };
+  state.guidedIntake = sanitizeGuidedIntakeState(state.guidedIntake);
+  renderGuidedIntakeFields();
+}
+
+function sanitizeGuidedIntakeState(source) {
+  const next = {
+    otherPartyInvolved: String(source?.otherPartyInvolved || ""),
+    otherPartyType: String(source?.otherPartyType || ""),
+    otherPartyName: String(source?.otherPartyName || ""),
+    forumInvolved: String(source?.forumInvolved || ""),
+    forumName: String(source?.forumName || ""),
+    forumOther: String(source?.forumOther || ""),
+    caseReference: String(source?.caseReference || ""),
+    nextDate: String(source?.nextDate || ""),
+  };
+  const otherPartyConfig = getOtherPartyFieldConfig(state.intakeReason, state.selectedPracticeAreaId);
+  if (!otherPartyConfig) {
+    next.otherPartyInvolved = "";
+    next.otherPartyType = "";
+    next.otherPartyName = "";
+  } else if (next.otherPartyInvolved !== "yes") {
+    next.otherPartyType = "";
+    next.otherPartyName = "";
+  } else if (next.otherPartyType && !otherPartyConfig.roleOptions.includes(next.otherPartyType)) {
+    next.otherPartyType = "";
+  }
+
+  const forumConfig = getCourtForumConfig(state.intakeReason, state.selectedCountryCode, elements.regionSelect?.value || "");
+  if (!forumConfig) {
+    next.forumInvolved = "";
+    next.forumName = "";
+    next.forumOther = "";
+    next.caseReference = "";
+    next.nextDate = "";
+  } else if (next.forumInvolved !== "yes") {
+    next.forumName = "";
+    next.forumOther = "";
+    next.caseReference = "";
+    next.nextDate = "";
+  } else {
+    const forumOptions = forumConfig.options.map((option) => option.value);
+    if (next.forumName && !forumOptions.includes(next.forumName) && next.forumName !== "__other") {
+      next.forumOther = next.forumName;
+      next.forumName = "__other";
+    }
+    if (next.forumName !== "__other") {
+      next.forumOther = "";
+    }
+  }
+  return next;
+}
+
+function getGuidedIntakeState(source) {
+  const customAnswers = source?.customAnswers || source || {};
+  const forumName = String(customAnswers[COURT_FORUM_LABEL] || "").trim();
+  return sanitizeGuidedIntakeState({
+    otherPartyInvolved:
+      String(customAnswers[OTHER_PARTY_INVOLVED_KEY] || "").trim()
+      || (customAnswers[OTHER_PARTY_ROLE_LABEL] || customAnswers[OTHER_PARTY_NAME_LABEL] ? "yes" : ""),
+    otherPartyType: String(customAnswers[OTHER_PARTY_ROLE_LABEL] || "").trim(),
+    otherPartyName: String(customAnswers[OTHER_PARTY_NAME_LABEL] || "").trim(),
+    forumInvolved:
+      String(customAnswers[COURT_FORUM_INVOLVED_KEY] || "").trim()
+      || (forumName || customAnswers[CASE_REFERENCE_LABEL] || customAnswers[NEXT_DATE_LABEL] ? "yes" : ""),
+    forumName,
+    caseReference: String(customAnswers[CASE_REFERENCE_LABEL] || "").trim(),
+    nextDate: String(customAnswers[NEXT_DATE_LABEL] || "").trim(),
+  });
+}
+
+function getOtherPartyFieldConfig(intakeReasonId, practiceAreaId) {
+  if (!["defending-claim", "making-claim", "court-tribunal-process"].includes(intakeReasonId)) {
+    return null;
+  }
+
+  const areaId = String(practiceAreaId || "");
+  if (["criminal-defence", "traffic"].includes(areaId)) {
+    return {
+      eyebrow: "Other party",
+      copy: "Tell lawyers who is on the other side of the allegation or prosecution, if you know.",
+      roleOptions: ["Police", "Informant", "Complainant", "Prosecution", "Other", "I'm not sure"],
+    };
+  }
+  if (["family-divorce", "child-custody"].includes(areaId)) {
+    return {
+      eyebrow: "Other party",
+      copy: "This helps lawyers understand who the case is against or who else is involved.",
+      roleOptions: ["Other parent", "Former partner", "Spouse", "Guardian", "Other", "I'm not sure"],
+    };
+  }
+  if (["employment"].includes(areaId)) {
+    return {
+      eyebrow: "Other party",
+      copy: "Identify the workplace party involved so the lawyer can triage the employment issue faster.",
+      roleOptions: ["Employer", "Former employer", "Employee", "Former employee", "Regulator", "Other", "I'm not sure"],
+    };
+  }
+  if (["personal-injury", "medical-negligence"].includes(areaId)) {
+    return {
+      eyebrow: "Other party",
+      copy: "Identify the main party on the other side of the claim or allegation.",
+      roleOptions: ["Insurer", "Driver", "Employer", "Medical provider", "Other", "I'm not sure"],
+    };
+  }
+  if (["property", "commercial", "contract-disputes", "ip", "consumer", "debt-insolvency", "construction", "environmental", "administrative", "tax"].includes(areaId)) {
+    return {
+      eyebrow: "Other party",
+      copy: "Name the key party or decision-maker involved so lawyers can gauge the dispute setting.",
+      roleOptions: ["Business", "Supplier", "Customer", "Contractor", "Regulator", "Other", "I'm not sure"],
+    };
+  }
+
+  if (intakeReasonId === "defending-claim") {
+    return {
+      eyebrow: "Other party",
+      copy: "If you know who is bringing the claim or allegation, add that here.",
+      roleOptions: ["Plaintiff", "Applicant", "Employer", "Landlord", "Regulator", "Other", "I'm not sure"],
+    };
+  }
+  if (intakeReasonId === "making-claim") {
+    return {
+      eyebrow: "Other party",
+      copy: "This helps lawyers understand who you want to pursue or respond to.",
+      roleOptions: ["Defendant", "Respondent", "Business", "Individual", "Insurer", "Other", "I'm not sure"],
+    };
+  }
+  return {
+    eyebrow: "Other party",
+    copy: "Add the main party, agency, or person on the other side if that is already known.",
+    roleOptions: ["Applicant", "Respondent", "Agency", "Complainant", "Other", "I'm not sure"],
+  };
+}
+
+function getCourtForumConfig(intakeReasonId, countryCode, region) {
+  if (!["defending-claim", "making-claim", "court-tribunal-process"].includes(intakeReasonId)) {
+    return null;
+  }
+  return {
+    eyebrow: "Court or tribunal",
+    copy: "Only add this if a court, tribunal, or government body is already involved.",
+    options: buildCourtForumOptions(countryCode, region),
+  };
+}
+
+function buildCourtForumOptions(countryCode, region) {
+  if (countryCode === "AU") {
+    const lowerCourtByRegion = {
+      ACT: "Magistrates Court of the ACT",
+      NSW: "Local Court of NSW",
+      NT: "Local Court of the Northern Territory",
+      QLD: "Magistrates Court of Queensland",
+      SA: "Magistrates Court of South Australia",
+      TAS: "Magistrates Court of Tasmania",
+      VIC: "Magistrates' Court of Victoria",
+      WA: "Magistrates Court of Western Australia",
+    };
+    const middleCourtByRegion = {
+      NSW: "District Court of NSW",
+      QLD: "District Court of Queensland",
+      SA: "District Court of South Australia",
+      VIC: "County Court of Victoria",
+      WA: "District Court of Western Australia",
+    };
+    const supremeByRegion = {
+      ACT: "Supreme Court of the ACT",
+      NSW: "Supreme Court of NSW",
+      NT: "Supreme Court of the Northern Territory",
+      QLD: "Supreme Court of Queensland",
+      SA: "Supreme Court of South Australia",
+      TAS: "Supreme Court of Tasmania",
+      VIC: "Supreme Court of Victoria",
+      WA: "Supreme Court of Western Australia",
+    };
+    const tribunalByRegion = {
+      ACT: "ACAT",
+      NSW: "NCAT",
+      NT: "NTCAT",
+      QLD: "QCAT",
+      SA: "SACAT",
+      TAS: "Tasmanian Civil and Administrative Tribunal",
+      VIC: "VCAT",
+      WA: "SAT",
+    };
+    return [
+      { value: lowerCourtByRegion[region] || "Local / Magistrates Court", label: lowerCourtByRegion[region] || "Local / Magistrates Court" },
+      ...(middleCourtByRegion[region] ? [{ value: middleCourtByRegion[region], label: middleCourtByRegion[region] }] : []),
+      { value: supremeByRegion[region] || "Supreme Court", label: supremeByRegion[region] || "Supreme Court" },
+      ...(tribunalByRegion[region] ? [{ value: tribunalByRegion[region], label: tribunalByRegion[region] }] : []),
+      { value: "Federal Circuit and Family Court of Australia", label: "Federal Circuit and Family Court of Australia" },
+      { value: "Fair Work Commission", label: "Fair Work Commission" },
+      { value: "Administrative Review Tribunal", label: "Administrative Review Tribunal" },
+      { value: "__other", label: "Other" },
+      { value: "I'm not sure", label: "I'm not sure" },
+    ];
+  }
+  if (countryCode === "NZ") {
+    return [
+      { value: "District Court of New Zealand", label: "District Court of New Zealand" },
+      { value: "Family Court of New Zealand", label: "Family Court of New Zealand" },
+      { value: "Employment Relations Authority", label: "Employment Relations Authority" },
+      { value: "Tenancy Tribunal", label: "Tenancy Tribunal" },
+      { value: "__other", label: "Other" },
+      { value: "I'm not sure", label: "I'm not sure" },
+    ];
+  }
+  if (countryCode === "UK") {
+    return [
+      { value: "Magistrates' Court", label: "Magistrates' Court" },
+      { value: "County Court", label: "County Court" },
+      { value: "High Court", label: "High Court" },
+      { value: "Employment Tribunal", label: "Employment Tribunal" },
+      { value: "First-tier Tribunal", label: "First-tier Tribunal" },
+      { value: "__other", label: "Other" },
+      { value: "I'm not sure", label: "I'm not sure" },
+    ];
+  }
+  if (countryCode === "US") {
+    return [
+      { value: "State trial court", label: "State trial court" },
+      { value: "Federal District Court", label: "Federal District Court" },
+      { value: "Small claims court", label: "Small claims court" },
+      { value: "Family court", label: "Family court" },
+      { value: "Government agency or board", label: "Government agency or board" },
+      { value: "__other", label: "Other" },
+      { value: "I'm not sure", label: "I'm not sure" },
+    ];
+  }
+  if (countryCode === "CA") {
+    return [
+      { value: "Provincial court", label: "Provincial court" },
+      { value: "Superior court", label: "Superior court" },
+      { value: "Small claims court", label: "Small claims court" },
+      { value: "Tribunal or commission", label: "Tribunal or commission" },
+      { value: "__other", label: "Other" },
+      { value: "I'm not sure", label: "I'm not sure" },
+    ];
+  }
+  return [
+    { value: "District Court", label: "District Court" },
+    { value: "Circuit Court", label: "Circuit Court" },
+    { value: "High Court", label: "High Court" },
+    { value: "Tribunal or commission", label: "Tribunal or commission" },
+    { value: "__other", label: "Other" },
+    { value: "I'm not sure", label: "I'm not sure" },
+  ];
+}
+
+function renderGuidedIntakeFields() {
+  if (!elements.guidedIntakeFields) {
+    return;
+  }
+
+  const otherPartyConfig = getOtherPartyFieldConfig(state.intakeReason, state.selectedPracticeAreaId);
+  const forumConfig = getCourtForumConfig(state.intakeReason, state.selectedCountryCode, elements.regionSelect?.value || "");
+  const groups = [];
+
+  if (otherPartyConfig) {
+    const otherPartyInvolved = state.guidedIntake.otherPartyInvolved || "";
+    groups.push(`
+      <div class="guided-intake-group">
+        <p class="eyebrow">${otherPartyConfig.eyebrow}</p>
+        <p>${otherPartyConfig.copy}</p>
+        <label>
+          Is there another party involved?
+          <select data-guided-key="otherPartyInvolved">
+            ${renderSelectOption("", "Select", !otherPartyInvolved)}
+            ${renderSelectOption("yes", "Yes", otherPartyInvolved === "yes")}
+            ${renderSelectOption("no", "No", otherPartyInvolved === "no")}
+            ${renderSelectOption("not-sure", "I'm not sure", otherPartyInvolved === "not-sure")}
+          </select>
+        </label>
+        ${
+          otherPartyInvolved === "yes"
+            ? `
+              <div class="form-grid">
+                <label>
+                  Other party role
+                  <select data-guided-key="otherPartyType">
+                    ${renderSelectOption("", "Select", !state.guidedIntake.otherPartyType)}
+                    ${otherPartyConfig.roleOptions.map((option) => renderSelectOption(option, option, state.guidedIntake.otherPartyType === option)).join("")}
+                  </select>
+                </label>
+                <label>
+                  Other party name
+                  <input data-guided-key="otherPartyName" type="text" placeholder="Add the party name if you know it" value="${escapeHtml(
+                    state.guidedIntake.otherPartyName || "",
+                  )}" />
+                </label>
+              </div>
+            `
+            : ""
+        }
+      </div>
+    `);
+  }
+
+  if (forumConfig) {
+    const forumInvolved = state.guidedIntake.forumInvolved || "";
+    const forumSelection = resolveCourtForumSelection(forumConfig.options, state.guidedIntake.forumName);
+    groups.push(`
+      <div class="guided-intake-group">
+        <p class="eyebrow">${forumConfig.eyebrow}</p>
+        <p>${forumConfig.copy}</p>
+        <label>
+          Is a court, tribunal, or agency already involved?
+          <select data-guided-key="forumInvolved">
+            ${renderSelectOption("", "Select", !forumInvolved)}
+            ${renderSelectOption("yes", "Yes", forumInvolved === "yes")}
+            ${renderSelectOption("no", "No", forumInvolved === "no")}
+            ${renderSelectOption("not-sure", "I'm not sure", forumInvolved === "not-sure")}
+          </select>
+        </label>
+        ${
+          forumInvolved === "yes"
+            ? `
+              <div class="form-grid">
+                <label>
+                  Court / tribunal
+                  <select data-guided-key="forumName">
+                    ${renderSelectOption("", "Select", !forumSelection)}
+                    ${forumConfig.options.map((option) => renderSelectOption(option.value, option.label, forumSelection === option.value)).join("")}
+                  </select>
+                </label>
+                <label>
+                  Case or reference number
+                  <input data-guided-key="caseReference" type="text" placeholder="Add a case or reference number if you have one" value="${escapeHtml(
+                    state.guidedIntake.caseReference || "",
+                  )}" />
+                </label>
+                ${
+                  forumSelection === "__other"
+                    ? `
+                      <label class="field-span-full">
+                        Court / tribunal name
+                        <input data-guided-key="forumOther" type="text" placeholder="Enter the court, tribunal, or agency name" value="${escapeHtml(
+                          state.guidedIntake.forumOther || "",
+                        )}" />
+                      </label>
+                    `
+                    : ""
+                }
+                <label>
+                  Next hearing date or deadline
+                  <input data-guided-key="nextDate" type="date" value="${escapeHtml(state.guidedIntake.nextDate || "")}" />
+                </label>
+              </div>
+            `
+            : ""
+        }
+      </div>
+    `);
+  }
+
+  elements.guidedIntakeFields.innerHTML = groups.join("");
+}
+
+function resolveCourtForumSelection(options, currentValue) {
+  const value = String(currentValue || "");
+  if (!value) {
+    return "";
+  }
+  if (options.some((option) => option.value === value)) {
+    return value;
+  }
+  return "__other";
+}
+
+function renderSelectOption(value, label, selected) {
+  return `<option value="${escapeHtml(value)}" ${selected ? "selected" : ""}>${escapeHtml(label)}</option>`;
+}
+
+function buildGuidedIntakeCustomAnswers() {
+  const answers = {};
+  const guided = sanitizeGuidedIntakeState(state.guidedIntake);
+  if (guided.otherPartyInvolved) {
+    answers[OTHER_PARTY_INVOLVED_KEY] = guided.otherPartyInvolved;
+  }
+  if (guided.otherPartyInvolved === "yes") {
+    if (guided.otherPartyType && guided.otherPartyType !== "I'm not sure") {
+      answers[OTHER_PARTY_ROLE_LABEL] = guided.otherPartyType;
+    }
+    if (guided.otherPartyName.trim()) {
+      answers[OTHER_PARTY_NAME_LABEL] = guided.otherPartyName.trim();
+    }
+  }
+  if (guided.forumInvolved) {
+    answers[COURT_FORUM_INVOLVED_KEY] = guided.forumInvolved;
+  }
+  if (guided.forumInvolved === "yes") {
+    const forumName = guided.forumName === "__other" ? guided.forumOther.trim() : guided.forumName.trim();
+    if (forumName && forumName !== "I'm not sure") {
+      answers[COURT_FORUM_LABEL] = forumName;
+    }
+    if (guided.caseReference.trim()) {
+      answers[CASE_REFERENCE_LABEL] = guided.caseReference.trim();
+    }
+    if (guided.nextDate.trim()) {
+      answers[NEXT_DATE_LABEL] = guided.nextDate.trim();
+    }
+  }
+  return answers;
+}
+
 function isSingleTaskScope(scopeValue) {
   return /single task/i.test(String(scopeValue || ""));
 }
@@ -2381,7 +2838,20 @@ function getSingleTaskDetails(source) {
 
 function getVisibleCustomAnswers(customAnswers) {
   return Object.entries(customAnswers || {})
-    .filter(([key]) => key !== SINGLE_TASK_DETAIL_KEY && key !== SINGLE_TASK_DETAILS_KEY && key !== INTAKE_REASON_KEY);
+    .filter(([key]) =>
+      ![
+        SINGLE_TASK_DETAIL_KEY,
+        SINGLE_TASK_DETAILS_KEY,
+        INTAKE_REASON_KEY,
+        OTHER_PARTY_INVOLVED_KEY,
+        COURT_FORUM_INVOLVED_KEY,
+        OTHER_PARTY_ROLE_LABEL,
+        OTHER_PARTY_NAME_LABEL,
+        COURT_FORUM_LABEL,
+        CASE_REFERENCE_LABEL,
+        NEXT_DATE_LABEL,
+      ].includes(key),
+    );
 }
 
 function getSavedIntakeReason(source) {
@@ -2541,6 +3011,30 @@ function renderIntakeReasonSummary(matter) {
     return "";
   }
   return `<p><strong>What they need help with:</strong> ${escapeHtml(label)}</p>`;
+}
+
+function renderGuidedMatterContext(matter) {
+  const customAnswers = matter?.customAnswers || {};
+  const lines = [];
+  const otherPartyRole = String(customAnswers[OTHER_PARTY_ROLE_LABEL] || "").trim();
+  const otherPartyName = String(customAnswers[OTHER_PARTY_NAME_LABEL] || "").trim();
+  const forumName = String(customAnswers[COURT_FORUM_LABEL] || "").trim();
+  const caseReference = String(customAnswers[CASE_REFERENCE_LABEL] || "").trim();
+  const nextDate = String(customAnswers[NEXT_DATE_LABEL] || "").trim();
+
+  if (otherPartyRole || otherPartyName) {
+    lines.push(`<p><strong>Other party:</strong> ${escapeHtml([otherPartyRole, otherPartyName].filter(Boolean).join(" - "))}</p>`);
+  }
+  if (forumName) {
+    lines.push(`<p><strong>Court / tribunal:</strong> ${escapeHtml(forumName)}</p>`);
+  }
+  if (caseReference) {
+    lines.push(`<p><strong>Case or reference number:</strong> ${escapeHtml(caseReference)}</p>`);
+  }
+  if (nextDate) {
+    lines.push(`<p><strong>Next hearing date or deadline:</strong> ${escapeHtml(formatMatterDate(nextDate))}</p>`);
+  }
+  return lines.join("");
 }
 
 function renderLawyerRegionOptions() {
@@ -3160,6 +3654,18 @@ function formatCaseCreatedAt(value) {
     month: "short",
     year: "numeric",
   }).format(date)}`;
+}
+
+function formatMatterDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return new Intl.DateTimeFormat(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
 }
 
 function detectCountry() {

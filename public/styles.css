@@ -1386,6 +1386,28 @@ form.panel > .button {
   color: rgba(21, 57, 200, 0.72);
 }
 
+.guided-intake-fields,
+.guided-intake-group {
+  display: grid;
+  gap: 16px;
+}
+
+.guided-intake-group {
+  padding: 18px;
+  border-radius: var(--panel-radius-md);
+  background: rgba(244, 245, 255, 0.54);
+  border: 1px solid rgba(21, 57, 200, 0.1);
+}
+
+.guided-intake-group .eyebrow,
+.guided-intake-group p {
+  margin: 0;
+}
+
+.guided-intake-group p {
+  color: rgba(21, 57, 200, 0.72);
+}
+
 .insight-panel {
   display: grid;
   align-content: start;
