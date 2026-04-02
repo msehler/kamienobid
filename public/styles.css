@@ -857,6 +857,16 @@ body[data-page="account"] .page-hero-card::before {
   gap: 14px;
 }
 
+.case-details {
+  gap: 10px;
+}
+
+.case-details p,
+.case-details .eyebrow,
+.case-details ul {
+  margin: 0;
+}
+
 .hero-copy {
   position: relative;
   z-index: 1;

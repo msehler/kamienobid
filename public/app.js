@@ -1327,7 +1327,7 @@ function populateMatterFormFromCase(matter) {
 
   renderMatterComposer();
 
-  Array.from(elements.promptFields?.querySelectorAll("textarea") || []).forEach((field) => {
+  Array.from(elements.promptFields?.querySelectorAll("[name^='prompt:']") || []).forEach((field) => {
     const prompt = field.name.replace(/^prompt:/, "");
     field.value = matter.customAnswers?.[prompt] || "";
   });
@@ -1385,6 +1385,7 @@ function renderMatterComposer() {
   const matterPrompts = buildMatterPrompts(state.intakeReason, template);
   const currentBudgetValue = elements.budgetInput?.value || "";
   const currentScopeValue = elements.scopeOfWork?.value || "";
+  const currentPromptValues = readPromptValuesFromDom();
   const currentSingleTaskDetails = readSingleTaskDetailsFromDom();
   if (currentSingleTaskDetails.length) {
     state.singleTaskDetails = currentSingleTaskDetails;
@@ -1443,16 +1444,10 @@ function renderMatterComposer() {
   elements.caseName.placeholder = buildCaseNamePlaceholder(state.currentUser?.name);
   elements.promptFields.innerHTML = template
     ? matterPrompts
-        .map(
-          (prompt) => `
-            <label>
-              ${prompt}
-              <textarea name="prompt:${prompt}" rows="4" placeholder="Provide matter-specific detail"></textarea>
-            </label>
-          `,
-        )
+        .map((prompt) => renderPromptField(prompt))
         .join("")
     : "";
+  applyPromptValuesToDom(currentPromptValues);
   elements.requiredUploads.innerHTML = template
     ? template.uploads.map((entry) => `<li>${entry}</li>`).join("")
     : hasIntakeReason
@@ -1734,7 +1729,7 @@ function renderClientBoard() {
     <div class="checklist-card">
       <p class="eyebrow">Dynamic prompts</p>
       <ul>${getVisibleCustomAnswers(matter.customAnswers)
-        .map(([key, value]) => `<li><strong>${key}</strong>: ${value || "Not provided"}</li>`)
+        .map(([key, value]) => `<li><strong>${key}</strong>: ${escapeHtml(formatCustomAnswerValue(key, value))}</li>`)
         .join("")}</ul>
     </div>
     ${
@@ -1812,7 +1807,7 @@ function renderClientCheckout() {
     ${renderSingleTaskSummaryPlain(matter)}
     <p class="eyebrow">Included in this submission</p>
     <ul>${getVisibleCustomAnswers(matter.customAnswers)
-      .map(([key, value]) => `<li><strong>${key}</strong>: ${escapeHtml(value || "Not provided")}</li>`)
+      .map(([key, value]) => `<li><strong>${key}</strong>: ${escapeHtml(formatCustomAnswerValue(key, value))}</li>`)
       .join("")}</ul>
   `;
   elements.checkoutAccountName.value = state.currentUser.name || "";
@@ -3019,6 +3014,55 @@ function readSingleTaskDetailsFromDom() {
   return Array.from(document.querySelectorAll("[data-single-task-input]"))
     .map((field) => field.value)
     .filter((value, index, items) => index < items.length);
+}
+
+function readPromptValuesFromDom() {
+  return Array.from(elements.promptFields?.querySelectorAll("[name^='prompt:']") || []).reduce((values, field) => {
+    values[field.name] = field.value;
+    return values;
+  }, {});
+}
+
+function applyPromptValuesToDom(values) {
+  Array.from(elements.promptFields?.querySelectorAll("[name^='prompt:']") || []).forEach((field) => {
+    if (Object.prototype.hasOwnProperty.call(values || {}, field.name)) {
+      field.value = values[field.name];
+    }
+  });
+}
+
+function renderPromptField(prompt) {
+  const fieldName = `prompt:${prompt}`;
+  if (isDatePrompt(prompt)) {
+    return `
+      <label>
+        ${prompt}
+        <input name="${escapeHtml(fieldName)}" type="date" />
+      </label>
+    `;
+  }
+  return `
+    <label>
+      ${prompt}
+      <textarea name="${escapeHtml(fieldName)}" rows="4" placeholder="Provide matter-specific detail"></textarea>
+    </label>
+  `;
+}
+
+function isDatePrompt(prompt) {
+  return /\bdate\b/i.test(String(prompt || "")) || /\bdeadline\b/i.test(String(prompt || ""));
+}
+
+function formatCustomAnswerValue(key, value) {
+  const normalizedKey = String(key || "");
+  const normalizedValue = String(value || "");
+  if (!normalizedValue) {
+    return "Not provided";
+  }
+  if (isDatePrompt(normalizedKey)) {
+    return formatMatterDate(normalizedValue);
+  }
+  return normalizedValue;
 }
 
 function getSingleTaskPlaceholder(practiceAreaId) {
