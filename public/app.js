@@ -25,6 +25,8 @@ const STORED_USER_KEY = "kamieno.rememberedUser";
 const MAX_MATTER_DOCUMENTS = 10;
 const MAX_MATTER_DOCUMENT_BYTES_PER_FILE = 2 * 1024 * 1024;
 const MAX_MATTER_DOCUMENT_BYTES_TOTAL = 3 * 1024 * 1024;
+const MAX_SIGNUP_DOCUMENT_BYTES_PER_FILE = 2 * 1024 * 1024;
+const MAX_SIGNUP_DOCUMENT_BYTES_TOTAL = 6 * 1024 * 1024;
 const INTAKE_REASON_KEY = "__intakeReason";
 const SINGLE_TASK_DETAIL_KEY = "__singleTaskDetail";
 const SINGLE_TASK_DETAILS_KEY = "__singleTaskDetails";
@@ -148,6 +150,19 @@ function cacheElements() {
     "signupForm",
     "signupFirstName",
     "signupLastName",
+    "signupPrimarySectionEyebrow",
+    "signupLawyerRoleField",
+    "signupLawyerRole",
+    "signupFirmSection",
+    "signupFirmName",
+    "signupFirmAddress",
+    "signupFirmPhone",
+    "signupFirmContactName",
+    "signupVerificationSection",
+    "signupIdentityDocs",
+    "signupPractisingCertificate",
+    "signupRegulatorConsent",
+    "signupPendingNote",
     "signupRole",
     "loginForm",
     "logoutButton",
@@ -417,12 +432,12 @@ function applyNavigationFocus() {
     "/about": "/about",
     "/contact": "/contact",
     "/client": "/client",
-    "/lawyer": "/account?role=lawyer",
+    "/lawyer": "/account?role=lawyer&mode=signup",
   };
 
-  const currentHref = path === "/account" ? (role === "lawyer" ? "/account?role=lawyer" : "/account") : currentHrefByPath[path];
+  const currentHref = path === "/account" ? (role === "lawyer" ? "/account?role=lawyer&mode=signup" : "/account") : currentHrefByPath[path];
 
-  ["/client", "/about", "/contact", "/account", "/account?role=lawyer"].forEach((href) => {
+  ["/client", "/about", "/contact", "/account", "/account?role=lawyer&mode=signup"].forEach((href) => {
     document.querySelectorAll(`a[href="${href}"]`).forEach((link) => {
       if (href === currentHref) {
         link.setAttribute("aria-current", "page");
@@ -497,6 +512,54 @@ function applySignupRolePrefill() {
   if (role === "client" || role === "lawyer") {
     elements.signupRole.value = role;
   }
+  applySignupFormVariant(elements.signupRole.value || "client");
+}
+
+function applySignupFormVariant(role) {
+  const isLawyer = role === "lawyer";
+  if (elements.signupPrimarySectionEyebrow) {
+    elements.signupPrimarySectionEyebrow.textContent = isLawyer ? "Lawyer details" : "Client details";
+  }
+  if (elements.signupLawyerRoleField) {
+    elements.signupLawyerRoleField.hidden = !isLawyer;
+  }
+  if (elements.signupFirmSection) {
+    elements.signupFirmSection.hidden = !isLawyer;
+  }
+  if (elements.signupVerificationSection) {
+    elements.signupVerificationSection.hidden = !isLawyer;
+  }
+  if (elements.signupPendingNote) {
+    elements.signupPendingNote.hidden = !isLawyer;
+  }
+  if (elements.signupHotButton) {
+    elements.signupHotButton.style.display = isLawyer ? "none" : "";
+  }
+  [
+    elements.signupLawyerRole,
+    elements.signupFirmName,
+    elements.signupFirmAddress,
+    elements.signupFirmPhone,
+    elements.signupFirmContactName,
+    elements.signupIdentityDocs,
+    elements.signupPractisingCertificate,
+    elements.signupRegulatorConsent,
+  ].forEach((field) => {
+    if (!field) {
+      return;
+    }
+    if (field.type === "checkbox") {
+      field.required = isLawyer;
+      if (!isLawyer) {
+        field.checked = false;
+      }
+      return;
+    }
+    field.required = isLawyer;
+    if (!isLawyer && field.type === "file") {
+      field.value = "";
+    }
+  });
 }
 
 function getAccountAuthConfig() {
@@ -520,7 +583,7 @@ function applyAccountPageMode() {
       elements.accountHeroTitle.innerHTML = 'Register your practice for <span>the right matters.</span>';
     }
     if (elements.accountHeroSummary) {
-      elements.accountHeroSummary.textContent = "Create your Kamieno lawyer account so you can verify your jurisdictions, receive relevant opportunities, and submit structured proposals to clients looking for the right legal fit.";
+      elements.accountHeroSummary.textContent = "Register your lawyer account with your firm details, identity documents, and practising certificate so Kamieno can review and approve your access.";
     }
     if (elements.accountHeroPills) {
       elements.accountHeroPills.innerHTML = `
@@ -534,9 +597,9 @@ function applyAccountPageMode() {
     }
     if (elements.accountHeroNotes) {
       elements.accountHeroNotes.innerHTML = `
-        <p>Create your lawyer account with your name, email, and secure password.</p>
-        <p>Complete your practice and jurisdiction details so Kamieno can verify where you are eligible to act.</p>
-        <p>Once approved, you can respond to suitable matters with pricing and a clear proposed approach.</p>
+        <p>Register with your lawyer details, firm details, and secure password.</p>
+        <p>Upload identification documents totaling 100 points and your current practising certificate.</p>
+        <p>After submission, sign in on the normal sign in page while Kamieno reviews your registration for approval.</p>
       `;
     }
     if (elements.accountWorkspaceEyebrow) {
@@ -544,8 +607,8 @@ function applyAccountPageMode() {
     }
     if (elements.accountWorkspaceTitle) {
       elements.accountWorkspaceTitle.textContent = mode === "signup"
-        ? "Create your lawyer account to start the verification and bidding workflow."
-        : "Sign in to continue your lawyer profile and jurisdiction workflow.";
+        ? "Create your lawyer account and submit it for approval."
+        : "Sign in to check the status of your lawyer account.";
     }
     if (elements.signupPanelTitle) {
       elements.signupPanelTitle.textContent = "Register as a lawyer";
@@ -554,13 +617,13 @@ function applyAccountPageMode() {
       elements.signupPanelPill.textContent = "Lawyer account";
     }
     if (elements.signupSubmitLabel) {
-      elements.signupSubmitLabel.textContent = "Create lawyer account";
+      elements.signupSubmitLabel.textContent = "Submit lawyer registration";
     }
     if (elements.accountInsightEyebrow) {
       elements.accountInsightEyebrow.textContent = "Why lawyers join";
     }
     if (elements.accountInsightBody) {
-      elements.accountInsightBody.textContent = "Kamieno is designed to help lawyers compete on relevance, jurisdiction fit, and quality of approach before a client makes first contact. After registration, complete your profile in the lawyer workspace to enter verification.";
+      elements.accountInsightBody.textContent = "Kamieno keeps lawyer registrations pending until identity, practising certificate, and regulator confirmation are reviewed. Once approved, the lawyer account can sign in and bid on suitable matters.";
     }
   } else if (mode === "signin") {
     if (elements.accountHeroEyebrow) {
@@ -604,6 +667,7 @@ function applyAccountPageMode() {
     elements.loginSwitchLink.href = signupHref;
     elements.loginSwitchLink.textContent = role === "lawyer" ? "Need a lawyer account? Sign up" : "Need an account? Sign up";
   }
+  applySignupFormVariant(role);
 }
 
 async function refreshApp() {
@@ -1998,7 +2062,11 @@ function renderAdmin() {
           <article class="queue-item">
             <strong>${lawyer.name}</strong>
             <p>${lawyer.email}</p>
+            <p>${lawyer.lawyerRole || "Lawyer role not supplied"}</p>
+            <p>${lawyer.firm || "Firm not supplied"}</p>
+            <p>${lawyer.firmContactName || "Firm contact not supplied"}</p>
             <p>${(lawyer.jurisdictions || []).join(", ")}</p>
+            <p>ID uploaded: ${lawyer.hasIdentityDocuments ? "Yes" : "No"} · Practising certificate: ${lawyer.hasPractisingCertificate ? "Yes" : "No"} · Regulator consent: ${lawyer.regulatorConsent ? "Yes" : "No"}</p>
             <button class="button primary" data-lawyer-id="${lawyer.id}">Approve lawyer</button>
           </article>
         `)
@@ -2011,16 +2079,22 @@ async function submitSignup(event) {
   const formData = new FormData(elements.signupForm);
   const firstName = normalizeNamePart(formData.get("firstName"));
   const lastName = normalizeNamePart(formData.get("lastName"));
+  const role = formData.get("role");
   await performSignup({
     firstName,
     lastName,
     email: formData.get("email"),
     password: formData.get("password"),
-    role: formData.get("role"),
+    role,
+    lawyerRegistration: role === "lawyer" ? await buildLawyerRegistrationPayload(formData) : null,
   });
 }
 
 async function submitHotSignup() {
+  if (elements.signupRole?.value === "lawyer") {
+    showToast("Dummy signup is only available for the client registration flow.");
+    return;
+  }
   const payload = buildDummySignupPayload();
   if (elements.signupFirstName) {
     elements.signupFirstName.value = payload.firstName;
@@ -2042,7 +2116,7 @@ async function submitHotSignup() {
   await performSignup(payload);
 }
 
-async function performSignup({ firstName, lastName, email, password, role }) {
+async function performSignup({ firstName, lastName, email, password, role, lawyerRegistration = null }) {
   try {
     if (elements.signupFirstName) {
       elements.signupFirstName.value = firstName;
@@ -2058,11 +2132,17 @@ async function performSignup({ firstName, lastName, email, password, role }) {
         email,
         password,
         role,
+        lawyerRegistration,
       }),
     });
     showToast(response.message);
-    storeUser(response.user);
     elements.signupForm.reset();
+    applySignupFormVariant(role);
+    if (role === "lawyer") {
+      window.location.assign("/account?mode=signin");
+      return;
+    }
+    storeUser(response.user);
     if (redirectAfterAuth(response.user, role)) {
       return;
     }
@@ -3813,6 +3893,53 @@ function buildDummySignupPayload() {
   };
 }
 
+async function buildLawyerRegistrationPayload(formData) {
+  const identityFiles = formData.getAll("lawyerIdentityDocs").filter((entry) => entry && entry.name);
+  const practisingCertificateFile = formData.get("lawyerPractisingCertificate");
+  return {
+    lawyerRole: formData.get("lawyerRole"),
+    firmName: formData.get("firmName"),
+    firmAddress: formData.get("firmAddress"),
+    firmPhone: formData.get("firmPhone"),
+    firmContactName: formData.get("firmContactName"),
+    identityDocuments: await readSignupFilesAsDocuments(identityFiles, "id"),
+    practisingCertificate:
+      practisingCertificateFile && practisingCertificateFile.name
+        ? await readSignupFileAsDocument(practisingCertificateFile, "certificate")
+        : null,
+    regulatorConsent: formData.get("regulatorConsent") === "on",
+  };
+}
+
+async function readSignupFilesAsDocuments(files, prefix) {
+  const nextDocuments = [];
+  let totalBytes = 0;
+  for (const file of files) {
+    if (!file?.name) {
+      continue;
+    }
+    if ((file.size || 0) > MAX_SIGNUP_DOCUMENT_BYTES_PER_FILE) {
+      throw new Error("Lawyer registration files must be under 2 MB each.");
+    }
+    if (totalBytes + (file.size || 0) > MAX_SIGNUP_DOCUMENT_BYTES_TOTAL) {
+      throw new Error("Lawyer registration files are too large together. Keep the total under 6 MB.");
+    }
+    nextDocuments.push(await readSignupFileAsDocument(file, prefix));
+    totalBytes += file.size || 0;
+  }
+  return nextDocuments;
+}
+
+async function readSignupFileAsDocument(file, prefix) {
+  return {
+    id: createClientId(prefix),
+    name: file.name,
+    mimeType: file.type || "",
+    size: file.size || 0,
+    dataUrl: await readFileAsDataUrl(file),
+  };
+}
+
 function formatMoney(value, currencyCode) {
   return new Intl.NumberFormat("en", {
     style: "currency",
@@ -3919,7 +4046,7 @@ function getPublicPrimaryNavMarkup(pathname) {
 function getPublicSecondaryNavMarkup(pathname) {
   const lawyerCurrent = pathname === "/lawyer" ? ' aria-current="page"' : "";
   return `
-    <a href="/account?role=lawyer"${lawyerCurrent}>Register as a lawyer</a>
+    <a href="/account?role=lawyer&mode=signup"${lawyerCurrent}>Register as a lawyer</a>
     <span class="header-jurisdiction-chip" data-region-badge>Detected region: <strong></strong></span>
   `;
 }
@@ -3930,12 +4057,12 @@ function getFooterMarkup() {
     ? `
         <a href="${dashboardPath}">Dashboard</a>
         <a href="/account">My account</a>
-        <a href="/account?role=lawyer">Lawyer access</a>
+        <a href="/account?role=lawyer&mode=signup">Lawyer access</a>
       `
     : `
         <a href="/account?mode=signup">Sign up</a>
         <a href="/account?mode=signin">Sign in</a>
-        <a href="/account?role=lawyer">Register as a lawyer</a>
+        <a href="/account?role=lawyer&mode=signup">Register as a lawyer</a>
       `;
 
   return `
@@ -3958,7 +4085,7 @@ function getFooterMarkup() {
         </div>
       </section>
       <section class="footer-column">
-        <h3>Existing Users</h3>
+        <h3>Account</h3>
         <div class="footer-link-list">
           ${existingUserLinks}
         </div>

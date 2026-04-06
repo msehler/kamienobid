@@ -1205,6 +1205,41 @@ body[data-page="account"] .page-hero-card::before {
   margin-top: 18px;
 }
 
+.signup-section,
+.signup-note-list {
+  display: grid;
+  gap: 14px;
+}
+
+.signup-section + .signup-section {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(21, 57, 200, 0.12);
+}
+
+.signup-note-list p,
+.field-hint {
+  margin: 0;
+  color: rgba(21, 57, 200, 0.72);
+}
+
+.checkbox-field {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 12px;
+  font-size: 0.96rem;
+  font-weight: 600;
+}
+
+.checkbox-field input[type="checkbox"] {
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  margin-top: 3px;
+  padding: 0;
+}
+
 .matter-form-actions {
   margin-top: 18px;
 }

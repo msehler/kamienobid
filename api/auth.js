@@ -21,7 +21,7 @@ module.exports = function handler(req, res) {
   if (req.method === "POST") {
     if (req.body?.action === "signup") {
       const result = signUp(req.body || {});
-      if (result.body.user) {
+      if (result.body.user && req.body?.role !== "lawyer") {
         rememberAccount(res, req, req.body?.email);
         const loginResult = login(req.body || {}, {
           rememberedAccounts: getRememberedAccounts(req),
