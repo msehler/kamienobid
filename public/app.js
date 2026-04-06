@@ -433,14 +433,15 @@ function applyNavigationFocus() {
     "/about": "/about",
     "/contact": "/contact",
     "/client": "/client",
-    "/lawyer": "/account?role=lawyer&mode=signup",
+    "/lawyer": "/lawyer",
+    "/lawyer-register": "/lawyer-register",
   };
 
   const currentHref = path === "/account"
-    ? (role === "lawyer" && mode === "signup" ? "/account?role=lawyer&mode=signup" : "/account")
+    ? "/account"
     : currentHrefByPath[path];
 
-  ["/client", "/about", "/contact", "/account", "/account?role=lawyer&mode=signup"].forEach((href) => {
+  ["/client", "/about", "/contact", "/account", "/lawyer", "/lawyer-register"].forEach((href) => {
     document.querySelectorAll(`a[href="${href}"]`).forEach((link) => {
       if (href === currentHref) {
         link.setAttribute("aria-current", "page");
@@ -511,8 +512,7 @@ function applySignupRolePrefill() {
   if (!elements.signupRole) {
     return;
   }
-  const { role, mode } = getAccountAuthConfig();
-  elements.signupRole.value = role === "lawyer" && mode === "signup" ? "lawyer" : "client";
+  elements.signupRole.value = document.body.dataset.page === "lawyer-register" ? "lawyer" : "client";
   applySignupFormVariant(elements.signupRole.value);
 }
 
@@ -565,17 +565,20 @@ function applySignupFormVariant(role) {
 }
 
 function getAccountAuthConfig() {
+  if (document.body.dataset.page === "lawyer-register") {
+    return { role: "lawyer", mode: "signup" };
+  }
   const params = new URLSearchParams(window.location.search);
   return {
-    role: params.get("role") === "lawyer" ? "lawyer" : "client",
+    role: "client",
     mode: params.get("mode") === "signup" ? "signup" : "signin",
   };
 }
 
 function applyAccountPageMode() {
   const { role, mode } = getAccountAuthConfig();
-  const isLawyerRegistration = role === "lawyer" && mode === "signup";
-  const signupHref = isLawyerRegistration ? "/account?role=lawyer&mode=signup" : "/account?mode=signup";
+  const isLawyerRegistration = document.body.dataset.page === "lawyer-register";
+  const signupHref = "/account?mode=signup";
   const signinHref = "/account?mode=signin";
 
   if (isLawyerRegistration) {
@@ -710,7 +713,7 @@ function applyAccountPageMode() {
   }
   if (elements.loginSwitchLink) {
     elements.loginSwitchLink.href = signupHref;
-    elements.loginSwitchLink.textContent = isLawyerRegistration ? "Need a lawyer account? Sign up" : "Need an account? Sign up";
+    elements.loginSwitchLink.textContent = "Need an account? Sign up";
   }
   applySignupFormVariant(isLawyerRegistration ? "lawyer" : "client");
 }
@@ -4089,9 +4092,9 @@ function getPublicPrimaryNavMarkup(pathname) {
 }
 
 function getPublicSecondaryNavMarkup(pathname) {
-  const lawyerCurrent = pathname === "/lawyer" ? ' aria-current="page"' : "";
+  const lawyerCurrent = pathname === "/lawyer-register" ? ' aria-current="page"' : "";
   return `
-    <a href="/account?role=lawyer&mode=signup"${lawyerCurrent}>Register as a lawyer</a>
+    <a href="/lawyer-register"${lawyerCurrent}>Register as a lawyer</a>
     <span class="header-jurisdiction-chip" data-region-badge>Detected region: <strong></strong></span>
   `;
 }
@@ -4102,12 +4105,12 @@ function getFooterMarkup() {
     ? `
         <a href="${dashboardPath}">Dashboard</a>
         <a href="/account">My account</a>
-        <a href="/account?role=lawyer&mode=signup">Lawyer access</a>
+        <a href="/lawyer-register">Lawyer access</a>
       `
     : `
         <a href="/account?mode=signup">Sign up</a>
         <a href="/account?mode=signin">Sign in</a>
-        <a href="/account?role=lawyer&mode=signup">Register as a lawyer</a>
+        <a href="/lawyer-register">Register as a lawyer</a>
       `;
 
   return `

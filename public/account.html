@@ -40,7 +40,7 @@
             <a href="/account?mode=signin" aria-current="page">Sign in</a>
           </div>
           <div class="main-nav-secondary">
-            <a href="/account?role=lawyer&mode=signup">Register as a lawyer</a>
+            <a href="/lawyer-register">Register as a lawyer</a>
             <span class="header-jurisdiction-chip" data-region-badge>Detected region: <strong></strong></span>
           </div>
         </nav>
@@ -52,7 +52,7 @@
           <a href="/account?mode=signin" aria-current="page">Sign in</a>
         </div>
         <div class="mobile-nav-secondary">
-          <a href="/account?role=lawyer&mode=signup">Register as a lawyer</a>
+          <a href="/lawyer-register">Register as a lawyer</a>
           <span class="header-jurisdiction-chip" data-region-badge>Detected region: <strong></strong></span>
         </div>
       </div>
@@ -68,12 +68,11 @@
               <span>or get started in minutes.</span>
             </h1>
             <p class="page-summary" id="accountHeroSummary">
-              Use this page to sign in, create an account, and move into the Kamieno path that fits you, whether you
-              are posting a case or registering as a lawyer.
+              Use this page to sign in or create a client account so you can save drafts, manage cases, and continue through checkout when you are ready.
             </p>
             <div class="page-pill-row" id="accountHeroPills">
               <span class="tag-pill">Post a case</span>
-              <span class="tag-pill">Join as a lawyer</span>
+              <span class="tag-pill">Save drafts</span>
               <span class="tag-pill">Secure account access</span>
             </div>
           </article>
@@ -82,7 +81,7 @@
             <div class="page-note-list" id="accountHeroNotes">
               <p>Create an account if you are new to Kamieno.</p>
               <p>Sign in if you already have an account and want to continue.</p>
-              <p>Use the lawyer registration path if you want to join the platform as a practitioner.</p>
+              <p>Use the separate lawyer registration page if you want to join Kamieno as a practitioner.</p>
             </div>
           </article>
         </div>
@@ -101,7 +100,6 @@
                 <h3 id="signupPanelTitle">Create your account</h3>
                 <span class="pill" id="signupPanelPill">New to Kamieno</span>
               </div>
-              <p class="eyebrow" id="signupPrimarySectionEyebrow" hidden>Lawyer details</p>
               <div class="form-grid">
                 <label>
                   First name
@@ -111,15 +109,6 @@
                   Last name
                   <input id="signupLastName" name="lastName" type="text" placeholder="Shaw" required />
                 </label>
-                <label id="signupLawyerRoleField" hidden>
-                  Role
-                  <select id="signupLawyerRole" name="lawyerRole">
-                    <option value="">Select</option>
-                    <option value="Employee">Employee</option>
-                    <option value="Principal Lawyer">Principal Lawyer</option>
-                    <option value="Partner">Partner</option>
-                  </select>
-                </label>
                 <label>
                   Email
                   <input id="signupEmail" name="email" type="email" placeholder="taylor@example.com" required />
@@ -128,51 +117,6 @@
                   Password
                   <input id="signupPassword" name="password" type="password" placeholder="Minimum 10 characters" required />
                 </label>
-              </div>
-              <div class="signup-section" id="signupFirmSection" hidden>
-                <p class="eyebrow">Law firm details</p>
-                <div class="form-grid">
-                  <label>
-                    Firm name
-                    <input id="signupFirmName" name="firmName" type="text" placeholder="Example Legal" />
-                  </label>
-                  <label>
-                    Firm phone number
-                    <input id="signupFirmPhone" name="firmPhone" type="tel" placeholder="+61 3 9000 0000" />
-                  </label>
-                  <label class="field-span-full">
-                    Firm address
-                    <textarea id="signupFirmAddress" name="firmAddress" rows="3" placeholder="Level 10, 100 Collins Street&#10;Melbourne VIC 3000"></textarea>
-                  </label>
-                  <label>
-                    Firm contact name
-                    <input id="signupFirmContactName" name="firmContactName" type="text" placeholder="Jordan Patel" />
-                  </label>
-                </div>
-              </div>
-              <div class="signup-section" id="signupVerificationSection" hidden>
-                <p class="eyebrow">Verification documents</p>
-                <div class="signup-note-list">
-                  <p>Upload identification documents totaling 100 points and a copy of your current practising certificate.</p>
-                  <p>Your lawyer account stays pending until Kamieno completes verification and approval.</p>
-                </div>
-                <div class="form-grid">
-                  <label class="field-span-full">
-                    100 points of identification
-                    <input id="signupIdentityDocs" name="lawyerIdentityDocs" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple />
-                  </label>
-                  <label class="field-span-full">
-                    Current practising certificate
-                    <input id="signupPractisingCertificate" name="lawyerPractisingCertificate" type="file" accept=".pdf,.jpg,.jpeg,.png" />
-                  </label>
-                </div>
-                <label class="checkbox-field">
-                  <input id="signupRegulatorConsent" name="regulatorConsent" type="checkbox" />
-                  <span>I consent to Kamieno contacting the relevant regulator to confirm my identity and practising certificate.</span>
-                </label>
-                <p class="field-hint" id="signupPendingNote" hidden>
-                  Once submitted, your lawyer account can sign in on the standard sign in page, but bidding remains pending until Kamieno approves it.
-                </p>
               </div>
               <input id="signupRole" name="role" type="hidden" value="client" />
               <div class="signup-actions">
@@ -198,7 +142,7 @@
                 </label>
               </div>
               <button class="button primary" type="submit">Sign in</button>
-              <p class="auth-switch"><a id="loginSwitchLink" href="/account?mode=signup">Need an account? Sign up</a></p>
+              <p class="auth-switch"><a id="loginSwitchLink" href="/account?mode=signup">Need an account? Sign up</a> · <a href="/lawyer-register">Register as a lawyer</a></p>
             </form>
           </div>
 
@@ -211,8 +155,7 @@
             <div class="launch-panel">
               <p class="eyebrow" id="accountInsightEyebrow">What happens after sign in</p>
               <p id="accountInsightBody">
-                Clients can post and manage cases, while lawyers can complete their profile, verify their
-                jurisdictions, and start responding to suitable matters once approved.
+                Create your client account, save drafts, manage cases from your dashboard, and continue to payment only when you are ready to receive proposals.
               </p>
             </div>
             <button class="button ghost" id="logoutButton" type="button">Sign out</button>

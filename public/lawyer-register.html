@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kamieno | Register as a lawyer</title>
+    <meta
+      name="description"
+      content="Register as a lawyer on Kamieno with firm details, verification documents, and regulator consent."
+    />
+    <link rel="icon" href="/assets/favicon-symbol.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body data-page="lawyer-register" class="app-shell-pending">
+    <div class="page-grid"></div>
+    <div class="ambient-orb ambient-orb-left"></div>
+    <div class="ambient-orb ambient-orb-right"></div>
+    <div class="status-toast" id="statusToast" aria-live="polite"></div>
+
+    <header class="site-header reveal">
+      <div class="brand-row">
+        <a href="/" class="brand-mark" aria-label="Kamieno home">
+          <img src="/assets/site-wordmark-symbol.svg" alt="Kamieno" />
+        </a>
+        <button
+          class="mobile-nav-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="mobileNav"
+          aria-label="Toggle navigation"
+        >
+          <span class="mobile-nav-toggle-bar"></span>
+          <span class="mobile-nav-toggle-bar"></span>
+          <span class="mobile-nav-toggle-bar"></span>
+        </button>
+        <nav class="main-nav">
+          <div class="main-nav-primary">
+            <a class="main-nav-cta" href="/client">Post a new case</a>
+            <a href="/account?mode=signup">Sign up</a>
+            <a href="/account?mode=signin">Sign in</a>
+          </div>
+          <div class="main-nav-secondary">
+            <a href="/lawyer-register" aria-current="page">Register as a lawyer</a>
+            <span class="header-jurisdiction-chip" data-region-badge>Detected region: <strong></strong></span>
+          </div>
+        </nav>
+      </div>
+      <div class="mobile-nav-panel" id="mobileNav" hidden>
+        <div class="mobile-nav-primary">
+          <a class="main-nav-cta" href="/client">Post a new case</a>
+          <a href="/account?mode=signup">Sign up</a>
+          <a href="/account?mode=signin">Sign in</a>
+        </div>
+        <div class="mobile-nav-secondary">
+          <a href="/lawyer-register" aria-current="page">Register as a lawyer</a>
+          <span class="header-jurisdiction-chip" data-region-badge>Detected region: <strong></strong></span>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero reveal" id="accountHeroSection">
+        <div class="page-hero-shell">
+          <article class="page-hero-card page-hero-primary">
+            <p class="eyebrow" id="accountHeroEyebrow">Lawyer registration</p>
+            <h1 class="page-title" id="accountHeroTitle">
+              Register your practice for
+              <span>the right matters.</span>
+            </h1>
+            <p class="page-summary" id="accountHeroSummary">
+              Register your lawyer account with your firm details, identity documents, and practising certificate so Kamieno can review and approve your access.
+            </p>
+            <div class="page-pill-row" id="accountHeroPills">
+              <span class="tag-pill">Practice profile</span>
+              <span class="tag-pill">Identity check</span>
+              <span class="tag-pill">Pending approval</span>
+            </div>
+          </article>
+          <article class="page-hero-card page-hero-secondary">
+            <p class="eyebrow" id="accountHeroSecondaryEyebrow">What happens next</p>
+            <div class="page-note-list" id="accountHeroNotes">
+              <p>Register with your lawyer details, firm details, and secure password.</p>
+              <p>Upload identification documents totaling 100 points and your current practising certificate.</p>
+              <p>After submission, sign in on the normal sign in page while Kamieno reviews your registration for approval.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="workspace alt reveal" id="account">
+        <div class="workspace-header">
+          <p class="eyebrow" id="accountWorkspaceEyebrow">Lawyer onboarding</p>
+          <h2 id="accountWorkspaceTitle">Create your lawyer account and submit it for approval.</h2>
+        </div>
+        <div class="workspace-grid" id="accountWorkspaceGrid">
+          <div class="stack-column" id="accountPrimaryColumn">
+            <form class="panel" id="signupForm">
+              <div class="panel-header">
+                <h3 id="signupPanelTitle">Register as a lawyer</h3>
+                <span class="pill" id="signupPanelPill">Lawyer account</span>
+              </div>
+              <div class="signup-section">
+                <p class="eyebrow" id="signupPrimarySectionEyebrow">Lawyer details</p>
+                <div class="form-grid">
+                  <label>
+                    First name
+                    <input id="signupFirstName" name="firstName" type="text" placeholder="Jordan" required />
+                  </label>
+                  <label>
+                    Last name
+                    <input id="signupLastName" name="lastName" type="text" placeholder="Patel" required />
+                  </label>
+                  <label id="signupLawyerRoleField">
+                    Role
+                    <select id="signupLawyerRole" name="lawyerRole" required>
+                      <option value="">Select</option>
+                      <option value="Employee">Employee</option>
+                      <option value="Principal Lawyer">Principal Lawyer</option>
+                      <option value="Partner">Partner</option>
+                    </select>
+                  </label>
+                  <label>
+                    Email address
+                    <input id="signupEmail" name="email" type="email" placeholder="jordan@examplelegal.com.au" required />
+                  </label>
+                  <label>
+                    Password
+                    <input id="signupPassword" name="password" type="password" placeholder="Minimum 10 characters" required />
+                  </label>
+                </div>
+              </div>
+              <div class="signup-section" id="signupFirmSection">
+                <p class="eyebrow">Law firm details</p>
+                <div class="form-grid">
+                  <label>
+                    Firm name
+                    <input id="signupFirmName" name="firmName" type="text" placeholder="Example Legal" required />
+                  </label>
+                  <label>
+                    Firm phone number
+                    <input id="signupFirmPhone" name="firmPhone" type="tel" placeholder="+61 3 9000 0000" required />
+                  </label>
+                  <label class="field-span-full">
+                    Firm address
+                    <textarea id="signupFirmAddress" name="firmAddress" rows="3" placeholder="Level 10, 100 Collins Street&#10;Melbourne VIC 3000" required></textarea>
+                  </label>
+                  <label>
+                    Firm contact name
+                    <input id="signupFirmContactName" name="firmContactName" type="text" placeholder="Jordan Patel" required />
+                  </label>
+                </div>
+              </div>
+              <div class="signup-section" id="signupVerificationSection">
+                <p class="eyebrow">Verification documents</p>
+                <div class="signup-note-list">
+                  <p>Upload identification documents totaling 100 points and a copy of your current practising certificate.</p>
+                  <p>Your lawyer account stays pending until Kamieno completes verification and approval.</p>
+                </div>
+                <div class="form-grid">
+                  <label class="field-span-full">
+                    100 points of identification
+                    <input id="signupIdentityDocs" name="lawyerIdentityDocs" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple required />
+                  </label>
+                  <label class="field-span-full">
+                    Current practising certificate
+                    <input id="signupPractisingCertificate" name="lawyerPractisingCertificate" type="file" accept=".pdf,.jpg,.jpeg,.png" required />
+                  </label>
+                </div>
+                <label class="checkbox-field">
+                  <input id="signupRegulatorConsent" name="regulatorConsent" type="checkbox" required />
+                  <span>I consent to Kamieno contacting the relevant regulator to confirm my identity and practising certificate.</span>
+                </label>
+                <p class="field-hint" id="signupPendingNote">
+                  Once submitted, sign in on the standard sign in page. Your ability to bid will remain pending until Kamieno approves the account.
+                </p>
+              </div>
+              <input id="signupRole" name="role" type="hidden" value="lawyer" />
+              <div class="signup-actions">
+                <button class="button primary" id="signupSubmitLabel" type="submit">Submit lawyer registration</button>
+              </div>
+              <p class="auth-switch"><a id="signupSwitchLink" href="/account?mode=signin">Already registered? Sign in</a></p>
+            </form>
+          </div>
+
+          <aside class="panel insight-panel" id="accountInsightPanel">
+            <div class="panel-header">
+              <h3 id="accountStatusPanelTitle">Registration checklist</h3>
+              <span class="pill neutral" id="stripeStatus">Pending review</span>
+            </div>
+            <div class="launch-panel">
+              <p class="eyebrow" id="accountInsightEyebrow">Why lawyers join</p>
+              <p id="accountInsightBody">
+                Kamieno keeps lawyer registrations pending until identity, practising certificate, and regulator confirmation are reviewed. Once approved, the lawyer account can sign in and bid on suitable matters.
+              </p>
+            </div>
+            <div class="checklist-card">
+              <p class="eyebrow">Required before approval</p>
+              <ul>
+                <li>Lawyer details and role</li>
+                <li>Law firm details</li>
+                <li>100 points of identification</li>
+                <li>Current practising certificate</li>
+                <li>Consent for regulator confirmation</li>
+              </ul>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer reveal">
+      <div class="footer-meta">
+        <p>&copy; 2026 Kamieno. All rights reserved.</p>
+        <a href="/terms">Terms of Use</a>
+      </div>
+    </footer>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>
