@@ -644,6 +644,12 @@ function applyAccountPageMode() {
     if (elements.accountWorkspaceTitle) {
       elements.accountWorkspaceTitle.textContent = "Sign in to open your client dashboard.";
     }
+    if (elements.accountInsightEyebrow) {
+      elements.accountInsightEyebrow.textContent = "What happens after sign in";
+    }
+    if (elements.accountInsightBody) {
+      elements.accountInsightBody.textContent = "Clients can post and manage cases, while lawyers can complete their profile, verify their jurisdictions, and start responding to suitable matters once approved.";
+    }
     if (elements.signupPanelTitle) {
       elements.signupPanelTitle.textContent = "Create your account";
     }
@@ -674,6 +680,12 @@ function applyAccountPageMode() {
     }
     if (elements.accountWorkspaceTitle) {
       elements.accountWorkspaceTitle.textContent = "Create your account to open your client dashboard.";
+    }
+    if (elements.accountInsightEyebrow) {
+      elements.accountInsightEyebrow.textContent = "What happens after sign in";
+    }
+    if (elements.accountInsightBody) {
+      elements.accountInsightBody.textContent = "Clients can post and manage cases, while lawyers can complete their profile, verify their jurisdictions, and start responding to suitable matters once approved.";
     }
     if (elements.signupPanelTitle) {
       elements.signupPanelTitle.textContent = "Create your account";
