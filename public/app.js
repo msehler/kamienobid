@@ -187,6 +187,10 @@ function cacheElements() {
     "signupPendingNote",
     "signupRole",
     "loginForm",
+    "adminLoginForm",
+    "adminLoginIdentifier",
+    "adminLoginPassword",
+    "adminSigninState",
     "logoutButton",
     "accountHeroSection",
     "accountHeroEyebrow",
@@ -287,6 +291,9 @@ function cacheElements() {
     "bidList",
     "engagementLetter",
     "adminAccess",
+    "adminSignInGate",
+    "adminWorkspaceGrid",
+    "adminCredentialsPanel",
     "adminCountrySettings",
     "adminMetrics",
     "practiceAreaAnalytics",
@@ -439,6 +446,9 @@ function bindEvents() {
   if (elements.loginForm) {
     elements.loginForm.addEventListener("submit", submitLogin);
   }
+  if (elements.adminLoginForm) {
+    elements.adminLoginForm.addEventListener("submit", submitAdminLogin);
+  }
   if (elements.logoutButton) {
     elements.logoutButton.addEventListener("click", submitLogout);
   }
@@ -459,6 +469,9 @@ function bindEvents() {
   }
   if (elements.verificationQueue) {
     elements.verificationQueue.addEventListener("click", handleAdminApproval);
+  }
+  if (elements.adminCredentialsPanel) {
+    elements.adminCredentialsPanel.addEventListener("submit", submitAdminCredentials);
   }
 }
 
@@ -1070,6 +1083,7 @@ function renderAll() {
   renderCountryRail();
   renderClientExperience();
   renderLawyerStudio();
+  renderAdminSignIn();
   renderAdmin();
 }
 
@@ -2302,49 +2316,125 @@ async function continueCaseCheckout(caseId) {
   }
 }
 
+function renderAdminSignIn() {
+  if (!elements.adminSigninState || document.body.dataset.page !== "admin-signin") {
+    return;
+  }
+
+  if (!elements.adminSigninState.dataset.defaultMarkup) {
+    elements.adminSigninState.dataset.defaultMarkup = elements.adminSigninState.innerHTML;
+  }
+
+  if (state.currentUser?.role === "admin") {
+    elements.adminSigninState.innerHTML = `
+      <div class="panel-header">
+        <h3>Admin session active</h3>
+        <span class="pill neutral">Signed in</span>
+      </div>
+      <p>You are already signed in to the Kamieno admin account.</p>
+      <div class="account-actions">
+        <a class="button primary" href="/admin">Go to admin dashboard</a>
+      </div>
+    `;
+    return;
+  }
+
+  if (elements.adminSigninState.innerHTML !== elements.adminSigninState.dataset.defaultMarkup) {
+    elements.adminSigninState.innerHTML = elements.adminSigninState.dataset.defaultMarkup;
+    elements.adminLoginForm = document.getElementById("adminLoginForm");
+    if (elements.adminLoginForm) {
+      elements.adminLoginForm.addEventListener("submit", submitAdminLogin);
+    }
+  }
+}
+
+function renderAdminCredentialsPanel() {
+  if (!elements.adminCredentialsPanel) {
+    return;
+  }
+
+  const adminEmail = escapeHtml(state.currentUser?.email || "admin@kamieno.local");
+  elements.adminCredentialsPanel.innerHTML = `
+    <div class="panel-header">
+      <h3>Admin sign-in settings</h3>
+      <span class="pill neutral">Username: admin</span>
+    </div>
+    <p class="admin-credentials-copy">Keep the username fixed as <code>admin</code>. Update the email and rotate the password here once you are signed in.</p>
+    <form id="adminCredentialsForm" class="admin-credentials-form">
+      <div class="form-grid">
+        <label>
+          Admin email
+          <input name="email" type="email" value="${adminEmail}" required />
+        </label>
+        <label>
+          Current password
+          <input name="currentPassword" type="password" placeholder="Enter the current admin password" required />
+        </label>
+        <label>
+          New password
+          <input name="newPassword" type="password" placeholder="Use at least 10 characters" />
+        </label>
+        <label>
+          Confirm new password
+          <input name="confirmPassword" type="password" placeholder="Re-enter the new password" />
+        </label>
+      </div>
+      <p class="account-password-note">Security recommendation: replace the default password immediately, use at least 10 characters, and prefer a memorable passphrase that includes numbers or symbols.</p>
+      <div class="account-actions">
+        <button class="button primary" type="submit">Save admin sign-in details</button>
+      </div>
+    </form>
+  `;
+}
+
 function renderAdmin() {
   if (!elements.adminAccess || !elements.adminCountrySettings || !elements.adminMetrics || !elements.practiceAreaAnalytics || !elements.verificationQueue) {
     return;
   }
   const isAdmin = state.currentUser?.role === "admin";
+  if (elements.adminSignInGate) {
+    elements.adminSignInGate.hidden = isAdmin;
+  }
+  if (elements.adminWorkspaceGrid) {
+    elements.adminWorkspaceGrid.hidden = !isAdmin;
+  }
+  if (!isAdmin) {
+    return;
+  }
   const countries = state.bootstrap.countries;
-  const analytics = isAdmin && state.admin?.analytics ? state.admin.analytics : state.bootstrap.analytics;
-  const adminCases = isAdmin ? state.cases : [];
-  const adminBids = isAdmin ? state.bids : [];
-  const adminLawyers = isAdmin ? state.lawyers : [];
-  const liveMatters = isAdmin ? adminCases.filter((matter) => matter.status === "open" && String(matter.paymentStatus).startsWith("paid")).length : null;
-  const draftMatters = isAdmin ? adminCases.filter((matter) => !String(matter.paymentStatus).startsWith("paid")).length : null;
-  const engagedMatters = isAdmin ? adminCases.filter((matter) => matter.status === "engaged" || matter.acceptedBidId).length : null;
-  const pendingLawyers = isAdmin ? adminLawyers.filter((lawyer) => lawyer.status !== "verified").length : analytics.verificationQueue.length;
+  const analytics = state.admin?.analytics || state.bootstrap.analytics;
+  const adminCases = state.cases;
+  const adminBids = state.bids;
+  const adminLawyers = state.lawyers;
+  const liveMatters = adminCases.filter((matter) => matter.status === "open" && String(matter.paymentStatus).startsWith("paid")).length;
+  const draftMatters = adminCases.filter((matter) => !String(matter.paymentStatus).startsWith("paid")).length;
+  const engagedMatters = adminCases.filter((matter) => matter.status === "engaged" || matter.acceptedBidId).length;
+  const pendingLawyers = adminLawyers.filter((lawyer) => lawyer.status !== "verified").length;
   const enabledCountries = countries.filter((country) => country.enabled).length;
 
-  elements.adminAccess.innerHTML = isAdmin
-    ? "<p>Admin session active. Market toggles and lawyer approvals are live on this screen.</p>"
-    : "<p>Administrator preview mode. The dashboard is visible, but the controls are read-only until admin sign-in is built.</p>";
+  elements.adminAccess.innerHTML = "<p>Admin session active. Market toggles, lawyer approvals, and admin sign-in settings are live on this screen.</p>";
   elements.adminCountrySettings.innerHTML = countries
     .map((country) => `
       <article class="setting-card">
         <strong>${country.name}</strong>
         <span>${country.currencyCode} · ${country.legalTitle}</span>
         <span>${country.dataResidency}</span>
-        ${
-          isAdmin
-            ? `<button class="button ${country.enabled ? "secondary" : "primary"}" data-country="${country.code}" data-enabled="${country.enabled}">
-                ${country.enabled ? "Disable" : "Enable"}
-              </button>`
-            : `<span class="pill neutral">${country.enabled ? "Live market" : "Paused market"}</span>`
-        }
+        <button class="button ${country.enabled ? "secondary" : "primary"}" data-country="${country.code}" data-enabled="${country.enabled}">
+          ${country.enabled ? "Disable" : "Enable"}
+        </button>
       </article>
     `)
     .join("");
 
+  renderAdminCredentialsPanel();
+
   elements.adminMetrics.innerHTML = [
     ["Enabled markets", enabledCountries],
     ["Total matters", analytics.totalMatters],
-    ["Draft matters", isAdmin ? draftMatters : "Sign in"],
-    ["Live tenders", isAdmin ? liveMatters : "Sign in"],
-    ["Engaged matters", isAdmin ? engagedMatters : "Sign in"],
-    ["Total bids", isAdmin ? adminBids.length : analytics.totalBids],
+    ["Draft matters", draftMatters],
+    ["Live tenders", liveMatters],
+    ["Engaged matters", engagedMatters],
+    ["Total bids", adminBids.length],
     ["Pending lawyers", pendingLawyers],
     ["Verified lawyers", analytics.verifiedLawyers],
   ]
@@ -2387,20 +2477,11 @@ function renderAdmin() {
             <p>${lawyer.firmContactName || "Firm contact not supplied"}</p>
             <p>${(lawyer.jurisdictions || []).join(", ")}</p>
             <p>ID uploaded: ${lawyer.hasIdentityDocuments ? "Yes" : "No"} · Practising certificate: ${lawyer.hasPractisingCertificate ? "Yes" : "No"} · Regulator consent: ${lawyer.regulatorConsent ? "Yes" : "No"}</p>
-            ${isAdmin
-              ? `<button class="button primary" data-lawyer-id="${lawyer.id}">Approve lawyer</button>`
-              : `<span class="pill neutral">Awaiting admin review</span>`}
+            <button class="button primary" data-lawyer-id="${lawyer.id}">Approve lawyer</button>
           </article>
         `)
         .join("")
     : "<p>Verification queue is clear.</p>";
-
-  if (!isAdmin) {
-    elements.verificationQueue.innerHTML = `
-      <p><strong>Preview only.</strong> Lawyer approvals and market toggles are not clickable here yet because admin login has not been implemented.</p>
-      ${elements.verificationQueue.innerHTML}
-    `;
-  }
 }
 
 async function submitSignup(event) {
@@ -2511,6 +2592,28 @@ async function submitLogin(event) {
   }
 }
 
+async function submitAdminLogin(event) {
+  event.preventDefault();
+  const formData = new FormData(event.currentTarget);
+  try {
+    const response = await request("/api/auth", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "login",
+        identifier: formData.get("identifier"),
+        password: formData.get("password"),
+        expectedRole: "admin",
+      }),
+    });
+    showToast(response.message);
+    storeUser(response.user);
+    event.currentTarget.reset();
+    window.location.assign("/admin");
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
 async function submitLogout() {
   try {
     const response = await request("/api/auth", {
@@ -2523,6 +2626,36 @@ async function submitLogout() {
     state.editingCaseId = null;
     state.accountEditMode = false;
     clearStoredUser();
+    showToast(response.message);
+    await refreshApp();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function submitAdminCredentials(event) {
+  const form = event.target.closest("#adminCredentialsForm");
+  if (!form || state.currentUser?.role !== "admin") {
+    return;
+  }
+  event.preventDefault();
+  const formData = new FormData(form);
+  try {
+    const response = await request("/api/admin", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "update-admin-credentials",
+        email: formData.get("email"),
+        currentPassword: formData.get("currentPassword"),
+        newPassword: formData.get("newPassword"),
+        confirmPassword: formData.get("confirmPassword"),
+      }),
+    });
+    state.currentUser = response.user;
+    if (state.bootstrap) {
+      state.bootstrap.currentUser = response.user;
+    }
+    storeUser(response.user);
     showToast(response.message);
     await refreshApp();
   } catch (error) {
@@ -4375,6 +4508,9 @@ function getPostAuthPath(user, preferredRole) {
   if (role === "lawyer") {
     return "/lawyer";
   }
+  if (role === "admin") {
+    return "/admin";
+  }
   return "/account";
 }
 
@@ -4384,6 +4520,9 @@ function getDashboardPath(user) {
   }
   if (user?.role === "lawyer") {
     return "/lawyer";
+  }
+  if (user?.role === "admin") {
+    return "/admin";
   }
   return "/account";
 }
@@ -4410,6 +4549,7 @@ function getPublicSecondaryNavMarkup(pathname) {
 
 function getFooterMarkup() {
   const dashboardPath = getDashboardPath(state.currentUser);
+  const adminPath = state.currentUser?.role === "admin" ? "/admin" : "/admin-signin";
   const existingUserLinks = state.currentUser
     ? `
         <a href="${dashboardPath}">Dashboard</a>
@@ -4438,7 +4578,7 @@ function getFooterMarkup() {
         <div class="footer-link-list">
           <a href="/about">About us</a>
           <a href="/contact">Contact us</a>
-          <a href="/admin">Administrator</a>
+          <a href="${adminPath}">Administrator</a>
           <a href="/terms">Terms of Use</a>
         </div>
       </section>

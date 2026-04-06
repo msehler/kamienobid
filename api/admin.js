@@ -1,4 +1,4 @@
-const { loadViewer, requireRole } = require("../lib/auth");
+const { loadViewer, rememberAccount, requireRole } = require("../lib/auth");
 const { getAdminSummary, updateAdmin } = require("../lib/platform");
 
 module.exports = function handler(req, res) {
@@ -14,7 +14,10 @@ module.exports = function handler(req, res) {
   }
 
   if (req.method === "POST") {
-    const result = updateAdmin(req.body || {});
+    const result = updateAdmin(req.viewer, req.body || {});
+    if (result.body?.user?.email) {
+      rememberAccount(res, req, result.body.user.email);
+    }
     res.status(result.status).json(result.body);
     return;
   }

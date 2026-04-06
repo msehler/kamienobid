@@ -3,15 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kamieno | Admin</title>
+    <title>Kamieno | Admin sign in</title>
     <meta
       name="description"
-      content="Admin controls and analytics for the Kamieno platform."
+      content="Sign in to the Kamieno admin dashboard."
     />
     <link rel="icon" href="/assets/favicon-symbol.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
-  <body data-page="admin">
+  <body data-page="admin-signin" class="app-shell-pending">
     <div class="page-grid"></div>
     <div class="ambient-orb ambient-orb-left"></div>
     <div class="ambient-orb ambient-orb-right"></div>
@@ -59,53 +59,48 @@
     </header>
 
     <main>
-      <section class="workspace alt reveal" id="admin">
+      <section class="workspace alt reveal" id="adminSignin">
         <div class="workspace-header">
-          <p class="eyebrow">Admin side</p>
-          <h2>Monitor registrations, case flow, and country rollout from a single admin dashboard.</h2>
+          <p class="eyebrow">Administrator</p>
+          <h2>Sign in to manage approvals, market settings, and admin access.</h2>
         </div>
-        <div class="panel admin-signin-gate" id="adminSignInGate" hidden>
-          <div class="panel-header">
-            <h3>Admin sign-in required</h3>
-            <span class="pill neutral">Restricted access</span>
-          </div>
-          <p>Use the admin sign-in page to access country controls, verification approvals, and admin account settings.</p>
-          <div class="account-actions">
-            <a class="button primary" href="/admin-signin">Go to admin sign in</a>
-          </div>
-        </div>
-        <div class="workspace-grid" id="adminWorkspaceGrid">
-          <div class="panel">
-            <div class="panel-header">
-              <h3>Country management</h3>
-              <span class="pill neutral">Enable / disable</span>
-            </div>
-            <div class="access-note" id="adminAccess"></div>
-            <div id="adminCountrySettings" class="settings-grid"></div>
-          </div>
+        <div class="workspace-grid auth-simple">
           <div class="stack-column">
-            <div class="panel" id="adminCredentialsPanel">
-              <div class="panel-header">
-                <h3>Admin sign-in settings</h3>
-                <span class="pill neutral">Username: admin</span>
-              </div>
-            </div>
-            <div class="panel">
-              <div class="panel-header">
-                <h3>Platform metrics</h3>
-                <span class="pill">Segmented analytics</span>
-              </div>
-              <div id="adminMetrics" class="metric-stack compact"></div>
-              <div id="practiceAreaAnalytics" class="analytics-list"></div>
-            </div>
-            <div class="panel">
-              <div class="panel-header">
-                <h3>Verification queue</h3>
-                <span class="pill neutral">Admin action</span>
-              </div>
-              <div id="verificationQueue" class="queue-list"></div>
+            <div class="panel" id="adminSigninState">
+              <form id="adminLoginForm" class="admin-login-form">
+                <div class="panel-header">
+                  <h3>Admin sign in</h3>
+                  <span class="pill neutral">Dashboard access</span>
+                </div>
+                <div class="form-grid">
+                  <label>
+                    Username or email
+                    <input id="adminLoginIdentifier" name="identifier" type="text" placeholder="admin" required />
+                  </label>
+                  <label>
+                    Password
+                    <input id="adminLoginPassword" name="password" type="password" placeholder="admin" required />
+                  </label>
+                </div>
+                <button class="button primary" type="submit">Sign in to admin</button>
+              </form>
             </div>
           </div>
+
+          <aside class="panel insight-panel">
+            <div class="panel-header">
+              <h3>Admin access</h3>
+              <span class="pill neutral">Initial credentials</span>
+            </div>
+            <div class="template-summary">
+              <p><strong>Default sign-in:</strong> username <code>admin</code> and password <code>admin</code>.</p>
+              <p>Once you are inside the dashboard, use the admin sign-in settings panel to set a new admin email and a stronger password.</p>
+            </div>
+            <div class="launch-panel">
+              <p class="eyebrow">Security reminder</p>
+              <p>Rotate away from the default password as soon as you sign in. Kamieno will require at least 10 characters for the replacement password.</p>
+            </div>
+          </aside>
         </div>
       </section>
     </main>

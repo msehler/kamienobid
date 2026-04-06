@@ -44,7 +44,7 @@ module.exports = function handler(req, res) {
       });
       if (result.body.token) {
         setSessionCookie(res, result.body.token);
-        rememberAccount(res, req, req.body?.email);
+        rememberAccount(res, req, result.body.user?.email);
         delete result.body.token;
       }
       res.status(result.status).json(result.body);
