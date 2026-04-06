@@ -14,6 +14,7 @@ const state = {
   clientView: "marketing",
   editingCaseId: null,
   accountEditMode: false,
+  lawyerSignupStep: 1,
   intakeReason: "",
   matterDocuments: [],
   singleTaskDetails: [],
@@ -151,13 +152,34 @@ function cacheElements() {
     "signupFirstName",
     "signupLastName",
     "signupPrimarySectionEyebrow",
+    "signupLawyerCountry",
     "signupLawyerRoleField",
     "signupLawyerRole",
+    "lawyerSignupProgress",
+    "lawyerSignupDetailsStep",
+    "lawyerSignupFirmStep",
+    "lawyerSignupVerificationStep",
+    "lawyerSignupDetailsNextButton",
+    "lawyerSignupFirmBackButton",
+    "lawyerSignupFirmNextButton",
+    "lawyerSignupVerificationBackButton",
     "signupFirmSection",
     "signupFirmName",
     "signupFirmAddress",
     "signupFirmPhone",
     "signupFirmContactName",
+    "signupFirmAddressLine1",
+    "signupFirmAddressLine2",
+    "signupFirmLocalityField",
+    "signupFirmLocalityLabel",
+    "signupFirmLocality",
+    "signupFirmCityField",
+    "signupFirmCityLabel",
+    "signupFirmCity",
+    "signupFirmRegionLabel",
+    "signupFirmRegion",
+    "signupFirmPostalCodeLabel",
+    "signupFirmPostalCode",
     "signupVerificationSection",
     "signupIdentityDocs",
     "signupPractisingCertificate",
@@ -394,6 +416,22 @@ function bindEvents() {
 
   if (elements.signupForm) {
     elements.signupForm.addEventListener("submit", submitSignup);
+    elements.signupForm.addEventListener("keydown", handleLawyerSignupKeydown);
+  }
+  if (elements.signupLawyerCountry) {
+    elements.signupLawyerCountry.addEventListener("change", renderLawyerSignupFlow);
+  }
+  if (elements.lawyerSignupDetailsNextButton) {
+    elements.lawyerSignupDetailsNextButton.addEventListener("click", () => advanceLawyerSignupStep(1, 2));
+  }
+  if (elements.lawyerSignupFirmBackButton) {
+    elements.lawyerSignupFirmBackButton.addEventListener("click", () => setLawyerSignupStep(1));
+  }
+  if (elements.lawyerSignupFirmNextButton) {
+    elements.lawyerSignupFirmNextButton.addEventListener("click", () => advanceLawyerSignupStep(2, 3));
+  }
+  if (elements.lawyerSignupVerificationBackButton) {
+    elements.lawyerSignupVerificationBackButton.addEventListener("click", () => setLawyerSignupStep(2));
   }
   if (elements.signupHotButton) {
     elements.signupHotButton.addEventListener("click", submitHotSignup);
@@ -718,6 +756,213 @@ function applyAccountPageMode() {
   applySignupFormVariant(isLawyerRegistration ? "lawyer" : "client");
 }
 
+function getLawyerSignupAddressConfig(countryCode) {
+  switch (countryCode) {
+    case "AU":
+      return {
+        localityLabel: "Suburb / locality",
+        localityPlaceholder: "Melbourne",
+        showCity: false,
+        cityLabel: "City / town",
+        cityPlaceholder: "",
+        regionLabel: "State / Territory",
+        postalLabel: "Postcode",
+        postalPlaceholder: "3000",
+      };
+    case "NZ":
+      return {
+        localityLabel: "Suburb",
+        localityPlaceholder: "Ponsonby",
+        showCity: true,
+        cityLabel: "City / town",
+        cityPlaceholder: "Auckland",
+        regionLabel: "Region",
+        postalLabel: "Postcode",
+        postalPlaceholder: "1011",
+      };
+    case "US":
+      return {
+        localityLabel: "City",
+        localityPlaceholder: "New York",
+        showCity: false,
+        cityLabel: "City",
+        cityPlaceholder: "",
+        regionLabel: "State",
+        postalLabel: "ZIP code",
+        postalPlaceholder: "10001",
+      };
+    case "CA":
+      return {
+        localityLabel: "City",
+        localityPlaceholder: "Toronto",
+        showCity: false,
+        cityLabel: "City",
+        cityPlaceholder: "",
+        regionLabel: "Province / Territory",
+        postalLabel: "Postal code",
+        postalPlaceholder: "M5H 2N2",
+      };
+    case "IE":
+      return {
+        localityLabel: "Town / city",
+        localityPlaceholder: "Dublin",
+        showCity: false,
+        cityLabel: "Town / city",
+        cityPlaceholder: "",
+        regionLabel: "County",
+        postalLabel: "Eircode",
+        postalPlaceholder: "D02 X285",
+      };
+    case "UK":
+      return {
+        localityLabel: "Town / city",
+        localityPlaceholder: "London",
+        showCity: true,
+        cityLabel: "County / area",
+        cityPlaceholder: "Greater London",
+        regionLabel: "Nation",
+        postalLabel: "Postcode",
+        postalPlaceholder: "SW1A 1AA",
+      };
+    default:
+      return {
+        localityLabel: "City / locality",
+        localityPlaceholder: "",
+        showCity: false,
+        cityLabel: "Region / area",
+        cityPlaceholder: "",
+        regionLabel: "Region",
+        postalLabel: "Postal code",
+        postalPlaceholder: "",
+      };
+  }
+}
+
+function getLawyerSignupCountryCode() {
+  if (!elements.signupLawyerCountry) {
+    return detectCountry() || getEnabledCountries()[0]?.code || "AU";
+  }
+  return elements.signupLawyerCountry.value || detectCountry() || getEnabledCountries()[0]?.code || "AU";
+}
+
+function setLawyerSignupStep(nextStep) {
+  state.lawyerSignupStep = Math.max(1, Math.min(3, Number(nextStep) || 1));
+  renderLawyerSignupFlow();
+}
+
+function validateLawyerSignupStep(stepNumber) {
+  const panel = document.querySelector(`[data-signup-step="${stepNumber}"]`);
+  if (!panel) {
+    return true;
+  }
+  const fields = Array.from(panel.querySelectorAll("input, select, textarea"))
+    .filter((field) => !field.disabled && field.type !== "hidden");
+  for (const field of fields) {
+    if (typeof field.reportValidity === "function" && !field.reportValidity()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function advanceLawyerSignupStep(currentStep, nextStep) {
+  if (!validateLawyerSignupStep(currentStep)) {
+    return;
+  }
+  setLawyerSignupStep(nextStep);
+}
+
+function renderLawyerSignupFlow() {
+  if (document.body.dataset.page !== "lawyer-register") {
+    return;
+  }
+
+  const countries = getEnabledCountries();
+  const fallbackCountryCode = detectCountry() || countries[0]?.code || "AU";
+  if (elements.signupLawyerCountry) {
+    populateCountrySelect(elements.signupLawyerCountry, elements.signupLawyerCountry.value || fallbackCountryCode);
+  }
+
+  const countryCode = getLawyerSignupCountryCode();
+  const country = getCountry(countryCode);
+  const addressConfig = getLawyerSignupAddressConfig(countryCode);
+
+  if (elements.signupFirmRegionLabel) {
+    elements.signupFirmRegionLabel.textContent = country.regionLabel || addressConfig.regionLabel;
+  }
+  if (elements.signupFirmPostalCodeLabel) {
+    elements.signupFirmPostalCodeLabel.textContent = addressConfig.postalLabel;
+  }
+  if (elements.signupFirmPostalCode) {
+    elements.signupFirmPostalCode.placeholder = addressConfig.postalPlaceholder;
+  }
+  if (elements.signupFirmLocalityLabel) {
+    elements.signupFirmLocalityLabel.textContent = addressConfig.localityLabel;
+  }
+  if (elements.signupFirmLocality) {
+    elements.signupFirmLocality.placeholder = addressConfig.localityPlaceholder;
+  }
+  if (elements.signupFirmCityField) {
+    elements.signupFirmCityField.hidden = !addressConfig.showCity;
+  }
+  if (elements.signupFirmCityLabel) {
+    elements.signupFirmCityLabel.textContent = addressConfig.cityLabel;
+  }
+  if (elements.signupFirmCity) {
+    elements.signupFirmCity.placeholder = addressConfig.cityPlaceholder;
+    elements.signupFirmCity.required = addressConfig.showCity;
+  }
+  if (elements.signupFirmRegion) {
+    populateRegionSelect(elements.signupFirmRegion, country, elements.signupFirmRegion.value);
+    elements.signupFirmRegion.required = true;
+  }
+
+  const step = Math.max(1, Math.min(3, state.lawyerSignupStep || 1));
+  if (elements.lawyerSignupDetailsStep) {
+    elements.lawyerSignupDetailsStep.hidden = step !== 1;
+  }
+  if (elements.lawyerSignupFirmStep) {
+    elements.lawyerSignupFirmStep.hidden = step !== 2;
+  }
+  if (elements.lawyerSignupVerificationStep) {
+    elements.lawyerSignupVerificationStep.hidden = step !== 3;
+  }
+
+  if (elements.lawyerSignupProgress) {
+    elements.lawyerSignupProgress.querySelectorAll("[data-signup-step-pill]").forEach((pill) => {
+      const pillStep = Number(pill.dataset.signupStepPill || 0);
+      pill.classList.toggle("is-active", pillStep === step);
+      pill.classList.toggle("is-complete", pillStep < step);
+    });
+  }
+
+  if (elements.accountInsightEyebrow) {
+    elements.accountInsightEyebrow.textContent =
+      step === 1 ? "What happens next"
+        : step === 2 ? "Law firm details"
+          : "Verification before approval";
+  }
+  if (elements.accountInsightBody) {
+      elements.accountInsightBody.textContent =
+        step === 1
+          ? "Start with the minimum needed to create the lawyer account: your name, role, country of practice, email address, and password."
+          : step === 2
+            ? `Now complete the law firm details, including the usual ${country.name} address fields Kamieno will use for verification and records.`
+            : "Upload your identification and current practising certificate, then submit the registration for pending review by Kamieno admin.";
+  }
+}
+
+function handleLawyerSignupKeydown(event) {
+  if (document.body.dataset.page !== "lawyer-register" || state.lawyerSignupStep >= 3) {
+    return;
+  }
+  if (event.key !== "Enter" || event.target?.tagName === "TEXTAREA") {
+    return;
+  }
+  event.preventDefault();
+  advanceLawyerSignupStep(state.lawyerSignupStep, state.lawyerSignupStep + 1);
+}
+
 async function refreshApp() {
   try {
     const bootstrap = await request("/api/bootstrap");
@@ -821,6 +1066,7 @@ function renderAll() {
   renderFooter();
   renderHero();
   renderAuth();
+  renderLawyerSignupFlow();
   renderCountryRail();
   renderClientExperience();
   renderLawyerStudio();
@@ -2060,34 +2306,46 @@ function renderAdmin() {
   if (!elements.adminAccess || !elements.adminCountrySettings || !elements.adminMetrics || !elements.practiceAreaAnalytics || !elements.verificationQueue) {
     return;
   }
-  if (state.currentUser?.role !== "admin") {
-    elements.adminAccess.innerHTML = "<p>Admin access is restricted to administrator accounts.</p>";
-    elements.adminCountrySettings.innerHTML = "";
-    elements.adminMetrics.innerHTML = "";
-    elements.practiceAreaAnalytics.innerHTML = "";
-    elements.verificationQueue.innerHTML = "";
-    return;
-  }
-
-  elements.adminAccess.innerHTML = "<p>Admin session active.</p>";
+  const isAdmin = state.currentUser?.role === "admin";
   const countries = state.bootstrap.countries;
-  const analytics = state.admin.analytics;
+  const analytics = isAdmin && state.admin?.analytics ? state.admin.analytics : state.bootstrap.analytics;
+  const adminCases = isAdmin ? state.cases : [];
+  const adminBids = isAdmin ? state.bids : [];
+  const adminLawyers = isAdmin ? state.lawyers : [];
+  const liveMatters = isAdmin ? adminCases.filter((matter) => matter.status === "open" && String(matter.paymentStatus).startsWith("paid")).length : null;
+  const draftMatters = isAdmin ? adminCases.filter((matter) => !String(matter.paymentStatus).startsWith("paid")).length : null;
+  const engagedMatters = isAdmin ? adminCases.filter((matter) => matter.status === "engaged" || matter.acceptedBidId).length : null;
+  const pendingLawyers = isAdmin ? adminLawyers.filter((lawyer) => lawyer.status !== "verified").length : analytics.verificationQueue.length;
+  const enabledCountries = countries.filter((country) => country.enabled).length;
+
+  elements.adminAccess.innerHTML = isAdmin
+    ? "<p>Admin session active. Market toggles and lawyer approvals are live on this screen.</p>"
+    : "<p>Administrator preview mode. Sign in with an admin account later to approve lawyers and change market settings.</p>";
   elements.adminCountrySettings.innerHTML = countries
     .map((country) => `
       <article class="setting-card">
         <strong>${country.name}</strong>
         <span>${country.currencyCode} · ${country.legalTitle}</span>
         <span>${country.dataResidency}</span>
-        <button class="button ${country.enabled ? "secondary" : "primary"}" data-country="${country.code}" data-enabled="${country.enabled}">
-          ${country.enabled ? "Disable" : "Enable"}
-        </button>
+        ${
+          isAdmin
+            ? `<button class="button ${country.enabled ? "secondary" : "primary"}" data-country="${country.code}" data-enabled="${country.enabled}">
+                ${country.enabled ? "Disable" : "Enable"}
+              </button>`
+            : `<span class="pill neutral">${country.enabled ? "Live market" : "Paused market"}</span>`
+        }
       </article>
     `)
     .join("");
 
   elements.adminMetrics.innerHTML = [
+    ["Enabled markets", enabledCountries],
     ["Total matters", analytics.totalMatters],
-    ["Total bids", analytics.totalBids],
+    ["Draft matters", isAdmin ? draftMatters : "Sign in"],
+    ["Live tenders", isAdmin ? liveMatters : "Sign in"],
+    ["Engaged matters", isAdmin ? engagedMatters : "Sign in"],
+    ["Total bids", isAdmin ? adminBids.length : analytics.totalBids],
+    ["Pending lawyers", pendingLawyers],
     ["Verified lawyers", analytics.verifiedLawyers],
   ]
     .map(
@@ -2100,9 +2358,23 @@ function renderAdmin() {
     )
     .join("");
 
-  elements.practiceAreaAnalytics.innerHTML = analytics.byPracticeArea
-    .map((entry) => `<p>${entry.label}: <strong>${entry.matters}</strong> matters</p>`)
-    .join("");
+  elements.practiceAreaAnalytics.innerHTML = `
+    <div class="checklist-card">
+      <p class="eyebrow">Workflow snapshot</p>
+      <ul>
+        <li>${analytics.totalMatters} total matters have been created so far.</li>
+        <li>${pendingLawyers} lawyer account${pendingLawyers === 1 ? "" : "s"} ${pendingLawyers === 1 ? "is" : "are"} currently waiting for review.</li>
+        <li>${analytics.totalBids} lawyer proposal${analytics.totalBids === 1 ? "" : "s"} ${analytics.totalBids === 1 ? "has" : "have"} been submitted across the platform.</li>
+        <li>${enabledCountries} country market${enabledCountries === 1 ? "" : "s"} ${enabledCountries === 1 ? "is" : "are"} currently enabled.</li>
+      </ul>
+    </div>
+    <div class="analytics-list">
+      <p class="eyebrow">Practice area demand</p>
+      ${analytics.byPracticeArea.length
+        ? analytics.byPracticeArea.map((entry) => `<p>${entry.label}: <strong>${entry.matters}</strong> matters</p>`).join("")
+        : "<p>No practice area demand has been recorded yet.</p>"}
+    </div>
+  `;
 
   elements.verificationQueue.innerHTML = analytics.verificationQueue.length
     ? analytics.verificationQueue
@@ -2115,7 +2387,9 @@ function renderAdmin() {
             <p>${lawyer.firmContactName || "Firm contact not supplied"}</p>
             <p>${(lawyer.jurisdictions || []).join(", ")}</p>
             <p>ID uploaded: ${lawyer.hasIdentityDocuments ? "Yes" : "No"} · Practising certificate: ${lawyer.hasPractisingCertificate ? "Yes" : "No"} · Regulator consent: ${lawyer.regulatorConsent ? "Yes" : "No"}</p>
-            <button class="button primary" data-lawyer-id="${lawyer.id}">Approve lawyer</button>
+            ${isAdmin
+              ? `<button class="button primary" data-lawyer-id="${lawyer.id}">Approve lawyer</button>`
+              : `<span class="pill neutral">Awaiting admin review</span>`}
           </article>
         `)
         .join("")
@@ -2128,6 +2402,10 @@ async function submitSignup(event) {
   const firstName = normalizeNamePart(formData.get("firstName"));
   const lastName = normalizeNamePart(formData.get("lastName"));
   const role = formData.get("role");
+  if (role === "lawyer" && document.body.dataset.page === "lawyer-register" && state.lawyerSignupStep < 3) {
+    advanceLawyerSignupStep(state.lawyerSignupStep, state.lawyerSignupStep + 1);
+    return;
+  }
   await performSignup({
     firstName,
     lastName,
@@ -2185,7 +2463,9 @@ async function performSignup({ firstName, lastName, email, password, role, lawye
     });
     showToast(response.message);
     elements.signupForm.reset();
+    state.lawyerSignupStep = 1;
     applySignupFormVariant(role);
+    renderLawyerSignupFlow();
     if (role === "lawyer") {
       window.location.assign("/account?mode=signin");
       return;
@@ -3944,10 +4224,12 @@ function buildDummySignupPayload() {
 async function buildLawyerRegistrationPayload(formData) {
   const identityFiles = formData.getAll("lawyerIdentityDocs").filter((entry) => entry && entry.name);
   const practisingCertificateFile = formData.get("lawyerPractisingCertificate");
+  const structuredAddress = buildLawyerFirmAddress(formData);
   return {
     lawyerRole: formData.get("lawyerRole"),
     firmName: formData.get("firmName"),
-    firmAddress: formData.get("firmAddress"),
+    firmAddress: structuredAddress.address,
+    firmCountryCode: structuredAddress.countryCode,
     firmPhone: formData.get("firmPhone"),
     firmContactName: formData.get("firmContactName"),
     identityDocuments: await readSignupFilesAsDocuments(identityFiles, "id"),
@@ -3956,6 +4238,26 @@ async function buildLawyerRegistrationPayload(formData) {
         ? await readSignupFileAsDocument(practisingCertificateFile, "certificate")
         : null,
     regulatorConsent: formData.get("regulatorConsent") === "on",
+  };
+}
+
+function buildLawyerFirmAddress(formData) {
+  const countryCode = String(formData.get("lawyerCountry") || "").trim() || detectCountry() || "AU";
+  const country = getCountry(countryCode);
+  const config = getLawyerSignupAddressConfig(countryCode);
+  const line1 = String(formData.get("firmAddressLine1") || "").trim();
+  const line2 = String(formData.get("firmAddressLine2") || "").trim();
+  const locality = String(formData.get("firmLocality") || "").trim();
+  const city = String(formData.get("firmCity") || "").trim();
+  const region = String(formData.get("firmRegion") || "").trim();
+  const postalCode = String(formData.get("firmPostalCode") || "").trim();
+
+  const localityLine = [locality, config.showCity ? city : ""].filter(Boolean).join(", ");
+  const regionLine = [region, postalCode].filter(Boolean).join(" ");
+
+  return {
+    countryCode,
+    address: [line1, line2, localityLine, regionLine, country.name].filter(Boolean).join("\n"),
   };
 }
 
@@ -4129,6 +4431,7 @@ function getFooterMarkup() {
         <div class="footer-link-list">
           <a href="/about">About us</a>
           <a href="/contact">Contact us</a>
+          <a href="/admin">Administrator</a>
           <a href="/terms">Terms of Use</a>
         </div>
       </section>

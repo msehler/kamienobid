@@ -1240,6 +1240,31 @@ body[data-page="account"] .page-hero-card::before {
   padding: 0;
 }
 
+.signup-step-progress {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.signup-step-progress .pill {
+  opacity: 0.6;
+}
+
+.signup-step-progress .pill.is-active {
+  opacity: 1;
+  background: rgba(21, 57, 200, 0.14);
+}
+
+.signup-step-progress .pill.is-complete {
+  opacity: 1;
+  background: rgba(182, 197, 255, 0.58);
+}
+
+.signup-step-panel[hidden] {
+  display: none !important;
+}
+
 .matter-form-actions {
   margin-top: 18px;
 }

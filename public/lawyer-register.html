@@ -99,85 +99,128 @@
                 <h3 id="signupPanelTitle">Register as a lawyer</h3>
                 <span class="pill" id="signupPanelPill">Lawyer account</span>
               </div>
-              <div class="signup-section">
-                <p class="eyebrow" id="signupPrimarySectionEyebrow">Lawyer details</p>
-                <div class="form-grid">
-                  <label>
-                    First name
-                    <input id="signupFirstName" name="firstName" type="text" placeholder="Jordan" required />
-                  </label>
-                  <label>
-                    Last name
-                    <input id="signupLastName" name="lastName" type="text" placeholder="Patel" required />
-                  </label>
-                  <label id="signupLawyerRoleField">
-                    Role
-                    <select id="signupLawyerRole" name="lawyerRole" required>
-                      <option value="">Select</option>
-                      <option value="Employee">Employee</option>
-                      <option value="Principal Lawyer">Principal Lawyer</option>
-                      <option value="Partner">Partner</option>
-                    </select>
-                  </label>
-                  <label>
-                    Email address
-                    <input id="signupEmail" name="email" type="email" placeholder="jordan@examplelegal.com.au" required />
-                  </label>
-                  <label>
-                    Password
-                    <input id="signupPassword" name="password" type="password" placeholder="Minimum 10 characters" required />
-                  </label>
-                </div>
+              <div class="signup-step-progress" id="lawyerSignupProgress">
+                <span class="pill neutral" data-signup-step-pill="1">1. Lawyer details</span>
+                <span class="pill neutral" data-signup-step-pill="2">2. Firm details</span>
+                <span class="pill neutral" data-signup-step-pill="3">3. Verification</span>
               </div>
-              <div class="signup-section" id="signupFirmSection">
-                <p class="eyebrow">Law firm details</p>
-                <div class="form-grid">
-                  <label>
-                    Firm name
-                    <input id="signupFirmName" name="firmName" type="text" placeholder="Example Legal" required />
-                  </label>
-                  <label>
-                    Firm phone number
-                    <input id="signupFirmPhone" name="firmPhone" type="tel" placeholder="+61 3 9000 0000" required />
-                  </label>
-                  <label class="field-span-full">
-                    Firm address
-                    <textarea id="signupFirmAddress" name="firmAddress" rows="3" placeholder="Level 10, 100 Collins Street&#10;Melbourne VIC 3000" required></textarea>
-                  </label>
-                  <label>
-                    Firm contact name
-                    <input id="signupFirmContactName" name="firmContactName" type="text" placeholder="Jordan Patel" required />
-                  </label>
+              <section class="signup-step-panel" id="lawyerSignupDetailsStep" data-signup-step="1">
+                <div class="signup-section">
+                  <p class="eyebrow" id="signupPrimarySectionEyebrow">Lawyer details</p>
+                  <div class="form-grid">
+                    <label>
+                      First name
+                      <input id="signupFirstName" name="firstName" type="text" placeholder="Jordan" required />
+                    </label>
+                    <label>
+                      Last name
+                      <input id="signupLastName" name="lastName" type="text" placeholder="Patel" required />
+                    </label>
+                    <label id="signupLawyerRoleField">
+                      Role
+                      <select id="signupLawyerRole" name="lawyerRole" required>
+                        <option value="">Select</option>
+                        <option value="Employee">Employee</option>
+                        <option value="Principal Lawyer">Principal Lawyer</option>
+                        <option value="Partner">Partner</option>
+                      </select>
+                    </label>
+                    <label>
+                      Country of practice
+                      <select id="signupLawyerCountry" name="lawyerCountry" required></select>
+                    </label>
+                    <label>
+                      Email address
+                      <input id="signupEmail" name="email" type="email" placeholder="jordan@examplelegal.com.au" required />
+                    </label>
+                    <label>
+                      Password
+                      <input id="signupPassword" name="password" type="password" placeholder="Minimum 10 characters" required />
+                    </label>
+                  </div>
                 </div>
-              </div>
-              <div class="signup-section" id="signupVerificationSection">
-                <p class="eyebrow">Verification documents</p>
-                <div class="signup-note-list">
-                  <p>Upload identification documents totaling 100 points and a copy of your current practising certificate.</p>
-                  <p>Your lawyer account stays pending until Kamieno completes verification and approval.</p>
+                <div class="signup-actions">
+                  <button class="button primary" id="lawyerSignupDetailsNextButton" type="button">Continue to law firm details</button>
                 </div>
-                <div class="form-grid">
-                  <label class="field-span-full">
-                    100 points of identification
-                    <input id="signupIdentityDocs" name="lawyerIdentityDocs" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple required />
-                  </label>
-                  <label class="field-span-full">
-                    Current practising certificate
-                    <input id="signupPractisingCertificate" name="lawyerPractisingCertificate" type="file" accept=".pdf,.jpg,.jpeg,.png" required />
-                  </label>
+              </section>
+              <section class="signup-step-panel" id="lawyerSignupFirmStep" data-signup-step="2" hidden>
+                <div class="signup-section" id="signupFirmSection">
+                  <p class="eyebrow">Law firm details</p>
+                  <div class="form-grid">
+                    <label>
+                      Firm name
+                      <input id="signupFirmName" name="firmName" type="text" placeholder="Example Legal" required />
+                    </label>
+                    <label>
+                      Firm phone number
+                      <input id="signupFirmPhone" name="firmPhone" type="tel" placeholder="+61 3 9000 0000" required />
+                    </label>
+                    <label>
+                      Firm contact name
+                      <input id="signupFirmContactName" name="firmContactName" type="text" placeholder="Jordan Patel" required />
+                    </label>
+                    <label class="field-span-full">
+                      <span id="signupFirmAddressLine1Label">Address line 1</span>
+                      <input id="signupFirmAddressLine1" name="firmAddressLine1" type="text" placeholder="Level 10, 100 Collins Street" required />
+                    </label>
+                    <label class="field-span-full">
+                      <span id="signupFirmAddressLine2Label">Address line 2</span>
+                      <input id="signupFirmAddressLine2" name="firmAddressLine2" type="text" placeholder="Suite or floor (optional)" />
+                    </label>
+                    <label id="signupFirmLocalityField">
+                      <span id="signupFirmLocalityLabel">Suburb / locality</span>
+                      <input id="signupFirmLocality" name="firmLocality" type="text" placeholder="Melbourne" />
+                    </label>
+                    <label id="signupFirmCityField">
+                      <span id="signupFirmCityLabel">City / town</span>
+                      <input id="signupFirmCity" name="firmCity" type="text" placeholder="Melbourne" />
+                    </label>
+                    <label>
+                      <span id="signupFirmRegionLabel">State / Territory</span>
+                      <select id="signupFirmRegion" name="firmRegion" required></select>
+                    </label>
+                    <label>
+                      <span id="signupFirmPostalCodeLabel">Postcode</span>
+                      <input id="signupFirmPostalCode" name="firmPostalCode" type="text" placeholder="3000" required />
+                    </label>
+                  </div>
                 </div>
-                <label class="checkbox-field">
-                  <input id="signupRegulatorConsent" name="regulatorConsent" type="checkbox" required />
-                  <span>I consent to Kamieno contacting the relevant regulator to confirm my identity and practising certificate.</span>
-                </label>
-                <p class="field-hint" id="signupPendingNote">
-                  Once submitted, sign in on the standard sign in page. Your ability to bid will remain pending until Kamieno approves the account.
-                </p>
-              </div>
+                <div class="signup-actions">
+                  <button class="button secondary" id="lawyerSignupFirmBackButton" type="button">Back</button>
+                  <button class="button primary" id="lawyerSignupFirmNextButton" type="button">Continue to verification</button>
+                </div>
+              </section>
+              <section class="signup-step-panel" id="lawyerSignupVerificationStep" data-signup-step="3" hidden>
+                <div class="signup-section" id="signupVerificationSection">
+                  <p class="eyebrow">Verification documents</p>
+                  <div class="signup-note-list">
+                    <p>Upload identification documents totaling 100 points and a copy of your current practising certificate.</p>
+                    <p>Your lawyer account stays pending until Kamieno completes verification and approval.</p>
+                  </div>
+                  <div class="form-grid">
+                    <label class="field-span-full">
+                      100 points of identification
+                      <input id="signupIdentityDocs" name="lawyerIdentityDocs" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple required />
+                    </label>
+                    <label class="field-span-full">
+                      Current practising certificate
+                      <input id="signupPractisingCertificate" name="lawyerPractisingCertificate" type="file" accept=".pdf,.jpg,.jpeg,.png" required />
+                    </label>
+                  </div>
+                  <label class="checkbox-field">
+                    <input id="signupRegulatorConsent" name="regulatorConsent" type="checkbox" required />
+                    <span>I consent to Kamieno contacting the relevant regulator to confirm my identity and practising certificate.</span>
+                  </label>
+                  <p class="field-hint" id="signupPendingNote">
+                    Once submitted, sign in on the standard sign in page. Your ability to bid will remain pending until Kamieno approves the account.
+                  </p>
+                </div>
+                <div class="signup-actions">
+                  <button class="button secondary" id="lawyerSignupVerificationBackButton" type="button">Back</button>
+                  <button class="button primary" id="signupSubmitLabel" type="submit">Submit lawyer registration</button>
+                </div>
+              </section>
               <input id="signupRole" name="role" type="hidden" value="lawyer" />
-              <div class="signup-actions">
-                <button class="button primary" id="signupSubmitLabel" type="submit">Submit lawyer registration</button>
-              </div>
               <p class="auth-switch"><a id="signupSwitchLink" href="/account?mode=signin">Already registered? Sign in</a></p>
             </form>
           </div>
