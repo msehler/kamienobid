@@ -2320,7 +2320,7 @@ function renderAdmin() {
 
   elements.adminAccess.innerHTML = isAdmin
     ? "<p>Admin session active. Market toggles and lawyer approvals are live on this screen.</p>"
-    : "<p>Administrator preview mode. Sign in with an admin account later to approve lawyers and change market settings.</p>";
+    : "<p>Administrator preview mode. The dashboard is visible, but the controls are read-only until admin sign-in is built.</p>";
   elements.adminCountrySettings.innerHTML = countries
     .map((country) => `
       <article class="setting-card">
@@ -2394,6 +2394,13 @@ function renderAdmin() {
         `)
         .join("")
     : "<p>Verification queue is clear.</p>";
+
+  if (!isAdmin) {
+    elements.verificationQueue.innerHTML = `
+      <p><strong>Preview only.</strong> Lawyer approvals and market toggles are not clickable here yet because admin login has not been implemented.</p>
+      ${elements.verificationQueue.innerHTML}
+    `;
+  }
 }
 
 async function submitSignup(event) {

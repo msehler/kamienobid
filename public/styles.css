@@ -1412,6 +1412,21 @@ body[data-page="account"] .page-hero-card::before {
   align-self: start;
 }
 
+body[data-page="admin"] .workspace-grid {
+  align-items: start;
+}
+
+body[data-page="admin"] .stack-column {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  align-self: start;
+}
+
+body[data-page="admin"] .stack-column > .panel {
+  flex: 0 0 auto;
+}
+
 .panel {
   border-radius: var(--panel-radius-lg);
   padding: 28px;
