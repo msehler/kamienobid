@@ -427,6 +427,7 @@ function bindEvents() {
 function applyNavigationFocus() {
   const params = new URLSearchParams(window.location.search);
   const role = params.get("role");
+  const mode = params.get("mode");
   const path = window.location.pathname;
   const currentHrefByPath = {
     "/about": "/about",
@@ -435,7 +436,9 @@ function applyNavigationFocus() {
     "/lawyer": "/account?role=lawyer&mode=signup",
   };
 
-  const currentHref = path === "/account" ? (role === "lawyer" ? "/account?role=lawyer&mode=signup" : "/account") : currentHrefByPath[path];
+  const currentHref = path === "/account"
+    ? (role === "lawyer" && mode === "signup" ? "/account?role=lawyer&mode=signup" : "/account")
+    : currentHrefByPath[path];
 
   ["/client", "/about", "/contact", "/account", "/account?role=lawyer&mode=signup"].forEach((href) => {
     document.querySelectorAll(`a[href="${href}"]`).forEach((link) => {
@@ -508,17 +511,16 @@ function applySignupRolePrefill() {
   if (!elements.signupRole) {
     return;
   }
-  const role = new URLSearchParams(window.location.search).get("role");
-  if (role === "client" || role === "lawyer") {
-    elements.signupRole.value = role;
-  }
-  applySignupFormVariant(elements.signupRole.value || "client");
+  const { role, mode } = getAccountAuthConfig();
+  elements.signupRole.value = role === "lawyer" && mode === "signup" ? "lawyer" : "client";
+  applySignupFormVariant(elements.signupRole.value);
 }
 
 function applySignupFormVariant(role) {
   const isLawyer = role === "lawyer";
   if (elements.signupPrimarySectionEyebrow) {
-    elements.signupPrimarySectionEyebrow.textContent = isLawyer ? "Lawyer details" : "Client details";
+    elements.signupPrimarySectionEyebrow.hidden = !isLawyer;
+    elements.signupPrimarySectionEyebrow.textContent = "Lawyer details";
   }
   if (elements.signupLawyerRoleField) {
     elements.signupLawyerRoleField.hidden = !isLawyer;
@@ -572,10 +574,11 @@ function getAccountAuthConfig() {
 
 function applyAccountPageMode() {
   const { role, mode } = getAccountAuthConfig();
-  const signupHref = role === "lawyer" ? "/account?role=lawyer&mode=signup" : "/account?mode=signup";
+  const isLawyerRegistration = role === "lawyer" && mode === "signup";
+  const signupHref = isLawyerRegistration ? "/account?role=lawyer&mode=signup" : "/account?mode=signup";
   const signinHref = "/account?mode=signin";
 
-  if (role === "lawyer") {
+  if (isLawyerRegistration) {
     if (elements.accountHeroEyebrow) {
       elements.accountHeroEyebrow.textContent = "Lawyer registration";
     }
@@ -641,6 +644,21 @@ function applyAccountPageMode() {
     if (elements.accountWorkspaceTitle) {
       elements.accountWorkspaceTitle.textContent = "Sign in to open your client dashboard.";
     }
+    if (elements.signupPanelTitle) {
+      elements.signupPanelTitle.textContent = "Create your account";
+    }
+    if (elements.signupPanelPill) {
+      elements.signupPanelPill.textContent = "New to Kamieno";
+    }
+    if (elements.signupSubmitLabel) {
+      elements.signupSubmitLabel.textContent = "Create account";
+    }
+    if (elements.accountInsightEyebrow) {
+      elements.accountInsightEyebrow.textContent = "What happens after sign in";
+    }
+    if (elements.accountInsightBody) {
+      elements.accountInsightBody.textContent = "Clients can review drafts, submit matters for payment, and manage proposals from their dashboard once they sign in.";
+    }
   } else {
     if (elements.accountHeroEyebrow) {
       elements.accountHeroEyebrow.textContent = "Client sign up";
@@ -657,6 +675,21 @@ function applyAccountPageMode() {
     if (elements.accountWorkspaceTitle) {
       elements.accountWorkspaceTitle.textContent = "Create your account to open your client dashboard.";
     }
+    if (elements.signupPanelTitle) {
+      elements.signupPanelTitle.textContent = "Create your account";
+    }
+    if (elements.signupPanelPill) {
+      elements.signupPanelPill.textContent = "New to Kamieno";
+    }
+    if (elements.signupSubmitLabel) {
+      elements.signupSubmitLabel.textContent = "Create account";
+    }
+    if (elements.accountInsightEyebrow) {
+      elements.accountInsightEyebrow.textContent = "What happens after sign up";
+    }
+    if (elements.accountInsightBody) {
+      elements.accountInsightBody.textContent = "Create your client account, save drafts, manage cases from your dashboard, and continue to payment only when you are ready to receive proposals.";
+    }
   }
 
   if (elements.signupSwitchLink) {
@@ -665,9 +698,9 @@ function applyAccountPageMode() {
   }
   if (elements.loginSwitchLink) {
     elements.loginSwitchLink.href = signupHref;
-    elements.loginSwitchLink.textContent = role === "lawyer" ? "Need a lawyer account? Sign up" : "Need an account? Sign up";
+    elements.loginSwitchLink.textContent = isLawyerRegistration ? "Need a lawyer account? Sign up" : "Need an account? Sign up";
   }
-  applySignupFormVariant(role);
+  applySignupFormVariant(isLawyerRegistration ? "lawyer" : "client");
 }
 
 async function refreshApp() {
