@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kamieno | Verify email</title>
+    <meta
+      name="description"
+      content="Verify your Kamieno email address."
+    />
+    <link rel="icon" href="/assets/favicon-symbol.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body data-page="verify-email" class="app-shell-pending">
+    <div class="page-grid"></div>
+    <div class="ambient-orb ambient-orb-left"></div>
+    <div class="ambient-orb ambient-orb-right"></div>
+    <div class="status-toast" id="statusToast" aria-live="polite"></div>
+
+    <header class="site-header reveal">
+      <div class="brand-row">
+        <a href="/" class="brand-mark" aria-label="Kamieno home">
+          <img src="/assets/site-wordmark-symbol.svg" alt="Kamieno" />
+        </a>
+        <button
+          class="mobile-nav-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="mobileNav"
+          aria-label="Toggle navigation"
+        >
+          <span class="mobile-nav-toggle-bar"></span>
+          <span class="mobile-nav-toggle-bar"></span>
+          <span class="mobile-nav-toggle-bar"></span>
+        </button>
+        <nav class="main-nav">
+          <div class="main-nav-primary">
+            <a class="main-nav-cta" href="/client">Post a new case</a>
+            <a href="/account?mode=signup">Sign up</a>
+            <a href="/account?mode=signin">Sign in</a>
+          </div>
+          <div class="main-nav-secondary">
+            <a href="/lawyer-register">Register as a lawyer</a>
+            <span class="header-jurisdiction-chip" data-region-badge>Detected region: <strong></strong></span>
+          </div>
+        </nav>
+      </div>
+      <div class="mobile-nav-panel" id="mobileNav" hidden>
+        <div class="mobile-nav-primary">
+          <a class="main-nav-cta" href="/client">Post a new case</a>
+          <a href="/account?mode=signup">Sign up</a>
+          <a href="/account?mode=signin">Sign in</a>
+        </div>
+        <div class="mobile-nav-secondary">
+          <a href="/lawyer-register">Register as a lawyer</a>
+          <span class="header-jurisdiction-chip" data-region-badge>Detected region: <strong></strong></span>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="workspace alt reveal">
+        <div class="workspace-header">
+          <p class="eyebrow">Email verification</p>
+          <h2>Confirm your Kamieno account email.</h2>
+        </div>
+        <div class="workspace-grid auth-simple">
+          <div class="stack-column">
+            <div class="panel">
+              <div class="panel-header">
+                <h3 id="verifyEmailStatus">Verifying email</h3>
+                <span class="pill neutral">Account security</span>
+              </div>
+              <p id="verifyEmailMessage">Please wait while Kamieno checks your verification link.</p>
+              <div class="account-actions" id="verifyEmailActions"></div>
+            </div>
+          </div>
+          <aside class="panel insight-panel">
+            <div class="panel-header">
+              <h3>Why this matters</h3>
+              <span class="pill neutral">Trust and security</span>
+            </div>
+            <div class="launch-panel">
+              <p class="eyebrow">Verified account email</p>
+              <p>Kamieno uses email verification to confirm account ownership before matters, proposals, and lawyer registrations move deeper into the platform.</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer reveal">
+      <div class="footer-meta">
+        <p>&copy; 2026 Kamieno. All rights reserved.</p>
+        <a href="/terms">Terms of Use</a>
+      </div>
+    </footer>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>

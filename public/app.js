@@ -19,6 +19,7 @@ const state = {
   matterDocuments: [],
   singleTaskDetails: [],
   guidedIntake: {},
+  verifyEmailHandled: false,
 };
 
 const elements = {};
@@ -130,6 +131,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   observeReveals();
   try {
     await refreshApp();
+    await handleVerifyEmailRoute();
     await handleCheckoutReturn();
   } finally {
     document.body.classList.remove("app-shell-pending");
@@ -140,6 +142,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 function cacheElements() {
   [
     "statusToast",
+    "verifyEmailStatus",
+    "verifyEmailMessage",
+    "verifyEmailActions",
     "authQuick",
     "globalDisclaimer",
     "heroEyebrow",
@@ -452,6 +457,9 @@ function bindEvents() {
   }
   if (elements.logoutButton) {
     elements.logoutButton.addEventListener("click", submitLogout);
+  }
+  if (elements.sessionCard) {
+    elements.sessionCard.addEventListener("click", handleSessionCardActions);
   }
   if (elements.matterForm) {
     elements.matterForm.addEventListener("submit", submitMatter);
@@ -972,8 +980,8 @@ function renderLawyerSignupFlow() {
       elements.accountInsightBody.textContent =
         signedInLawyer && !isLawyerRegistrationComplete(signedInLawyer)
           ? step === 2
-            ? `Your lawyer account is created. Complete the ${country.name} firm details next so you can move to verification.`
-            : "Your lawyer account is created. Finish the verification documents and consent so Kamieno can review the registration."
+            ? `Your lawyer account is created. Complete the ${country.name} firm details next so you can move to verification.${signedInLawyer.emailVerified ? "" : " Kamieno has also sent an email verification link to the account email."}`
+            : `Your lawyer account is created. Finish the verification documents and consent so Kamieno can review the registration.${signedInLawyer.emailVerified ? "" : " Verify the account email from your inbox while you complete this step."}`
         : step === 1
           ? `Start with the minimum needed to create the lawyer account: your name, role at your firm, ${country.regionLabel.toLowerCase()} of practice, email address, and password.`
           : step === 2
@@ -1146,6 +1154,71 @@ async function handleCheckoutReturn() {
       await refreshApp();
     } catch (error) {
       showToast(error.message);
+    }
+  }
+}
+
+async function handleVerifyEmailRoute() {
+  if (document.body.dataset.page !== "verify-email" || state.verifyEmailHandled) {
+    return;
+  }
+
+  state.verifyEmailHandled = true;
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+
+  if (elements.verifyEmailStatus) {
+    elements.verifyEmailStatus.textContent = "Verifying email";
+  }
+  if (elements.verifyEmailMessage) {
+    elements.verifyEmailMessage.textContent = token
+      ? "Please wait while Kamieno confirms your email address."
+      : "This verification link is missing a token.";
+  }
+  if (elements.verifyEmailActions) {
+    elements.verifyEmailActions.innerHTML = token ? "" : '<a class="button primary" href="/account?mode=signin">Go to sign in</a>';
+  }
+  if (!token) {
+    return;
+  }
+
+  try {
+    const response = await request("/api/auth", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "verify-email",
+        token,
+      }),
+    });
+    if (response.user) {
+      state.currentUser = response.user;
+      if (state.bootstrap) {
+        state.bootstrap.currentUser = response.user;
+      }
+      storeUser(response.user);
+    }
+    if (elements.verifyEmailStatus) {
+      elements.verifyEmailStatus.textContent = "Email verified";
+    }
+    if (elements.verifyEmailMessage) {
+      elements.verifyEmailMessage.textContent = response.message;
+    }
+    if (elements.verifyEmailActions) {
+      elements.verifyEmailActions.innerHTML = `
+        <a class="button primary" href="${getDashboardPath(response.user)}">Continue</a>
+        <a class="button secondary" href="/account">My account</a>
+      `;
+    }
+    clearSearchParams();
+  } catch (error) {
+    if (elements.verifyEmailStatus) {
+      elements.verifyEmailStatus.textContent = "Verification failed";
+    }
+    if (elements.verifyEmailMessage) {
+      elements.verifyEmailMessage.textContent = error.message;
+    }
+    if (elements.verifyEmailActions) {
+      elements.verifyEmailActions.innerHTML = '<a class="button primary" href="/account?mode=signin">Go to sign in</a>';
     }
   }
 }
@@ -1454,6 +1527,9 @@ function renderAuth() {
     `;
     elements.sessionCard.innerHTML = `
       <p><strong>Use this page to manage the contact details tied to your Kamieno account.</strong></p>
+      ${user.emailVerified
+        ? `<p>Email status: verified for ${accountEmail}.</p>`
+        : `<p><strong>Email status:</strong> not yet verified for ${accountEmail}. Check your inbox and click the verification link, or <a href="#resend" data-account-action="resend-verification">send it again</a>.</p>`}
       <p>Name and email control your signed-in identity. Phone and address help keep engagement and billing details current once you start working with a lawyer.</p>
       <p>${hasJurisdictions
         ? `Jurisdictions on file: ${escapeHtml(user.jurisdictions.join(", "))}.`
@@ -2650,15 +2726,26 @@ async function performSignup({ firstName, lastName, email, password, role, lawye
         lawyerRegistration,
       }),
     });
-    showToast(response.message);
+    showToast(response.verificationMessage ? `${response.message} ${response.verificationMessage}` : response.message);
+    const isInitialLawyerSignup = role === "lawyer" && lawyerRegistration?.registrationStage === "initial";
+    if (isInitialLawyerSignup) {
+      state.currentUser = response.user;
+      if (state.bootstrap) {
+        state.bootstrap.currentUser = response.user;
+      }
+      storeUser(response.user);
+      if (elements.signupPassword) {
+        elements.signupPassword.value = "";
+      }
+      state.lawyerSignupStep = 2;
+      await refreshApp();
+      renderLawyerSignupFlow();
+      return;
+    }
     elements.signupForm.reset();
     state.lawyerSignupStep = 1;
     applySignupFormVariant(role);
     renderLawyerSignupFlow();
-    if (role === "lawyer") {
-      window.location.assign("/account?mode=signin");
-      return;
-    }
     storeUser(response.user);
     if (redirectAfterAuth(response.user, role)) {
       return;
@@ -2755,6 +2842,41 @@ async function submitLogout() {
     await refreshApp();
   } catch (error) {
     showToast(error.message);
+  }
+}
+
+async function submitResendVerification() {
+  if (!state.currentUser) {
+    showToast("Please sign in to continue.");
+    return;
+  }
+  try {
+    const response = await request("/api/auth", {
+      method: "POST",
+      body: JSON.stringify({ action: "resend-verification" }),
+    });
+    if (response.user) {
+      state.currentUser = response.user;
+      if (state.bootstrap) {
+        state.bootstrap.currentUser = response.user;
+      }
+      storeUser(response.user);
+      renderAll();
+    }
+    showToast(response.message);
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+function handleSessionCardActions(event) {
+  const trigger = event.target.closest("[data-account-action]");
+  if (!trigger) {
+    return;
+  }
+  if (trigger.dataset.accountAction === "resend-verification") {
+    event.preventDefault();
+    submitResendVerification();
   }
 }
 
