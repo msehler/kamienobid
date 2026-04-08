@@ -117,7 +117,7 @@
                       <input id="signupLastName" name="lastName" type="text" placeholder="Patel" required />
                     </label>
                     <label id="signupLawyerRoleField">
-                      Role
+                      Role at your firm
                       <select id="signupLawyerRole" name="lawyerRole" required>
                         <option value="">Select</option>
                         <option value="Employee">Employee</option>
@@ -126,8 +126,9 @@
                       </select>
                     </label>
                     <label>
-                      Country of practice
-                      <select id="signupLawyerCountry" name="lawyerCountry" required></select>
+                      Region of practice
+                      <input id="signupLawyerCountry" name="lawyerCountry" type="hidden" />
+                      <select id="signupLawyerRegion" name="lawyerRegion" required></select>
                     </label>
                     <label>
                       Email address

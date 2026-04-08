@@ -153,6 +153,7 @@ function cacheElements() {
     "signupLastName",
     "signupPrimarySectionEyebrow",
     "signupLawyerCountry",
+    "signupLawyerRegion",
     "signupLawyerRoleField",
     "signupLawyerRole",
     "lawyerSignupProgress",
@@ -429,7 +430,7 @@ function bindEvents() {
     elements.signupLawyerCountry.addEventListener("change", renderLawyerSignupFlow);
   }
   if (elements.lawyerSignupDetailsNextButton) {
-    elements.lawyerSignupDetailsNextButton.addEventListener("click", () => advanceLawyerSignupStep(1, 2));
+    elements.lawyerSignupDetailsNextButton.addEventListener("click", handleLawyerRegistrationPrimaryAction);
   }
   if (elements.lawyerSignupFirmBackButton) {
     elements.lawyerSignupFirmBackButton.addEventListener("click", () => setLawyerSignupStep(1));
@@ -640,7 +641,7 @@ function applyAccountPageMode() {
       elements.accountHeroTitle.innerHTML = 'Register your practice for <span>the right matters.</span>';
     }
     if (elements.accountHeroSummary) {
-      elements.accountHeroSummary.textContent = "Register your lawyer account with your firm details, identity documents, and practising certificate so Kamieno can review and approve your access.";
+      elements.accountHeroSummary.textContent = "Create your lawyer account first, then complete the firm and verification steps so Kamieno can review and approve your access.";
     }
     if (elements.accountHeroPills) {
       elements.accountHeroPills.innerHTML = `
@@ -654,9 +655,9 @@ function applyAccountPageMode() {
     }
     if (elements.accountHeroNotes) {
       elements.accountHeroNotes.innerHTML = `
-        <p>Register with your lawyer details, firm details, and secure password.</p>
+        <p>Create your lawyer account with your basic details and secure password first.</p>
         <p>Upload identification documents totaling 100 points and your current practising certificate.</p>
-        <p>After submission, sign in on the normal sign in page while Kamieno reviews your registration for approval.</p>
+        <p>If you stop part-way through, sign in on the normal sign in page and Kamieno will return you to the remaining registration steps.</p>
       `;
     }
     if (elements.accountWorkspaceEyebrow) {
@@ -680,7 +681,7 @@ function applyAccountPageMode() {
       elements.accountInsightEyebrow.textContent = "Why lawyers join";
     }
     if (elements.accountInsightBody) {
-      elements.accountInsightBody.textContent = "Kamieno keeps lawyer registrations pending until identity, practising certificate, and regulator confirmation are reviewed. Once approved, the lawyer account can sign in and bid on suitable matters.";
+      elements.accountInsightBody.textContent = "Kamieno creates the lawyer account first, keeps the registration pending while the firm and verification steps are completed, and only unlocks bidding after admin approval.";
     }
   } else if (mode === "signin") {
     if (elements.accountHeroEyebrow) {
@@ -892,13 +893,25 @@ function renderLawyerSignupFlow() {
 
   const countries = getEnabledCountries();
   const fallbackCountryCode = detectCountry() || countries[0]?.code || "AU";
+  const signedInLawyer = state.currentUser?.role === "lawyer" ? state.currentUser : null;
+  if (signedInLawyer) {
+    hydrateLawyerRegistrationForm(signedInLawyer, fallbackCountryCode);
+    if (state.lawyerSignupStep === 1) {
+      state.lawyerSignupStep = getLawyerRegistrationResumeStep(signedInLawyer);
+    }
+  }
   if (elements.signupLawyerCountry) {
-    populateCountrySelect(elements.signupLawyerCountry, elements.signupLawyerCountry.value || fallbackCountryCode);
+    elements.signupLawyerCountry.value = fallbackCountryCode;
   }
 
   const countryCode = getLawyerSignupCountryCode();
   const country = getCountry(countryCode);
   const addressConfig = getLawyerSignupAddressConfig(countryCode);
+
+  if (elements.signupLawyerRegion) {
+    populateRegionSelect(elements.signupLawyerRegion, country, elements.signupLawyerRegion.value);
+    elements.signupLawyerRegion.required = true;
+  }
 
   if (elements.signupFirmRegionLabel) {
     elements.signupFirmRegionLabel.textContent = country.regionLabel || addressConfig.regionLabel;
@@ -957,23 +970,107 @@ function renderLawyerSignupFlow() {
   }
   if (elements.accountInsightBody) {
       elements.accountInsightBody.textContent =
-        step === 1
-          ? "Start with the minimum needed to create the lawyer account: your name, role, country of practice, email address, and password."
+        signedInLawyer && !isLawyerRegistrationComplete(signedInLawyer)
+          ? step === 2
+            ? `Your lawyer account is created. Complete the ${country.name} firm details next so you can move to verification.`
+            : "Your lawyer account is created. Finish the verification documents and consent so Kamieno can review the registration."
+        : step === 1
+          ? `Start with the minimum needed to create the lawyer account: your name, role at your firm, ${country.regionLabel.toLowerCase()} of practice, email address, and password.`
           : step === 2
             ? `Now complete the law firm details, including the usual ${country.name} address fields Kamieno will use for verification and records.`
             : "Upload your identification and current practising certificate, then submit the registration for pending review by Kamieno admin.";
   }
 }
 
+function hydrateLawyerRegistrationForm(user, fallbackCountryCode) {
+  const [firstName = "", ...rest] = String(user.name || "").trim().split(/\s+/);
+  const lastName = rest.join(" ");
+  const firstJurisdiction = Array.isArray(user.jurisdictions) ? user.jurisdictions[0] : "";
+  const [jurisdictionCountryCode, jurisdictionRegion] = String(firstJurisdiction || "").split(":");
+  const countryCode = jurisdictionCountryCode || fallbackCountryCode;
+
+  if (elements.signupFirstName) {
+    elements.signupFirstName.value = firstName;
+  }
+  if (elements.signupLastName) {
+    elements.signupLastName.value = lastName;
+  }
+  if (elements.signupEmail) {
+    elements.signupEmail.value = user.email || "";
+  }
+  if (elements.signupLawyerRole) {
+    elements.signupLawyerRole.value = user.lawyerRole || "";
+  }
+  if (elements.signupLawyerCountry) {
+    elements.signupLawyerCountry.value = countryCode;
+  }
+  if (elements.signupLawyerRegion && jurisdictionRegion && !elements.signupLawyerRegion.value) {
+    elements.signupLawyerRegion.value = jurisdictionRegion;
+  }
+  if (elements.signupFirmName && user.firm) {
+    elements.signupFirmName.value = user.firm;
+  }
+  if (elements.signupFirmPhone && user.firmPhone) {
+    elements.signupFirmPhone.value = user.firmPhone;
+  }
+  if (elements.signupFirmContactName && user.firmContactName) {
+    elements.signupFirmContactName.value = user.firmContactName;
+  }
+}
+
+function getLawyerRegistrationResumeStep(user) {
+  if (!user || user.role !== "lawyer") {
+    return 1;
+  }
+  if (!user.firm || !user.firmAddress || !user.firmPhone || !user.firmContactName) {
+    return 2;
+  }
+  if (!user.hasIdentityDocuments || !user.hasPractisingCertificate || !user.regulatorConsent) {
+    return 3;
+  }
+  return 3;
+}
+
 function handleLawyerSignupKeydown(event) {
-  if (document.body.dataset.page !== "lawyer-register" || state.lawyerSignupStep >= 3) {
+  if (document.body.dataset.page !== "lawyer-register") {
     return;
   }
   if (event.key !== "Enter" || event.target?.tagName === "TEXTAREA") {
     return;
   }
   event.preventDefault();
-  advanceLawyerSignupStep(state.lawyerSignupStep, state.lawyerSignupStep + 1);
+  if (state.lawyerSignupStep === 1 && !state.currentUser) {
+    handleLawyerRegistrationPrimaryAction();
+    return;
+  }
+  if (state.lawyerSignupStep < 3) {
+    advanceLawyerSignupStep(state.lawyerSignupStep, state.lawyerSignupStep + 1);
+  }
+}
+
+async function handleLawyerRegistrationPrimaryAction() {
+  if (document.body.dataset.page !== "lawyer-register") {
+    return;
+  }
+
+  if (state.currentUser?.role === "lawyer") {
+    advanceLawyerSignupStep(1, 2);
+    return;
+  }
+
+  if (!validateLawyerSignupStep(1)) {
+    return;
+  }
+
+  const formData = new FormData(elements.signupForm);
+  await performSignup({
+    firstName: normalizeNamePart(formData.get("firstName")),
+    lastName: normalizeNamePart(formData.get("lastName")),
+    email: formData.get("email"),
+    password: formData.get("password"),
+    role: "lawyer",
+    lawyerRegistration: buildInitialLawyerRegistrationPayload(formData),
+  });
 }
 
 async function refreshApp() {
@@ -2490,6 +2587,10 @@ async function submitSignup(event) {
   const firstName = normalizeNamePart(formData.get("firstName"));
   const lastName = normalizeNamePart(formData.get("lastName"));
   const role = formData.get("role");
+  if (role === "lawyer" && document.body.dataset.page === "lawyer-register" && state.currentUser?.role === "lawyer") {
+    await completeLawyerRegistration(formData);
+    return;
+  }
   if (role === "lawyer" && document.body.dataset.page === "lawyer-register" && state.lawyerSignupStep < 3) {
     advanceLawyerSignupStep(state.lawyerSignupStep, state.lawyerSignupStep + 1);
     return;
@@ -2563,6 +2664,30 @@ async function performSignup({ firstName, lastName, email, password, role, lawye
       return;
     }
     await refreshApp();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function completeLawyerRegistration(formData) {
+  try {
+    const payload = await buildLawyerRegistrationPayload(formData);
+    const response = await request("/api/lawyers", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "complete-registration",
+        ...payload,
+      }),
+    });
+    state.currentUser = response.lawyer;
+    if (state.bootstrap) {
+      state.bootstrap.currentUser = response.lawyer;
+    }
+    storeUser(response.lawyer);
+    showToast(response.message);
+    state.lawyerSignupStep = 3;
+    await refreshApp();
+    window.location.assign("/lawyer");
   } catch (error) {
     showToast(error.message);
   }
@@ -4366,7 +4491,10 @@ async function buildLawyerRegistrationPayload(formData) {
   const practisingCertificateFile = formData.get("lawyerPractisingCertificate");
   const structuredAddress = buildLawyerFirmAddress(formData);
   return {
+    registrationStage: "complete",
     lawyerRole: formData.get("lawyerRole"),
+    lawyerRegion: formData.get("lawyerRegion"),
+    lawyerCountryCode: structuredAddress.countryCode,
     firmName: formData.get("firmName"),
     firmAddress: structuredAddress.address,
     firmCountryCode: structuredAddress.countryCode,
@@ -4378,6 +4506,16 @@ async function buildLawyerRegistrationPayload(formData) {
         ? await readSignupFileAsDocument(practisingCertificateFile, "certificate")
         : null,
     regulatorConsent: formData.get("regulatorConsent") === "on",
+  };
+}
+
+function buildInitialLawyerRegistrationPayload(formData) {
+  const countryCode = String(formData.get("lawyerCountry") || "").trim() || detectCountry() || "AU";
+  return {
+    registrationStage: "initial",
+    lawyerRole: formData.get("lawyerRole"),
+    lawyerRegion: formData.get("lawyerRegion"),
+    lawyerCountryCode: countryCode,
   };
 }
 
@@ -4506,6 +4644,9 @@ function getPostAuthPath(user, preferredRole) {
     return "/client?view=dashboard";
   }
   if (role === "lawyer") {
+    if (!isLawyerRegistrationComplete(user)) {
+      return "/lawyer-register";
+    }
     return "/lawyer";
   }
   if (role === "admin") {
@@ -4519,12 +4660,29 @@ function getDashboardPath(user) {
     return "/client?view=dashboard";
   }
   if (user?.role === "lawyer") {
+    if (!isLawyerRegistrationComplete(user)) {
+      return "/lawyer-register";
+    }
     return "/lawyer";
   }
   if (user?.role === "admin") {
     return "/admin";
   }
   return "/account";
+}
+
+function isLawyerRegistrationComplete(user) {
+  return Boolean(
+    user
+    && user.role === "lawyer"
+    && user.firm
+    && user.firmAddress
+    && user.firmPhone
+    && user.firmContactName
+    && user.hasIdentityDocuments
+    && user.hasPractisingCertificate
+    && user.regulatorConsent,
+  );
 }
 
 function getPublicPrimaryNavMarkup(pathname) {
