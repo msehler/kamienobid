@@ -1626,6 +1626,15 @@ form.panel > .button {
   color: rgba(21, 57, 200, 0.72);
 }
 
+.test-account-group {
+  display: grid;
+  gap: 14px;
+}
+
+.test-account-card code {
+  word-break: break-word;
+}
+
 .account-security-card > input[disabled],
 .account-settings-panel input[disabled],
 .account-settings-panel textarea[disabled] {

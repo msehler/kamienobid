@@ -303,6 +303,7 @@ function cacheElements() {
     "adminCountrySettings",
     "adminMetrics",
     "practiceAreaAnalytics",
+    "testAccountsPanel",
     "verificationQueue",
     "clientName",
     "lawyerName",
@@ -481,6 +482,9 @@ function bindEvents() {
   }
   if (elements.adminCredentialsPanel) {
     elements.adminCredentialsPanel.addEventListener("submit", submitAdminCredentials);
+  }
+  if (elements.testAccountsPanel) {
+    elements.testAccountsPanel.addEventListener("click", handleAdminTestAccountActions);
   }
 }
 
@@ -2560,8 +2564,64 @@ function renderAdminCredentialsPanel() {
   `;
 }
 
+function renderAdminTestAccountsPanel() {
+  if (!elements.testAccountsPanel) {
+    return;
+  }
+
+  const testAccounts = state.admin?.testAccounts;
+  if (!testAccounts) {
+    elements.testAccountsPanel.innerHTML = "<p>Test account data is unavailable right now.</p>";
+    return;
+  }
+
+  const renderClientAccount = (entry) => `
+    <article class="queue-item test-account-card">
+      <strong>${escapeHtml(entry.name)}</strong>
+      <p>${escapeHtml(entry.email)}</p>
+      <p>${entry.caseCount} case${entry.caseCount === 1 ? "" : "s"} · ${entry.liveCaseCount} live · ${entry.draftCaseCount} draft · ${entry.engagedCaseCount} engaged</p>
+      <p>${entry.latestMatter ? `Latest matter: ${escapeHtml(entry.latestMatter.caseName)} (${escapeHtml(entry.latestMatter.practiceAreaLabel)})` : "No matters yet."}</p>
+      <div class="account-actions">
+        <button class="button secondary" type="button" data-admin-test-action="impersonate" data-user-id="${entry.id}">Sign in as client</button>
+      </div>
+    </article>
+  `;
+
+  const renderLawyerAccount = (entry) => `
+    <article class="queue-item test-account-card">
+      <strong>${escapeHtml(entry.name)}</strong>
+      <p>${escapeHtml(entry.email)}</p>
+      <p>${escapeHtml(entry.firm || "Firm not supplied")} · ${escapeHtml(entry.lawyerRole || "Lawyer")}</p>
+      <p>Status: ${escapeHtml(entry.status)} · ${entry.bidCount} bid${entry.bidCount === 1 ? "" : "s"} · ${escapeHtml((entry.jurisdictions || []).join(", ") || "No jurisdictions on file")}</p>
+      <div class="account-actions">
+        <button class="button secondary" type="button" data-admin-test-action="impersonate" data-user-id="${entry.id}">Sign in as lawyer</button>
+      </div>
+    </article>
+  `;
+
+  elements.testAccountsPanel.innerHTML = `
+    <div class="checklist-card">
+      <p class="eyebrow">Shared test credentials</p>
+      <p><strong>Client password:</strong> <code>${escapeHtml(testAccounts.clientPassword)}</code></p>
+      <p><strong>Lawyer password:</strong> <code>${escapeHtml(testAccounts.lawyerPassword)}</code></p>
+      <p>Use the buttons below to swap directly into a test account. That will replace the current admin session until you sign back in as admin.</p>
+      <div class="account-actions">
+        <button class="button primary" type="button" data-admin-test-action="refresh">Refresh test dataset</button>
+      </div>
+    </div>
+    <div class="test-account-group">
+      <p class="eyebrow">Client test accounts</p>
+      ${testAccounts.clients.map(renderClientAccount).join("")}
+    </div>
+    <div class="test-account-group">
+      <p class="eyebrow">Lawyer test accounts</p>
+      ${testAccounts.lawyers.map(renderLawyerAccount).join("")}
+    </div>
+  `;
+}
+
 function renderAdmin() {
-  if (!elements.adminAccess || !elements.adminCountrySettings || !elements.adminMetrics || !elements.practiceAreaAnalytics || !elements.verificationQueue) {
+  if (!elements.adminAccess || !elements.adminCountrySettings || !elements.adminMetrics || !elements.practiceAreaAnalytics || !elements.verificationQueue || !elements.testAccountsPanel) {
     return;
   }
   const isAdmin = state.currentUser?.role === "admin";
@@ -2600,6 +2660,7 @@ function renderAdmin() {
     .join("");
 
   renderAdminCredentialsPanel();
+  renderAdminTestAccountsPanel();
 
   elements.adminMetrics.innerHTML = [
     ["Enabled markets", enabledCountries],
@@ -3125,6 +3186,51 @@ async function handleAdminApproval(event) {
     await refreshApp();
   } catch (error) {
     showToast(error.message);
+  }
+}
+
+async function handleAdminTestAccountActions(event) {
+  const button = event.target.closest("button[data-admin-test-action]");
+  if (!button || state.currentUser?.role !== "admin") {
+    return;
+  }
+
+  const action = button.dataset.adminTestAction;
+  if (action === "refresh") {
+    try {
+      const response = await request("/api/admin", {
+        method: "POST",
+        body: JSON.stringify({ action: "seed-test-accounts" }),
+      });
+      showToast(response.message);
+      await refreshApp();
+    } catch (error) {
+      showToast(error.message);
+    }
+    return;
+  }
+
+  if (action === "impersonate") {
+    try {
+      const response = await request("/api/admin", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "impersonate-user",
+          userId: button.dataset.userId,
+        }),
+      });
+      if (response.user) {
+        state.currentUser = response.user;
+        if (state.bootstrap) {
+          state.bootstrap.currentUser = response.user;
+        }
+        storeUser(response.user);
+      }
+      showToast(response.message);
+      window.location.assign(response.redirectPath || getDashboardPath(response.user));
+    } catch (error) {
+      showToast(error.message);
+    }
   }
 }
 

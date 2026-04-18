@@ -1,4 +1,4 @@
-const { loadViewer, rememberAccount, requireRole } = require("../lib/auth");
+const { createSessionForUserId, loadViewer, rememberAccount, requireRole, setSessionCookie } = require("../lib/auth");
 const { getAdminSummary, updateAdmin } = require("../lib/platform");
 
 module.exports = function handler(req, res) {
@@ -15,7 +15,11 @@ module.exports = function handler(req, res) {
 
   if (req.method === "POST") {
     const result = updateAdmin(req.viewer, req.body || {});
-    if (result.body?.user?.email) {
+    if (req.body?.action === "impersonate-user" && result.body?.user?.id) {
+      const token = createSessionForUserId(result.body.user.id);
+      setSessionCookie(res, token);
+      rememberAccount(res, req, result.body.user.email);
+    } else if (result.body?.user?.email) {
       rememberAccount(res, req, result.body.user.email);
     }
     res.status(result.status).json(result.body);
