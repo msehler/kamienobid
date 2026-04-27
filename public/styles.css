@@ -1,6 +1,6 @@
 :root {
-  --bg: #143fda;
-  --bg-deep: #0f32b2;
+  --bg: #6c7474;
+  --bg-deep: #6c7474;
   --card: #fffdf8;
   --card-soft: #f4f7eb;
   --card-ghost: rgba(255, 255, 255, 0.12);
@@ -38,53 +38,32 @@ body {
   margin: 0;
   font-family: var(--sans);
   color: var(--card);
-  background:
-    radial-gradient(circle at 18% 24%, rgba(244, 247, 235, 0.12), transparent 18%),
-    radial-gradient(circle at 78% 18%, rgba(255, 255, 255, 0.08), transparent 16%),
-    linear-gradient(180deg, var(--bg) 0%, #1239ca 52%, var(--bg-deep) 100%);
+  background: var(--bg);
   min-height: 100vh;
 }
 
 body[data-page="home"] {
-  background:
-    radial-gradient(circle at 16% 18%, rgba(236, 247, 221, 0.18), transparent 19%),
-    radial-gradient(circle at 82% 16%, rgba(255, 255, 255, 0.1), transparent 16%),
-    linear-gradient(180deg, #113fdb 0%, #1038c3 50%, #082c90 100%);
+  background: var(--bg);
 }
 
 body[data-page="platform"] {
-  background:
-    radial-gradient(circle at 16% 22%, rgba(230, 255, 244, 0.14), transparent 18%),
-    radial-gradient(circle at 82% 20%, rgba(255, 255, 255, 0.08), transparent 17%),
-    linear-gradient(180deg, #0f42d8 0%, #1138c0 52%, #0a2f9a 100%);
+  background: var(--bg);
 }
 
 body[data-page="account"] {
-  background:
-    radial-gradient(circle at 20% 24%, rgba(255, 242, 223, 0.12), transparent 20%),
-    radial-gradient(circle at 76% 16%, rgba(255, 255, 255, 0.08), transparent 16%),
-    linear-gradient(180deg, #1343d8 0%, #1843ca 50%, #0d2e99 100%);
+  background: var(--bg);
 }
 
 body[data-page="client"] {
-  background:
-    radial-gradient(circle at 14% 20%, rgba(232, 244, 215, 0.18), transparent 19%),
-    radial-gradient(circle at 84% 18%, rgba(255, 255, 255, 0.08), transparent 18%),
-    linear-gradient(180deg, #153fd7 0%, #1a43ca 48%, #1034a4 100%);
+  background: var(--bg);
 }
 
 body[data-page="lawyer"] {
-  background:
-    radial-gradient(circle at 18% 24%, rgba(225, 239, 255, 0.18), transparent 18%),
-    radial-gradient(circle at 78% 18%, rgba(235, 255, 241, 0.11), transparent 17%),
-    linear-gradient(180deg, #113fd5 0%, #123ac0 48%, #0b2f99 100%);
+  background: var(--bg);
 }
 
 body[data-page="admin"] {
-  background:
-    radial-gradient(circle at 18% 20%, rgba(255, 245, 214, 0.14), transparent 19%),
-    radial-gradient(circle at 82% 20%, rgba(220, 236, 255, 0.12), transparent 17%),
-    linear-gradient(180deg, #123ecf 0%, #1538b6 46%, #092a8b 100%);
+  background: var(--bg);
 }
 
 body.app-shell-pending[data-page="account"] main,
@@ -128,6 +107,7 @@ a {
   pointer-events: none;
   filter: blur(10px);
   opacity: 0.6;
+  display: none;
 }
 
 .ambient-orb-left {
