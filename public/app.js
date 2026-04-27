@@ -1266,9 +1266,14 @@ function renderHeader() {
   const pathname = window.location.pathname;
   const params = new URLSearchParams(window.location.search);
   const isClientSignedIn = state.currentUser?.role === "client";
+  const brandHref = state.currentUser ? getDashboardPath(state.currentUser) : "/";
   if (elements.globalDisclaimer) {
     elements.globalDisclaimer.textContent = country.disclaimer;
   }
+  document.querySelectorAll(".brand-mark").forEach((link) => {
+    link.setAttribute("href", brandHref);
+    link.setAttribute("aria-label", state.currentUser ? "Kamieno dashboard" : "Kamieno home");
+  });
   document.querySelectorAll("[data-region-badge] strong").forEach((badge) => {
     badge.textContent = country.name;
   });
