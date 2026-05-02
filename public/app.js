@@ -455,6 +455,7 @@ function bindEvents() {
   }
   if (elements.adminLoginForm) {
     elements.adminLoginForm.addEventListener("submit", submitAdminLogin);
+    window.__kamienoAdminLoginBound = true;
   }
   if (elements.logoutButton) {
     elements.logoutButton.addEventListener("click", submitLogout);
@@ -2526,6 +2527,7 @@ function renderAdminSignIn() {
     elements.adminLoginForm = document.getElementById("adminLoginForm");
     if (elements.adminLoginForm) {
       elements.adminLoginForm.addEventListener("submit", submitAdminLogin);
+      window.__kamienoAdminLoginBound = true;
     }
   }
 }

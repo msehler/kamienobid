@@ -9,7 +9,7 @@
       content="Sign in to the Kamieno admin dashboard."
     />
     <link rel="icon" href="/assets/favicon-symbol.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/styles.css?v=20260502-admin" />
   </head>
   <body data-page="admin-signin" class="app-shell-pending">
     <div class="page-grid"></div>
@@ -112,6 +112,37 @@
       </div>
     </footer>
 
-    <script src="/app.js" defer></script>
+    <script src="/app.js?v=20260502-admin" defer></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        if (window.__kamienoAdminLoginBound) {
+          return;
+        }
+        const form = document.getElementById("adminLoginForm");
+        if (!form) {
+          return;
+        }
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const formData = new FormData(form);
+          const response = await fetch("/api/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "login",
+              identifier: formData.get("identifier"),
+              password: formData.get("password"),
+              expectedRole: "admin",
+            }),
+          });
+          const payload = await response.json();
+          if (!response.ok) {
+            window.alert(payload.error || "Admin sign in failed.");
+            return;
+          }
+          window.location.assign("/admin");
+        });
+      });
+    </script>
   </body>
 </html>
